@@ -1,0 +1,3 @@
+node_modules/
+electron_output.log
+physio_clinic.db*
