@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physio Clinic App</title>
+  <link href="./output.css" rel="stylesheet">
+  <!-- Material Icons -->
+  <style>
+    /* Basic offline fallback for icons since Material Icons CDN is blocked.
+       In a full production build, we would bundle the woff2 font file locally.
+       For this demo, we'll map a few core classes to text characters if offline. */
+    .material-icons { font-family: sans-serif; font-style: normal; font-weight: bold; }
+    .material-icons.fallback-dashboard::before { content: "📊"; }
+    .material-icons.fallback-people::before { content: "👥"; }
+    .material-icons.fallback-fitness::before { content: "🏋️"; }
+    .material-icons.fallback-payments::before { content: "💳"; }
+    .material-icons.fallback-settings::before { content: "⚙️"; }
+  </style>
+  <style>
+    /* Prevent text selection during drag and drop */
+    .no-select {
+        user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 h-screen w-screen overflow-hidden text-gray-800 flex">
+
+  <!-- Sidebar Navigation -->
+  <nav class="w-64 bg-gray-900 text-white flex flex-col h-full shadow-lg">
+    <div class="p-6">
+      <h2 class="text-2xl font-bold tracking-wider">PhysioApp</h2>
+    </div>
+
+    <div class="flex-1 flex flex-col mt-4 space-y-2 px-3">
+      <button onclick="navigate('dashboard')" class="nav-btn flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors bg-gray-800 text-blue-400">
+        <span class="material-icons fallback-dashboard mr-3"></span> Dashboard
+      </button>
+      <button onclick="navigate('patients')" class="nav-btn flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <span class="material-icons fallback-people mr-3"></span> Patients
+      </button>
+      <button onclick="navigate('programs')" class="nav-btn flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <span class="material-icons fallback-fitness mr-3"></span> PT Programs
+      </button>
+      <button onclick="navigate('finance')" class="nav-btn flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <span class="material-icons fallback-payments mr-3"></span> Finance
+      </button>
+    </div>
+
+    <div class="p-4 mt-auto">
+      <button onclick="navigate('settings')" class="nav-btn w-full flex items-center p-3 rounded-lg hover:bg-gray-800 transition-colors">
+        <span class="material-icons fallback-settings mr-3"></span> Settings
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+
+    <!-- Top Header / Global Search -->
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8 z-10">
+      <div class="flex-1 max-w-2xl relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <span class="material-icons text-gray-400">search</span>
+        </div>
+        <input type="text" id="global-search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm transition duration-150 ease-in-out" placeholder="Search patients...">
+
+        <!-- Search Results Dropdown -->
+        <div id="search-results" class="absolute mt-1 w-full bg-white rounded-md shadow-lg hidden max-h-60 overflow-y-auto z-50 border border-gray-200">
+            <!-- Results injected here via JS -->
+        </div>
+      </div>
+
+      <div id="header-clock" class="text-lg font-semibold text-gray-700 w-48 text-right">
+        --:--:-- --
+      </div>
+    </header>
+
+    <!-- Content Views Container -->
+    <div id="content-container" class="flex-1 overflow-y-auto p-8 relative">
+
+      <!-- Dashboard View -->
+      <div id="view-dashboard" class="view-section">
+        <!-- Dashboard content injected via JS -->
+      </div>
+
+      <!-- Patients View -->
+      <div id="view-patients" class="view-section hidden flex flex-col h-full">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Patient Management</h2>
+            <button onclick="openCreatePatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm flex items-center transition-colors">
+                <span class="material-icons mr-2 text-sm">person_add</span> New Patient
+            </button>
+        </div>
+
+        <div class="flex-1 flex space-x-6 overflow-hidden">
+            <!-- Patient List -->
+            <div class="w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-100 bg-gray-50">
+                    <input type="text" id="patient-list-search" class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm" placeholder="Filter list...">
+                </div>
+                <div id="patient-list-container" class="flex-1 overflow-y-auto">
+                    <!-- List populated by JS -->
+                </div>
+            </div>
+
+            <!-- Patient Portfolio -->
+            <div class="w-2/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden" id="patient-portfolio-container">
+                <div class="flex-1 flex items-center justify-center text-gray-400 flex-col">
+                    <span class="material-icons text-6xl mb-4 text-gray-200">folder_shared</span>
+                    <p>Select a patient to view their portfolio</p>
+                </div>
+                <!-- Portfolio content injected here when patient selected -->
+            </div>
+        </div>
+      </div>
+
+      <!-- Programs View -->
+      <div id="view-programs" class="view-section hidden flex flex-col h-full">
+          <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-bold">PT / S&C Program Builder</h2>
+              <div class="space-x-3">
+                  <button onclick="loadProgramLibrary()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 transition-colors">
+                      <span class="material-icons mr-2 text-sm align-middle">library_books</span> Template Library
+                  </button>
+                  <button onclick="startNewProgram()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm flex items-center transition-colors inline-flex">
+                      <span class="material-icons mr-2 text-sm">add</span> New Program
+                  </button>
+              </div>
+          </div>
+
+          <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden relative">
+
+              <!-- Program Builder Wizard Container -->
+              <div id="program-wizard" class="flex-1 flex flex-col hidden h-full">
+
+                  <!-- Wizard Header / Progress -->
+                  <div class="flex border-b border-gray-100 bg-gray-50">
+                      <div class="flex-1 py-4 text-center border-r border-gray-100 font-medium text-sm text-blue-600 bg-white" id="prog-tab-1">1. Setup Days</div>
+                      <div class="flex-1 py-4 text-center border-r border-gray-100 font-medium text-sm text-gray-500" id="prog-tab-2">2. Programming</div>
+                      <div class="flex-1 py-4 text-center font-medium text-sm text-gray-500" id="prog-tab-3">3. Review & Export</div>
+                  </div>
+
+                  <!-- Page 1: Setup Days -->
+                  <div id="prog-page-1" class="flex-1 p-8 flex flex-col items-center justify-center">
+                      <h3 class="text-xl font-bold mb-6 text-gray-800">Select Training Days</h3>
+                      <div class="flex space-x-4 mb-10" id="prog-days-selector">
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Mon">M</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Tue">T</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Wed">W</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Thu">T</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Fri">F</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Sat">S</button>
+                          <button class="day-btn h-12 w-12 rounded-full border-2 border-gray-300 text-gray-500 font-bold hover:border-blue-500 hover:text-blue-500 focus:outline-none transition-colors" data-day="Sun">S</button>
+                      </div>
+                      <button onclick="goToProgramPage(2)" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium shadow-sm hover:bg-blue-700">Next Step <span class="material-icons text-sm align-middle ml-2">arrow_forward</span></button>
+                  </div>
+
+                  <!-- Page 2: Programming -->
+                  <div id="prog-page-2" class="flex-1 p-6 hidden flex-col">
+                      <div class="flex space-x-2 mb-4 overflow-x-auto pb-2" id="prog-day-tabs">
+                          <!-- Day tabs injected here -->
+                      </div>
+                      <div class="flex-1 border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-gray-50">
+                          <div class="grid grid-cols-12 gap-2 p-3 bg-gray-100 border-b border-gray-200 font-bold text-xs text-gray-700 uppercase">
+                              <div class="col-span-1">Order</div>
+                              <div class="col-span-5">Exercise</div>
+                              <div class="col-span-2 text-center">Sets</div>
+                              <div class="col-span-2 text-center">Reps</div>
+                              <div class="col-span-2 text-center">Rest / Tempo</div>
+                          </div>
+                          <div id="prog-exercise-list" class="flex-1 overflow-y-auto p-3 space-y-2 bg-white">
+                              <!-- Exercises injected here -->
+                          </div>
+                          <div class="p-3 border-t border-gray-200 bg-gray-50">
+                              <button onclick="addExerciseRow()" class="text-blue-600 text-sm font-medium hover:text-blue-800 flex items-center">
+                                  <span class="material-icons text-sm mr-1">add_circle</span> Add Exercise
+                              </button>
+                          </div>
+                      </div>
+                      <div class="mt-4 flex justify-between">
+                          <button onclick="goToProgramPage(1)" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Back</button>
+                          <button onclick="goToProgramPage(3)" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700">Generate Program</button>
+                      </div>
+                  </div>
+
+                  <!-- Page 3: Output -->
+                  <div id="prog-page-3" class="flex-1 p-8 hidden flex-col">
+                      <div class="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-8 overflow-y-auto" id="prog-summary-container">
+                          <!-- Final PDF preview generated here -->
+                      </div>
+                      <div class="mt-6 flex justify-between items-center">
+                          <button onclick="goToProgramPage(2)" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Edit Program</button>
+                          <div class="space-x-3 flex items-center">
+                              <select id="prog-patient-select" class="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 mr-2">
+                                  <option value="">Select a patient to save to...</option>
+                              </select>
+                              <button onclick="saveProgramToPatient()" class="px-4 py-2 border border-green-600 text-green-600 rounded-md font-medium hover:bg-green-50 bg-white shadow-sm flex items-center">
+                                  <span class="material-icons text-sm mr-1">save</span> Save to Patient
+                              </button>
+                              <button onclick="saveProgramAsTemplate()" class="px-4 py-2 border border-blue-600 text-blue-600 rounded-md font-medium hover:bg-blue-50 bg-white">Save Template</button>
+                              <button onclick="exportProgramPDF()" class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700 flex items-center inline-flex">
+                                  <span class="material-icons text-sm mr-1">picture_as_pdf</span> Export PDF
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+
+              <!-- Default / Empty State -->
+              <div id="prog-empty-state" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                  <span class="material-icons text-6xl mb-4 text-gray-200">fitness_center</span>
+                  <p>Create a new program or load from library</p>
+              </div>
+
+          </div>
+      </div>
+
+      <!-- Finance View -->
+      <div id="view-finance" class="view-section hidden flex flex-col h-full">
+          <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-bold">Finance & Invoicing</h2>
+              <button onclick="createNewInvoice()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm flex items-center transition-colors">
+                  <span class="material-icons mr-2 text-sm">receipt_long</span> Create Invoice
+              </button>
+          </div>
+
+          <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden relative p-8">
+              <div id="finance-empty-state" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                  <span class="material-icons text-6xl mb-4 text-gray-200">payments</span>
+                  <p>Select 'Create Invoice' to generate a bill.</p>
+              </div>
+
+              <!-- Invoice Builder (Hidden by default) -->
+              <div id="invoice-builder" class="hidden flex-col h-full">
+                  <div class="flex justify-between mb-8 border-b border-gray-200 pb-6">
+                      <div>
+                          <h3 class="text-3xl font-bold text-gray-900 mb-1" id="inv-clinic-name">My Physio Clinic</h3>
+                          <p class="text-gray-500 text-sm">Invoice</p>
+                      </div>
+                      <div class="text-right">
+                          <div class="mb-2">
+                              <label class="text-xs text-gray-500 block mb-1">Select Patient</label>
+                              <select id="inv-patient-select" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-48 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                                  <option value="">Select a patient...</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label class="text-xs text-gray-500 block mb-1">Date</label>
+                              <input type="date" id="inv-date" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-48 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="flex-1 overflow-y-auto mb-6">
+                      <table class="w-full text-left">
+                          <thead>
+                              <tr class="border-b border-gray-200 text-sm text-gray-500 uppercase tracking-wide">
+                                  <th class="py-2 px-3">Description</th>
+                                  <th class="py-2 px-3 text-right w-32">Price</th>
+                              </tr>
+                          </thead>
+                          <tbody id="inv-items-list">
+                              <tr class="border-b border-gray-100">
+                                  <td class="py-3 px-3"><input type="text" class="w-full border-0 bg-transparent focus:ring-0 text-gray-800 font-medium" value="Physiotherapy Consultation"></td>
+                                  <td class="py-3 px-3 text-right"><input type="number" id="inv-base-price" class="w-24 border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-500" value="100"></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+
+                  <div class="border-t border-gray-200 pt-6 flex justify-end">
+                      <div class="w-64">
+                          <div class="flex justify-between py-1 text-sm text-gray-600">
+                              <span>Subtotal</span>
+                              <span id="inv-subtotal">$100.00</span>
+                          </div>
+                          <div class="flex justify-between py-1 text-sm text-gray-600">
+                              <span>Tax (<span id="inv-tax-rate">0</span>%)</span>
+                              <span id="inv-tax-amount">$0.00</span>
+                          </div>
+                          <div class="flex justify-between py-2 text-lg font-bold text-gray-900 border-t border-gray-200 mt-2">
+                              <span>Total</span>
+                              <span id="inv-total">$100.00</span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="mt-8 flex justify-end space-x-3">
+                      <button onclick="cancelInvoice()" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
+                      <button onclick="saveAndPrintInvoice()" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700 flex items-center">
+                          <span class="material-icons text-sm mr-2">print</span> Save & Generate PDF
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="view-settings" class="view-section hidden flex flex-col h-full">
+          <h2 class="text-2xl font-bold mb-6">Clinic Settings</h2>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl">
+              <form id="settings-form" class="space-y-6">
+                  <div>
+                      <h3 class="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2 mb-4">Clinic Details</h3>
+                      <div class="space-y-4">
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+                              <input type="text" id="set-clinic-name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" value="My Physio Clinic">
+                          </div>
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Logo Path (Local)</label>
+                              <div class="flex space-x-2">
+                                  <input type="text" id="set-logo-path" class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="/path/to/logo.png">
+                                  <!-- In a real desktop app, we'd use a file picker here -->
+                              </div>
+                              <p class="text-xs text-gray-500 mt-1">Used for PDF generation headers.</p>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div>
+                      <h3 class="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2 mb-4 mt-8">Finance Defaults</h3>
+                      <div class="grid grid-cols-2 gap-4">
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Default Service Price ($)</label>
+                              <input type="number" id="set-default-price" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" value="100">
+                          </div>
+                          <div>
+                              <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                              <input type="number" id="set-tax-rate" step="0.1" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" value="0">
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="pt-6 border-t border-gray-100 flex justify-end">
+                      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700">Save Settings</button>
+                  </div>
+              </form>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-2xl mt-8">
+              <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-4">
+                  <h3 class="text-lg font-bold text-gray-900">Auto-Text Templates</h3>
+                  <button onclick="openCreateAutoTextModal()" class="text-blue-600 text-sm font-medium hover:text-blue-800 flex items-center">
+                      <span class="material-icons text-sm mr-1">add</span> Add Template
+                  </button>
+              </div>
+              <div id="settings-autotext-list" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                  <!-- Auto text templates populated here -->
+              </div>
+          </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <!-- Note Editor Modal -->
+  <div id="note-editor-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex-col items-center justify-center z-50 pt-10 pb-10">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl flex flex-col max-h-full overflow-hidden relative">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+              <h3 class="text-lg font-bold text-gray-900" id="note-modal-title">New Clinical Note</h3>
+              <div class="flex items-center space-x-2">
+                  <span id="note-status-badge" class="hidden inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Draft</span>
+                  <button onclick="closeNoteEditor()" class="text-gray-400 hover:text-gray-600 ml-4">
+                      <span class="material-icons">close</span>
+                  </button>
+              </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-6 relative">
+              <textarea id="note-content" class="w-full h-full min-h-[300px] p-2 border-0 focus:ring-0 resize-none text-gray-800 leading-relaxed" placeholder="Type clinical notes here... Type @ to use templates." spellcheck="false"></textarea>
+
+              <!-- Auto-Text Dropdown -->
+              <div id="auto-text-dropdown" class="hidden absolute bg-white border border-gray-200 rounded-md shadow-lg w-64 max-h-48 overflow-y-auto z-10 text-sm">
+                  <!-- Templates populated here -->
+              </div>
+          </div>
+
+          <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center flex-shrink-0">
+              <div class="flex items-center space-x-4">
+                  <button type="button" onclick="openOMDictionary()" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center">
+                      <span class="material-icons text-sm mr-1">calculate</span> Insert Outcome Measure
+                  </button>
+                  <div class="text-xs text-gray-500">Press Cmd+S or Ctrl+S to save</div>
+              </div>
+              <div class="space-x-3">
+                  <button type="button" onclick="closeNoteEditor()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium">Cancel</button>
+                  <button type="button" onclick="saveNote()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-sm font-medium">Save Note</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Addendum Modal -->
+  <div id="addendum-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div>
+                  <h3 class="text-lg font-bold text-gray-900">Add Addendum</h3>
+                  <p class="text-xs text-red-600 mt-1"><span class="font-bold">Warning:</span> Addendums are permanently hard-stamped with the current date & time.</p>
+              </div>
+              <button onclick="closeAddendumModal()" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons">close</span>
+              </button>
+          </div>
+          <div class="p-6">
+              <textarea id="addendum-content" class="w-full h-32 border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Enter addendum text..."></textarea>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
+              <button type="button" onclick="closeAddendumModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium">Cancel</button>
+              <button type="button" onclick="saveAddendum()" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 shadow-sm text-sm font-medium flex items-center">
+                  <span class="material-icons text-sm mr-2">gavel</span> Stamp Addendum
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <!-- OM Dictionary Modal -->
+  <div id="om-dictionary-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl h-[80vh] flex overflow-hidden">
+
+          <!-- Library List -->
+          <div class="w-1/3 border-r border-gray-200 bg-white flex flex-col">
+              <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                  <h3 class="text-sm font-bold text-gray-900">OM Library</h3>
+                  <button onclick="closeOMDictionary()" class="text-gray-400 hover:text-gray-600">
+                      <span class="material-icons text-sm">close</span>
+                  </button>
+              </div>
+              <div class="p-3 border-b border-gray-100">
+                  <input type="text" id="om-search-input" class="w-full border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:border-blue-500 text-sm" placeholder="Search calculators...">
+              </div>
+              <div id="om-list" class="flex-1 overflow-y-auto">
+                  <!-- Injected via JS -->
+              </div>
+          </div>
+
+          <!-- Active Calculator -->
+          <div id="om-calculator-container" class="w-2/3 bg-white flex flex-col relative">
+              <div class="flex-1 flex items-center justify-center text-gray-400 flex-col">
+                  <span class="material-icons text-6xl mb-4 text-gray-200">calculate</span>
+                  <p>Select a calculator from the library</p>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Program Template Library Modal -->
+  <div id="program-library-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col h-[70vh]">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+              <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                  <span class="material-icons mr-2 text-gray-500">library_books</span> Program Template Library
+              </h3>
+              <button onclick="closeProgramLibrary()" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons">close</span>
+              </button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+              <div id="program-templates-list" class="space-y-3">
+                  <!-- Templates injected here -->
+                  <div class="text-center py-10 text-gray-400">Loading templates...</div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Create Appointment Modal -->
+  <div id="create-appointment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 class="text-lg font-bold text-gray-900">New Appointment</h3>
+              <button onclick="closeCreateAppointmentModal()" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons">close</span>
+              </button>
+          </div>
+          <form id="create-appointment-form" class="p-6 space-y-4">
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Select Patient <span class="text-red-500">*</span></label>
+                  <select id="ca-patient" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                      <option value="">Select a patient...</option>
+                  </select>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
+                      <input type="date" id="ca-date" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Time <span class="text-red-500">*</span></label>
+                      <input type="time" id="ca-time" step="1800" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <input type="text" id="ca-notes" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="Optional notes...">
+              </div>
+              <div class="pt-4 flex justify-end space-x-3">
+                  <button type="button" onclick="closeCreateAppointmentModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">Cancel</button>
+                  <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-sm">Book Appointment</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <!-- Create Auto-Text Modal -->
+  <div id="create-autotext-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 class="text-lg font-bold text-gray-900">New Auto-Text</h3>
+              <button onclick="closeCreateAutoTextModal()" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons">close</span>
+              </button>
+          </div>
+          <form id="create-autotext-form" class="p-6 space-y-4">
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Shortcut <span class="text-red-500">*</span></label>
+                  <div class="flex items-center">
+                      <span class="text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md px-3 py-2">@</span>
+                      <input type="text" id="cat-shortcut" required class="flex-1 border border-gray-300 rounded-r-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. obj">
+                  </div>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Content <span class="text-red-500">*</span></label>
+                  <textarea id="cat-content" required class="w-full h-32 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Template text goes here..."></textarea>
+              </div>
+              <div class="pt-4 flex justify-end space-x-3">
+                  <button type="button" onclick="closeCreateAutoTextModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">Cancel</button>
+                  <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-sm">Save Template</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <!-- Create Patient Modal -->
+  <div id="create-patient-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 class="text-lg font-bold text-gray-900">Create New Patient</h3>
+              <button onclick="closeCreatePatientModal()" class="text-gray-400 hover:text-gray-600">
+                  <span class="material-icons">close</span>
+              </button>
+          </div>
+          <form id="create-patient-form" class="p-6 space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
+                      <input type="text" id="cp-fname" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span class="text-red-500">*</span></label>
+                      <input type="text" id="cp-lname" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" id="cp-email" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <input type="tel" id="cp-phone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div class="pt-4 flex justify-end space-x-3">
+                  <button type="button" onclick="closeCreatePatientModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm">Save Patient</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <script src="./renderer.js"></script>
+  <script src="./dashboard.js"></script>
+  <script src="./patient.js"></script>
+  <script src="./notes.js"></script>
+  <script src="./auto_text.js"></script>
+  <script src="./om_dictionary.js"></script>
+  <script src="./program.js"></script>
+  <script src="./finance.js"></script>
+</body>
+</html>
