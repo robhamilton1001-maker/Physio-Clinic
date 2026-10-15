@@ -1,0 +1,8 @@
+node_modules/
+src/styles/output.css
+dist/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+Thumbs.db

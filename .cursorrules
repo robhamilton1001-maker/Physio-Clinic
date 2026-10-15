@@ -1,0 +1,20 @@
+# Physio Clinic App - Architecture Rules
+
+1. **Strictly 100% Offline / Local-Only:**
+   - Zero cloud connections, zero external REST APIs, zero remote authentication.
+   - All persistence must use local SQLite via `better-sqlite3` stored in the system's AppData directory (`app.getPath('userData')`).
+   - All assets, icons, fonts, and styles must be bundled locally. No CDNs.
+
+2. **Electron Security Architecture:**
+   - `contextIsolation: true` and `nodeIntegration: false` in `webPreferences`.
+   - All database, file system, and window operations MUST pass through `contextBridge` in `preload.js` via `ipcRenderer.invoke` and `ipcMain.handle`.
+   - Never expose raw Node.js modules or the database instance directly to the renderer.
+
+3. **Tech Stack:**
+   - Electron (desktop runtime)
+   - Tailwind CSS (styling)
+   - better-sqlite3 (embedded local SQL engine)
+   - Native HTML5 / ES6 JavaScript (clean, modular components)
+
+4. **UI Design Standard:**
+   - High-fidelity, modern desktop aesthetic: clean typography, dark slate accents, subtle borders (`border-slate-200`), rounded corners (`rounded-xl`), and generous whitespace. Avoid generic, sterile legacy medical forms.
