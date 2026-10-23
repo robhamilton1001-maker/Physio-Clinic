@@ -14,7 +14,7 @@ const { contextBridge, ipcRenderer } = require('electron');
  */
 contextBridge.exposeInMainWorld('api', {
 
-  // ── Low-level DB helpers ──────────────────────────────────────────────
+  // ── Low-level DB helpers ───────────────────────────────────────────────
   // Use these from renderer JS when no higher-level domain method exists yet.
 
   /** Run a write statement (INSERT / UPDATE / DELETE / DDL). Returns info object. */
@@ -27,22 +27,41 @@ contextBridge.exposeInMainWorld('api', {
   dbAll: (sql, params) => ipcRenderer.invoke('db:all', sql, params),
 
   // ── Domain: Patients ──────────────────────────────────────────────────
-  // Placeholder – implement IPC channels in main.js and wire here.
 
   patients: {
-    /** List all patients, ordered by last name. */
-    list:   ()       => ipcRenderer.invoke('patients:list'),
-    /** Get a single patient by ID. */
-    get:    (id)     => ipcRenderer.invoke('patients:get', id),
-    /** Create a new patient record. Returns { lastInsertRowid }. */
-    create: (data)   => ipcRenderer.invoke('patients:create', data),
+    /** List all active patients (lightweight), ordered by last name. */
+    list: () => ipcRenderer.invoke('patients:list'),
+
+    /**
+     * Real-time fuzzy search across first_name, last_name, phone, email.
+     * @param {string} query - Raw search string (no wildcards needed).
+     * @returns {Promise<Array>} Up to 20 matching patient rows.
+     */
+    search: (query) => ipcRenderer.invoke('patients:search', query),
+
+    /**
+     * Retrieve a full patient profile: patient row + appointments + notes.
+     * @param {number} id - Patient primary key.
+     * @returns {Promise<Object|null>} Patient object or null if not found.
+     */
+    getById: (id) => ipcRenderer.invoke('patients:getById', id),
+
+    /**
+     * Validate and create a new patient record.
+     * @param {Object} data - { first_name, last_name, dob, phone, email, emergency_contact, notes }
+     * @returns {Promise<Object>} The newly created patient row.
+     * @throws If validation fails (first_name or last_name missing).
+     */
+    create: (data) => ipcRenderer.invoke('patients:create', data),
+
     /** Update patient fields by ID. */
     update: (id, data) => ipcRenderer.invoke('patients:update', id, data),
+
     /** Soft-delete a patient (sets deleted_at timestamp). */
-    delete: (id)     => ipcRenderer.invoke('patients:delete', id),
+    delete: (id) => ipcRenderer.invoke('patients:delete', id),
   },
 
-  // ── Domain: Appointments ─────────────────────────────────────────────
+  // ── Domain: Appointments ──────────────────────────────────────────────
 
   appointments: {
     /** List appointments, optionally filtered by { patientId, date }. */
@@ -57,17 +76,41 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id)      => ipcRenderer.invoke('appointments:delete', id),
   },
 
-  // ── Domain: Notes / SOAP ─────────────────────────────────────────────
+  // ── Domain: Clinical Notes / SOAP ─────────────────────────────────────
 
   notes: {
     /** List clinical notes for a patient. */
     listByPatient: (patientId) => ipcRenderer.invoke('notes:listByPatient', patientId),
     /** Get a single note by ID. */
-    get:    (id)   => ipcRenderer.invoke('notes:get', id),
+    get:    (id)       => ipcRenderer.invoke('notes:get', id),
     /** Save a new SOAP note. */
-    create: (data) => ipcRenderer.invoke('notes:create', data),
+    create: (data)     => ipcRenderer.invoke('notes:create', data),
     /** Update an existing note. */
     update: (id, data) => ipcRenderer.invoke('notes:update', id, data),
+  },
+
+  // ── Stats ──────────────────────────────────────────────────────────────
+
+  stats: {
+    dashboard: (todayISO) => ipcRenderer.invoke('stats:dashboard', todayISO),
+  },
+
+  // ── Diary ──────────────────────────────────────────────────────────────
+
+  diary: {
+    /**
+     * Fetch events within a UTC date range.
+     * @param {string} startISO - Inclusive start (ISO 8601).
+     * @param {string} endISO   - Exclusive end (ISO 8601).
+     * @returns {Promise<Array>}
+     */
+    getEvents:   (startISO, endISO) => ipcRenderer.invoke('diary:getEvents', startISO, endISO),
+    /** Create a new calendar event. Returns the full inserted row. */
+    createEvent: (data)             => ipcRenderer.invoke('diary:createEvent', data),
+    /** Partial update of an existing event. */
+    updateEvent: (id, data)         => ipcRenderer.invoke('diary:updateEvent', id, data),
+    /** Soft-cancel an event (sets status = 'cancelled'). */
+    deleteEvent: (id)               => ipcRenderer.invoke('diary:deleteEvent', id),
   },
 
 });

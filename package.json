@@ -4,8 +4,9 @@
   "description": "Local-first physiotherapist clinic desktop application",
   "main": "src/main.js",
   "scripts": {
-    "build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch",
-    "start": "electron ."
+    "start": "electron .",
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css",
+    "watch:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
   },
   "keywords": ["electron", "physiotherapy", "clinic", "local-first"],
   "author": "",

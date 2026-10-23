@@ -1,55 +1,178 @@
-'use strict';
-
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
-// ── Database ───────────────────────────────────────────────────────────────
-// Import AFTER app is ready so app.getPath('userData') is available.
-let db;
-function getDb() {
-  if (!db) {
-    db = require('./db/database');
-  }
-  return db;
-}
+// ── Database ────────────────────────────────────────────────────────────────
+const db = require('./db/database.js');
 
-// ── Window creation ────────────────────────────────────────────────────────
+// ── Window ──────────────────────────────────────────────────────────────────
+let mainWindow = null;
+
+const isDev = process.env.NODE_ENV === 'development';
+
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1280,
+  mainWindow = new BrowserWindow({
+    width: 1366,
     height: 850,
-    minWidth: 1280,
-    minHeight: 850,
-    show: false, // Shown after 'ready-to-show' to avoid flash
-    backgroundColor: '#f9fafb',
+    minWidth: 1024,
+    minHeight: 700,
+    show: false,
+    frame: true,
+    backgroundColor: '#0f172a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,   // Renderer is isolated from Node
-      nodeIntegration: false,   // No Node access in renderer
-      sandbox: false,           // Required for preload to use require()
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
-  win.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  win.once('ready-to-show', () => {
-    win.show();
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
-  // Open DevTools in development
-  if (process.env.NODE_ENV === 'development') {
-    win.webContents.openDevTools();
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
   }
 
-  return win;
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
-// ── App lifecycle ──────────────────────────────────────────────────────────
-app.whenReady().then(() => {
-  // Initialize DB on startup
-  getDb();
-  createWindow();
+// ═══════════════════════════════════════════════════════════════════════════
+// IPC HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════
 
+// ── Low-level pass-through (legacy / ad-hoc queries) ─────────────────────
+ipcMain.handle('db:run', (_e, sql, params = []) => db.run(sql, params));
+ipcMain.handle('db:get', (_e, sql, params = []) => db.get(sql, params));
+ipcMain.handle('db:all', (_e, sql, params = []) => db.all(sql, params));
+
+// ── Patients ──────────────────────────────────────────────────────────────
+
+ipcMain.handle('patients:list', () => {
+  return db.patients.list();
+});
+
+ipcMain.handle('patients:search', (_e, query) => {
+  if (typeof query !== 'string') return [];
+  return db.patients.search(query);
+});
+
+ipcMain.handle('patients:getById', (_e, id) => {
+  if (!Number.isInteger(Number(id))) return null;
+  return db.patients.getById(Number(id));
+});
+
+ipcMain.handle('patients:create', (_e, data) => {
+  // Validate in main process — never trust renderer input
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid patient data payload.');
+  }
+  // db.patients.create throws with user-facing message on validation failure
+  return db.patients.create(data);
+});
+
+ipcMain.handle('patients:update', (_e, id, data) => {
+  if (!Number.isInteger(Number(id))) throw new Error('Invalid patient ID.');
+  return db.patients.update(Number(id), data);
+});
+
+ipcMain.handle('patients:delete', (_e, id) => {
+  if (!Number.isInteger(Number(id))) throw new Error('Invalid patient ID.');
+  return db.patients.delete(Number(id));
+});
+
+// ── Appointments ──────────────────────────────────────────────────────────
+
+ipcMain.handle('appointments:list', (_e, filters = {}) => {
+  // Simple list; advanced filtering delegated to domain layer in future phase
+  if (filters && filters.patientId) {
+    return db.appointments.listByPatient(Number(filters.patientId));
+  }
+  return db.all(
+    `SELECT * FROM appointments ORDER BY scheduled_at DESC LIMIT 200`
+  );
+});
+
+ipcMain.handle('appointments:get', (_e, id) => {
+  return db.appointments.getById(Number(id));
+});
+
+ipcMain.handle('appointments:create', (_e, data) => {
+  if (!data || !data.patient_id || !data.scheduled_at) {
+    throw new Error('patient_id and scheduled_at are required.');
+  }
+  return db.appointments.create(data);
+});
+
+ipcMain.handle('appointments:update', (_e, id, data) => {
+  return db.appointments.update(Number(id), data);
+});
+
+ipcMain.handle('appointments:delete', (_e, id) => {
+  return db.run(
+    `UPDATE appointments SET status = 'cancelled', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
+    [Number(id)]
+  );
+});
+
+// ── Clinical Notes ────────────────────────────────────────────────────────
+
+ipcMain.handle('notes:listByPatient', (_e, patientId) => {
+  return db.notes.listByPatient(Number(patientId));
+});
+
+ipcMain.handle('notes:get', (_e, id) => {
+  return db.notes.getById(Number(id));
+});
+
+ipcMain.handle('notes:create', (_e, data) => {
+  if (!data || !data.patient_id) throw new Error('patient_id is required.');
+  return db.notes.create(data);
+});
+
+ipcMain.handle('notes:update', (_e, id, data) => {
+  return db.notes.update(Number(id), data);
+});
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+
+ipcMain.handle('stats:dashboard', (_e, todayISO) => {
+  const today = typeof todayISO === 'string' ? todayISO : new Date().toISOString().split('T')[0];
+  return db.stats.dashboard(today);
+});
+
+// ── Diary ─────────────────────────────────────────────────────────────────
+
+ipcMain.handle('diary:getEvents', (_e, startISO, endISO) => {
+  if (typeof startISO !== 'string' || typeof endISO !== 'string') return [];
+  return db.diary.getEvents(startISO, endISO);
+});
+
+ipcMain.handle('diary:createEvent', (_e, data) => {
+  if (!data || typeof data !== 'object') throw new Error('Invalid event payload.');
+  if (!data.scheduled_at) throw new Error('scheduled_at is required.');
+  return db.diary.createEvent(data);
+});
+
+ipcMain.handle('diary:updateEvent', (_e, id, data) => {
+  if (!Number.isInteger(Number(id))) throw new Error('Invalid event ID.');
+  return db.diary.updateEvent(Number(id), data);
+});
+
+ipcMain.handle('diary:deleteEvent', (_e, id) => {
+  if (!Number.isInteger(Number(id))) throw new Error('Invalid event ID.');
+  return db.diary.deleteEvent(Number(id));
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// APP LIFECYCLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.whenReady().then(() => {
+  createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -57,21 +180,4 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
-
-// ── IPC Handlers ───────────────────────────────────────────────────────────
-// All database/system operations are registered here and exposed through
-// preload.js. The renderer process can never call Node APIs directly.
-
-// --- Generic query helpers (for future modules to call) ---
-ipcMain.handle('db:run', (_event, sql, params = []) => {
-  return getDb().run(sql, params);
-});
-
-ipcMain.handle('db:get', (_event, sql, params = []) => {
-  return getDb().get(sql, params);
-});
-
-ipcMain.handle('db:all', (_event, sql, params = []) => {
-  return getDb().all(sql, params);
 });
