@@ -85,7 +85,7 @@ initTheme();
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'invoicing', 'settings'];
+const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'exercise-library', 'invoicing', 'settings'];
 
 function switchView(target) {
   ALL_VIEWS.forEach(v => {
@@ -119,9 +119,14 @@ function switchView(target) {
     requestAnimationFrame(() => window.RehabBuilder.activate());
   }
 
-  // Activate settings exercise library when navigating to it
-  if (target === 'settings') {
-    loadSettingsExerciseLibrary();
+  // Activate dedicated exercise library hub when navigating to it
+  if (target === 'exercise-library' && typeof loadExerciseLibraryHub === 'function') {
+    loadExerciseLibraryHub();
+  }
+
+  // Activate settings preferences when navigating to it (NEVER defaults to exercise library)
+  if (target === 'settings' && typeof loadSettingsGeneralPreferences === 'function') {
+    loadSettingsGeneralPreferences();
   }
 }
 
@@ -953,7 +958,11 @@ function attachTableControls(table, container, optionalTextarea) {
       flank.className = 'row-flank-actions';
       flank.innerHTML = `
         <button type="button" class="btn-row-add" title="Insert row below">+</button>
-        <button type="button" class="btn-row-del" title="Delete row">🗑️</button>
+        <button type="button" class="btn-row-del" title="Delete row">
+          <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+        </button>
       `;
       firstTd.prepend(flank);
     }
@@ -1530,9 +1539,12 @@ async function refreshPatientNotesFeed(patientId) {
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Editable (${note.hours_remaining > 0 ? `${note.hours_remaining}h remaining` : 'Ending soon'})
               </span>
-              <button class="btn-edit-note text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 ml-2"
+              <button class="btn-edit-note text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 ml-2 inline-flex items-center gap-1"
                       data-note-id="${note.id}">
-                ✎ Edit Note
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                </svg>
+                <span>Edit Note</span>
               </button>
             `}
           </div>
@@ -2712,8 +2724,9 @@ async function renderPatientRehabPrograms(patientId) {
       item.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm';
 
       let exerciseCount = 0;
+      let sched = null;
       try {
-        const sched = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
+        sched = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
         if (sched && sched.weeks) {
           sched.weeks.forEach(w => {
             if (w.days) {
@@ -2738,11 +2751,23 @@ async function renderPatientRehabPrograms(patientId) {
           </p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button type="button" class="btn-prog-view btn-ghost text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 transition-colors">
-            <span>⚡ View in Builder</span>
+          <button type="button" class="btn-prog-view btn-ghost text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors" title="Load in Builder">
+            <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            <span>View in Builder</span>
           </button>
-          <button type="button" class="btn-prog-copy btn-ghost text-xs py-1.5 px-2.5 border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 flex items-center gap-1 transition-colors">
-            <span>📋 Copy as Note Table</span>
+          <button type="button" class="btn-prog-copy btn-ghost text-xs py-1.5 px-2.5 border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 flex items-center gap-1.5 transition-colors" title="Copy Table for Clinical Note">
+            <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+            </svg>
+            <span>Copy Table</span>
+          </button>
+          <button type="button" class="btn-prog-pdf btn-ghost text-xs py-1.5 px-2.5 border border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 flex items-center gap-1.5 transition-colors" title="Export High-Contrast Patient Take-Home PDF">
+            <svg class="h-3.5 w-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            <span>Export PDF</span>
           </button>
         </div>
       `;
@@ -2759,11 +2784,6 @@ async function renderPatientRehabPrograms(patientId) {
         if (!window.RehabBuilder) return;
         const btn = e.currentTarget;
         const origText = btn.innerHTML;
-
-        let sched = null;
-        try {
-          sched = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
-        } catch (err) {}
 
         const progObj = {
           title: prog.title,
@@ -2782,12 +2802,43 @@ async function renderPatientRehabPrograms(patientId) {
             'text/plain': blobText
           });
           await navigator.clipboard.write([clipItem]);
-          btn.innerHTML = '<span>✅ Copied Table!</span>';
+          btn.innerHTML = '<span>Table Copied!</span>';
           setTimeout(() => { btn.innerHTML = origText; }, 2000);
         } catch {
           await navigator.clipboard.writeText(plainFallback);
-          btn.innerHTML = '<span>✅ Copied Text!</span>';
+          btn.innerHTML = '<span>Text Copied!</span>';
           setTimeout(() => { btn.innerHTML = origText; }, 2000);
+        }
+      });
+
+      item.querySelector('.btn-prog-pdf')?.addEventListener('click', async (e) => {
+        if (!window.RehabBuilder) return;
+        const btn = e.currentTarget;
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<span>Exporting PDF…</span>';
+
+        try {
+          const patient = await window.api.patients.getById(patientId);
+          const progObj = {
+            title: prog.title,
+            duration_weeks: prog.duration_weeks,
+            weeks: sched?.weeks || []
+          };
+          const htmlContent = window.RehabBuilder.generatePatientPdfHtml(progObj, patient);
+          const cleanName = (prog.title || 'Rehab_Routine').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const defaultFilename = `${cleanName}_Patient_Plan.pdf`;
+
+          const result = await window.api.rehab.exportPdf(htmlContent, defaultFilename);
+          if (result && result.success) {
+            btn.innerHTML = '<span>PDF Saved!</span>';
+            setTimeout(() => { btn.innerHTML = origText; }, 2500);
+          } else {
+            btn.innerHTML = origText;
+          }
+        } catch (err) {
+          console.error('Error exporting patient PDF:', err);
+          alert('Failed to export PDF: ' + err.message);
+          btn.innerHTML = origText;
         }
       });
 
@@ -2799,90 +2850,254 @@ async function renderPatientRehabPrograms(patientId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SETTINGS: EXERCISE LIBRARY MANAGEMENT & APP PREFERENCES
+// DEDICATED EXERCISE & PROTOCOL LIBRARY HUB (VIEW: exercise-library)
 // ═══════════════════════════════════════════════════════════════════════════
 
-let settingsExercises = [];
+let exlibExercises = [];
+let exlibProtocols = [];
+let activeExLibTab = 'protocols';
 
-function initSettingsView() {
-  const tabExercises = $('set-tab-btn-exercises');
-  const tabGeneral = $('set-tab-btn-general');
-  const paneExercises = $('set-pane-exercises');
-  const paneGeneral = $('set-pane-general');
+function initExerciseLibraryHub() {
+  const tabProtocols = $('exlib-tab-protocols');
+  const tabExercises = $('exlib-tab-exercises');
+  const paneProtocols = $('exlib-pane-protocols');
+  const paneExercises = $('exlib-pane-exercises');
 
-  if (tabExercises && tabGeneral) {
-    tabExercises.addEventListener('click', () => {
-      tabExercises.className = 'px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
-      tabGeneral.className = 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
-      paneExercises?.classList.remove('hidden');
-      paneGeneral?.classList.add('hidden');
+  if (tabProtocols && tabExercises) {
+    tabProtocols.addEventListener('click', () => {
+      activeExLibTab = 'protocols';
+      tabProtocols.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
+      tabExercises.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
+      paneProtocols?.classList.remove('hidden');
+      paneExercises?.classList.add('hidden');
+      renderProtocolsGrid();
     });
 
-    tabGeneral.addEventListener('click', () => {
-      tabGeneral.className = 'px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
-      tabExercises.className = 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
-      paneGeneral?.classList.remove('hidden');
-      paneExercises?.classList.add('hidden');
+    tabExercises.addEventListener('click', () => {
+      activeExLibTab = 'exercises';
+      tabExercises.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
+      tabProtocols.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
+      paneExercises?.classList.remove('hidden');
+      paneProtocols?.classList.add('hidden');
+      renderExercisesTable();
     });
   }
 
-  // Search and filter listeners
-  $('set-ex-search')?.addEventListener('input', debounce(renderSettingsExercisesTable, 150));
-  $('set-ex-cat')?.addEventListener('change', renderSettingsExercisesTable);
+  // Filter & Search listeners for Exercises tab
+  $('exlib-search')?.addEventListener('input', debounce(renderExercisesTable, 150));
+  $('exlib-cat')?.addEventListener('change', renderExercisesTable);
 
   // New Exercise button
-  $('set-ex-btn-new')?.addEventListener('click', () => openEditExerciseModal(null));
+  $('exlib-btn-new-exercise')?.addEventListener('click', () => openEditExerciseModal(null));
 
-  // Modal close buttons
+  // New Protocol Template button
+  $('btn-new-protocol-template')?.addEventListener('click', openNewProtocolModal);
+
+  // Protocol template modal wiring
+  $('btn-close-proto-modal')?.addEventListener('click', closeNewProtocolModal);
+  $('btn-cancel-proto-modal')?.addEventListener('click', closeNewProtocolModal);
+  $('form-edit-protocol-template')?.addEventListener('submit', handleProtocolTemplateSubmit);
+
+  // Exercise modal wiring
   $('btn-close-edit-ex')?.addEventListener('click', closeEditExerciseModal);
   $('btn-cancel-edit-ex')?.addEventListener('click', closeEditExerciseModal);
+  $('form-edit-exercise')?.addEventListener('submit', handleExerciseFormSubmit);
+}
 
-  // Form submit
-  $('form-edit-exercise')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = $('edit-ex-id')?.value;
-    const name = $('edit-ex-name')?.value?.trim();
-    const category = $('edit-ex-cat')?.value;
-    const default_sets = parseInt($('edit-ex-sets')?.value, 10) || 3;
-    const default_reps = $('edit-ex-reps')?.value?.trim() || '10';
-    const cues = $('edit-ex-cues')?.value?.trim() || '';
+async function loadExerciseLibraryHub() {
+  try {
+    exlibProtocols = await window.api.rehab.listTemplates();
+    exlibExercises = await window.api.rehab.listExercises();
 
-    if (!name) return;
-
-    const payload = { name, category, default_sets, default_reps, cues };
-
-    try {
-      if (id) {
-        await window.api.rehab.updateExercise(Number(id), payload);
-      } else {
-        await window.api.rehab.createExercise(payload);
-      }
-      closeEditExerciseModal();
-      await loadSettingsExerciseLibrary();
-    } catch (err) {
-      alert('Failed to save exercise: ' + err.message);
+    if (activeExLibTab === 'protocols') {
+      renderProtocolsGrid();
+    } else {
+      renderExercisesTable();
     }
+  } catch (err) {
+    console.error('[ExLib] Error loading data:', err);
+  }
+}
+
+// ── Tab 1: Multi-Week Protocols Renderer ─────────────────────────────────────
+function renderProtocolsGrid() {
+  const grid = $('exlib-protocols-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (!exlibProtocols || exlibProtocols.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full py-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/40 dark:bg-slate-900/30 p-8 space-y-3">
+        <svg class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+        </svg>
+        <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No Multi-Week Protocols Stored</p>
+        <p class="text-xs text-slate-400 max-w-sm mx-auto">Build verified clinical protocols from scratch tailored to your practice standards.</p>
+        <button type="button" onclick="document.getElementById('btn-new-protocol-template').click()" class="btn-primary text-xs py-2 px-3.5 shadow-sm inline-flex items-center gap-1.5">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Create First Protocol Template</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  exlibProtocols.forEach(tmpl => {
+    const card = document.createElement('div');
+    card.className = 'card p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-sm space-y-3';
+
+    let exerciseCount = 0;
+    try {
+      const proto = typeof tmpl.protocol_json === 'string' ? JSON.parse(tmpl.protocol_json) : tmpl.protocol_json;
+      if (proto && proto.weeks) {
+        proto.weeks.forEach(w => {
+          if (w.days) {
+            Object.values(w.days).forEach(arr => {
+              exerciseCount += (arr || []).length;
+            });
+          }
+        });
+      }
+    } catch (_) {}
+
+    card.innerHTML = `
+      <div class="space-y-2">
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-1">${escapeHtml(tmpl.name)}</h3>
+          <span class="inline-flex px-2 py-0.5 text-[10px] uppercase font-semibold rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 shrink-0">
+            ${tmpl.duration_weeks || 4}w
+          </span>
+        </div>
+        <div class="flex items-center gap-2 text-[11px] text-slate-400">
+          <span class="font-medium text-slate-600 dark:text-slate-300">${escapeHtml(tmpl.category || 'General Rehab')}</span>
+          <span>·</span>
+          <span>${exerciseCount} total movement doses</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+        <button type="button" class="btn-proto-open btn-primary !py-1 !px-2.5 !text-[11px] shadow-sm flex items-center gap-1">
+          <span>Open in Builder</span>
+        </button>
+        <div class="flex items-center gap-1">
+          <button type="button" class="btn-proto-dup btn-ghost !py-1 !px-2 !text-[11px] text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+            Duplicate
+          </button>
+          <button type="button" class="btn-proto-del btn-ghost !py-1 !px-2 !text-[11px] text-rose-500 hover:text-rose-600">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('.btn-proto-open')?.addEventListener('click', () => {
+      switchView('programs');
+      if (window.RehabBuilder) {
+        window.RehabBuilder.loadProgramData(tmpl);
+      }
+    });
+
+    card.querySelector('.btn-proto-dup')?.addEventListener('click', async () => {
+      try {
+        const payload = {
+          name: `Copy of ${tmpl.name}`,
+          category: tmpl.category,
+          duration_weeks: tmpl.duration_weeks,
+          protocol_json: tmpl.protocol_json
+        };
+        await window.api.rehab.saveTemplate(payload);
+        await loadExerciseLibraryHub();
+      } catch (err) {
+        alert('Failed to duplicate template: ' + err.message);
+      }
+    });
+
+    card.querySelector('.btn-proto-del')?.addEventListener('click', async () => {
+      if (confirm(`Delete protocol template "${tmpl.name}"?`)) {
+        try {
+          await window.api.rehab.deleteTemplate(tmpl.id);
+          await loadExerciseLibraryHub();
+        } catch (err) {
+          alert('Failed to delete template: ' + err.message);
+        }
+      }
+    });
+
+    grid.appendChild(card);
   });
 }
 
-async function loadSettingsExerciseLibrary() {
+function openNewProtocolModal() {
+  const modal = $('modal-edit-protocol-template');
+  if (!modal) return;
+  $('edit-proto-id').value = '';
+  $('edit-proto-name').value = '';
+  $('edit-proto-cat').value = 'Knee & Quadriceps';
+  $('edit-proto-duration').value = '4';
+  modal.classList.remove('opacity-0', 'pointer-events-none');
+  $('edit-proto-name')?.focus();
+}
+
+function closeNewProtocolModal() {
+  const modal = $('modal-edit-protocol-template');
+  if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+}
+
+async function handleProtocolTemplateSubmit(e) {
+  e.preventDefault();
+  const name = $('edit-proto-name')?.value?.trim();
+  const category = $('edit-proto-cat')?.value;
+  const duration_weeks = parseInt($('edit-proto-duration')?.value, 10) || 4;
+
+  if (!name) return;
+
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weeks = [];
+  for (let w = 1; w <= duration_weeks; w++) {
+    const daysObj = {};
+    DAYS.forEach(d => { daysObj[d] = []; });
+    weeks.push({
+      week_num: w,
+      title: `Week ${w}`,
+      focus: 'Phase Progression & Tissue Capacity',
+      days: daysObj
+    });
+  }
+
+  const payload = {
+    name,
+    category,
+    duration_weeks,
+    protocol_json: JSON.stringify({
+      title: name,
+      duration_weeks,
+      weeks
+    })
+  };
+
   try {
-    settingsExercises = await window.api.rehab.listExercises();
-    renderSettingsExercisesTable();
+    const saved = await window.api.rehab.saveTemplate(payload);
+    closeNewProtocolModal();
+    switchView('programs');
+    if (window.RehabBuilder) {
+      window.RehabBuilder.loadProgramData(saved);
+    }
   } catch (err) {
-    console.error('Error loading exercises for settings:', err);
+    alert('Failed to create protocol template: ' + err.message);
   }
 }
 
-function renderSettingsExercisesTable() {
-  const tbody = $('set-ex-table-body');
-  const countBadge = $('set-ex-count-badge');
+// ── Tab 2: Individual Exercise Database Renderer ─────────────────────────────
+function renderExercisesTable() {
+  const tbody = $('exlib-table-body');
+  const countBadge = $('exlib-count-badge');
   if (!tbody) return;
 
-  const searchVal = ($('set-ex-search')?.value || '').toLowerCase().trim();
-  const catVal = $('set-ex-cat')?.value || 'All';
+  const searchVal = ($('exlib-search')?.value || '').toLowerCase().trim();
+  const catVal = $('exlib-cat')?.value || 'All';
 
-  const filtered = settingsExercises.filter(ex => {
+  const filtered = exlibExercises.filter(ex => {
     if (catVal !== 'All' && ex.category !== catVal) return false;
     if (searchVal) {
       return (ex.name && ex.name.toLowerCase().includes(searchVal)) ||
@@ -2893,7 +3108,7 @@ function renderSettingsExercisesTable() {
   });
 
   if (countBadge) {
-    countBadge.textContent = `${filtered.length} of ${settingsExercises.length} exercises`;
+    countBadge.textContent = `${filtered.length} of ${exlibExercises.length} exercises`;
   }
 
   tbody.innerHTML = '';
@@ -2930,10 +3145,10 @@ function renderSettingsExercisesTable() {
 
     tr.querySelector('.btn-ex-edit')?.addEventListener('click', () => openEditExerciseModal(ex));
     tr.querySelector('.btn-ex-del')?.addEventListener('click', async () => {
-      if (confirm(`Are you sure you want to delete "${ex.name}" from the exercise library?`)) {
+      if (confirm(`Delete "${ex.name}" from the exercise database?`)) {
         try {
           await window.api.rehab.deleteExercise(ex.id);
-          await loadSettingsExerciseLibrary();
+          await loadExerciseLibraryHub();
         } catch (err) {
           alert('Failed to delete exercise: ' + err.message);
         }
@@ -2957,7 +3172,7 @@ function openEditExerciseModal(exercise = null) {
   $('edit-ex-cues').value = exercise ? (exercise.cues || '') : '';
 
   if (title) {
-    title.textContent = exercise ? 'Edit Exercise' : 'Add New Exercise';
+    title.textContent = exercise ? 'Edit Exercise Movement' : 'Add New Exercise Movement';
   }
 
   modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -2969,5 +3184,78 @@ function closeEditExerciseModal() {
   if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
 }
 
-// Initialise Settings View listeners
+async function handleExerciseFormSubmit(e) {
+  e.preventDefault();
+  const id = $('edit-ex-id')?.value;
+  const name = $('edit-ex-name')?.value?.trim();
+  const category = $('edit-ex-cat')?.value;
+  const default_sets = parseInt($('edit-ex-sets')?.value, 10) || 3;
+  const default_reps = $('edit-ex-reps')?.value?.trim() || '10';
+  const cues = $('edit-ex-cues')?.value?.trim() || '';
+
+  if (!name) return;
+  const payload = { name, category, default_sets, default_reps, cues };
+
+  try {
+    if (id) {
+      await window.api.rehab.updateExercise(Number(id), payload);
+    } else {
+      await window.api.rehab.createExercise(payload);
+    }
+    closeEditExerciseModal();
+    await loadExerciseLibraryHub();
+  } catch (err) {
+    alert('Failed to save exercise: ' + err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS: GENERAL & CLINIC PREFERENCES (DEFAULT VIEW)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function initSettingsView() {
+  // Jump buttons to Hubs
+  $('set-jump-exlib')?.addEventListener('click', () => {
+    switchView('exercise-library');
+  });
+
+  $('set-jump-smartphrases')?.addEventListener('click', () => {
+    switchView('smart-phrases');
+  });
+
+  // Save clinic preferences
+  $('set-btn-save-prefs')?.addEventListener('click', () => {
+    const prefs = {
+      clinicName: $('set-clinic-name')?.value?.trim() || 'PhysioClinic Practice Suite',
+      practitioner: $('set-practitioner-name')?.value?.trim() || 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC',
+      phone: $('set-clinic-phone')?.value?.trim() || '',
+      hours: $('set-clinic-hours')?.value?.trim() || '08:00 – 18:00 (Mon–Fri)'
+    };
+    try {
+      localStorage.setItem('clinic:preferences', JSON.stringify(prefs));
+      const btn = $('set-btn-save-prefs');
+      const origText = btn.textContent;
+      btn.textContent = 'Preferences Saved!';
+      setTimeout(() => { btn.textContent = origText; }, 2000);
+    } catch (_) {}
+  });
+
+  loadSettingsGeneralPreferences();
+}
+
+function loadSettingsGeneralPreferences() {
+  try {
+    const raw = localStorage.getItem('clinic:preferences');
+    if (raw) {
+      const prefs = JSON.parse(raw);
+      if (prefs.clinicName && $('set-clinic-name')) $('set-clinic-name').value = prefs.clinicName;
+      if (prefs.practitioner && $('set-practitioner-name')) $('set-practitioner-name').value = prefs.practitioner;
+      if (prefs.phone && $('set-clinic-phone')) $('set-clinic-phone').value = prefs.phone;
+      if (prefs.hours && $('set-clinic-hours')) $('set-clinic-hours').value = prefs.hours;
+    }
+  } catch (_) {}
+}
+
+// Initialise Exercise Library Hub and Settings View
+initExerciseLibraryHub();
 initSettingsView();

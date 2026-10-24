@@ -149,6 +149,7 @@ contextBridge.exposeInMainWorld('api', {
     getProgram:     (id)               => ipcRenderer.invoke('rehab:getProgram', id),
     saveProgram:    (data)             => ipcRenderer.invoke('rehab:saveProgram', data),
     deleteProgram:  (id)               => ipcRenderer.invoke('rehab:deleteProgram', id),
+    exportPdf:      (htmlContent, defaultFilename) => ipcRenderer.invoke('rehab:exportPdf', { htmlContent, defaultFilename }),
   },
 
 });

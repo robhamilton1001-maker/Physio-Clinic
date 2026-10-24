@@ -286,6 +286,56 @@ ipcMain.handle('rehab:deleteProgram', (_e, id) => {
   return db.rehab.deleteProgram(id);
 });
 
+// 100% Offline Patient Take-Home PDF Generator
+ipcMain.handle('rehab:exportPdf', async (_e, { htmlContent, defaultFilename }) => {
+  const saveResult = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export Patient Rehabilitation Program PDF',
+    defaultPath: defaultFilename || 'Patient_Rehabilitation_Program.pdf',
+    filters: [
+      { name: 'PDF Documents (*.pdf)', extensions: ['pdf'] }
+    ]
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  const printWin = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  try {
+    await printWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);
+
+    const pdfData = await printWin.webContents.printToPDF({
+      pageSize: 'A4',
+      landscape: false,
+      printBackground: true,
+      margins: {
+        marginType: 'custom',
+        top: 0.5,
+        bottom: 0.5,
+        left: 0.5,
+        right: 0.5
+      }
+    });
+
+    fs.writeFileSync(saveResult.filePath, pdfData);
+    return { success: true, filePath: saveResult.filePath };
+  } catch (err) {
+    console.error('[PDF Export] Error generating PDF:', err);
+    throw err;
+  } finally {
+    if (!printWin.isDestroyed()) {
+      printWin.close();
+    }
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // APP LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════

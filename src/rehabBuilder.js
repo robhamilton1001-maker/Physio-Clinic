@@ -3,7 +3,7 @@
 /**
  * ══════════════════════════════════════════════════════════════════════════════
  *  PHYSIO CLINIC — PHASED S&C AND REHAB BUILDER (rehabBuilder.js)
- *  Open Sandbox Canvas, Massive Local Exercise Library & Interactive Tables.
+ *  Open Sandbox Canvas, HTML5 Drag-and-Drop Day Swapping, Professional PDF Engine.
  *  Exposed as window.RehabBuilder — consumed by renderer.js.
  * ══════════════════════════════════════════════════════════════════════════════
  */
@@ -109,7 +109,7 @@ window.RehabBuilder = (() => {
     const tableHtml = `
 <div class="excel-table-container my-3 rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden shadow-sm">
   <div class="px-3 py-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700 flex items-center justify-between text-xs">
-    <span class="font-bold text-slate-800 dark:text-slate-200">🏋️ Prescribed Program: ${escapeHtml(prog.title || 'Rehabilitation Routine')} (Week ${w.week_num})</span>
+    <span class="font-bold text-slate-800 dark:text-slate-200">Prescribed Program: ${escapeHtml(prog.title || 'Rehabilitation Routine')} (Week ${w.week_num})</span>
     <span class="text-[10px] text-slate-500 font-mono">${DAYS.filter(d => (w.days[d] || []).length > 0).join(', ')}</span>
   </div>
   <table class="excel-table w-full border-collapse text-xs text-left">
@@ -166,6 +166,179 @@ window.RehabBuilder = (() => {
     return lines.join('\n');
   }
 
+  // ── Helper: 100% Offline Patient Take-Home PDF Document Generator ───────────
+  function generatePatientPdfHtml(prog, patientInfo = null) {
+    const clinicName = 'PhysioClinic Practice Suite';
+    const practitioner = 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC';
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const patName = patientInfo ? `${patientInfo.first_name} ${patientInfo.last_name}` : 'Home Patient';
+    const patDob = patientInfo && patientInfo.dob ? new Date(patientInfo.dob).toLocaleDateString('en-GB') : '—';
+    const progTitle = prog.title || 'Personalized Rehabilitation Routine';
+    const duration = prog.duration_weeks || 4;
+
+    let daysTablesHtml = '';
+    const DAY_LABELS = {
+      Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
+      Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday'
+    };
+
+    (prog.weeks || []).forEach(w => {
+      let weekHasExercises = false;
+      let weekDaysHtml = '';
+
+      DAYS.forEach(day => {
+        const exs = (w.days && w.days[day]) || [];
+        if (exs.length > 0) {
+          weekHasExercises = true;
+          let rows = '';
+          exs.forEach(ex => {
+            rows += `
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 7px 10px; font-weight: 600; color: #0f172a; border-right: 1px solid #e2e8f0; font-size: 11px;">
+                  ${escapeHtml(ex.name)}
+                  <div style="font-size: 9px; font-weight: 500; color: #64748b; text-transform: uppercase; margin-top: 2px;">${escapeHtml(ex.category || 'Rehab')}</div>
+                </td>
+                <td style="padding: 7px 10px; text-align: center; font-family: monospace; font-weight: 600; border-right: 1px solid #e2e8f0; font-size: 11px;">
+                  ${ex.sets || 3}
+                </td>
+                <td style="padding: 7px 10px; text-align: center; font-family: monospace; border-right: 1px solid #e2e8f0; font-size: 11px;">
+                  ${escapeHtml(ex.reps || '10')}
+                </td>
+                <td style="padding: 7px 10px; text-align: center; font-family: monospace; border-right: 1px solid #e2e8f0; font-size: 11px;">
+                  ${escapeHtml(ex.hold_sec || '—')}
+                </td>
+                <td style="padding: 7px 10px; text-align: center; font-family: monospace; border-right: 1px solid #e2e8f0; font-size: 11px;">
+                  ${escapeHtml(ex.weight_kg || 'Bodyweight')}
+                </td>
+                <td style="padding: 7px 10px; text-align: center; font-size: 11px;">
+                  ${escapeHtml(ex.frequency || '1x/day')}
+                </td>
+              </tr>
+              ${ex.cues ? `
+              <tr style="background-color: #f8fafc; border-bottom: 1.5px solid #cbd5e1;">
+                <td colspan="6" style="padding: 5px 10px 7px 10px; font-size: 10px; color: #334155; font-style: italic; line-height: 1.4;">
+                  <strong style="font-style: normal; color: #475569;">Technique &amp; Overload Guidance:</strong> ${escapeHtml(ex.cues)}
+                </td>
+              </tr>` : ''}
+            `;
+          });
+
+          weekDaysHtml += `
+            <div style="margin-top: 14px; margin-bottom: 16px; page-break-inside: avoid;">
+              <div style="background: #f1f5f9; padding: 6px 12px; border: 1px solid #cbd5e1; border-bottom: none; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">${DAY_LABELS[day]} Routine</span>
+                <span style="font-size: 10px; color: #64748b; font-weight: 600;">${exs.length} Exercise${exs.length === 1 ? '' : 's'}</span>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #cbd5e1; background: #ffffff;">
+                <thead>
+                  <tr style="background: #e2e8f0; border-bottom: 1.5px solid #94a3b8; font-size: 10px; text-transform: uppercase; color: #334155; letter-spacing: 0.5px;">
+                    <th style="padding: 6px 10px; text-align: left; width: 34%; border-right: 1px solid #cbd5e1;">Exercise</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 10%; border-right: 1px solid #cbd5e1;">Sets</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 15%; border-right: 1px solid #cbd5e1;">Reps / Tempo</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 12%; border-right: 1px solid #cbd5e1;">Hold</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 14%; border-right: 1px solid #cbd5e1;">Load / Band</th>
+                    <th style="padding: 6px 10px; text-align: center; width: 15%;">Frequency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      });
+
+      if (weekHasExercises) {
+        daysTablesHtml += `
+          <div style="margin-top: 22px; page-break-before: ${w.week_num > 1 ? 'always' : 'auto'};">
+            <div style="border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline;">
+              <h2 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                Week ${w.week_num}: ${escapeHtml(w.title || 'Phase Protocol')}
+              </h2>
+              ${w.focus ? `<span style="font-size: 11px; font-style: italic; color: #475569;">Focus: ${escapeHtml(w.focus)}</span>` : ''}
+            </div>
+            ${weekDaysHtml}
+          </div>
+        `;
+      }
+    });
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(progTitle)} - Patient Exercise Program</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #0f172a;
+      background: #ffffff !important;
+      line-height: 1.4;
+    }
+    table {
+      page-break-inside: auto;
+    }
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Clinical Letterhead -->
+  <div style="border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <h1 style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #0f172a; text-transform: uppercase;">
+        ${escapeHtml(clinicName)}
+      </h1>
+      <p style="font-size: 11px; color: #475569; margin: 2px 0 0 0; font-weight: 500;">
+        ${escapeHtml(practitioner)}
+      </p>
+    </div>
+    <div style="text-align: right; font-size: 10px; color: #475569; line-height: 1.4;">
+      <div><strong>Issue Date:</strong> ${today}</div>
+      <div><strong>Document Ref:</strong> PT-DOC-${Date.now().toString(36).toUpperCase()}</div>
+      <div><strong>Protocol Scope:</strong> Home &amp; Clinic Rehabilitation</div>
+    </div>
+  </div>
+
+  <!-- Patient Demographics Banner -->
+  <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: grid; grid-template-columns: 2fr 1fr 2fr 1fr; gap: 8px; font-size: 11px;">
+    <div><span style="color: #64748b; text-transform: uppercase; font-size: 9px; font-weight: 700; display: block;">Patient Name</span><strong style="font-size: 13px; color: #0f172a;">${escapeHtml(patName)}</strong></div>
+    <div><span style="color: #64748b; text-transform: uppercase; font-size: 9px; font-weight: 700; display: block;">Date of Birth</span><strong>${escapeHtml(patDob)}</strong></div>
+    <div><span style="color: #64748b; text-transform: uppercase; font-size: 9px; font-weight: 700; display: block;">Rehabilitation Plan</span><strong>${escapeHtml(progTitle)}</strong></div>
+    <div><span style="color: #64748b; text-transform: uppercase; font-size: 9px; font-weight: 700; display: block;">Program Duration</span><strong>${duration} Weeks</strong></div>
+  </div>
+
+  <!-- Prescription Guidance Notice -->
+  <div style="background: #f1f5f9; border-left: 4px solid #4f46e5; padding: 7px 12px; margin-bottom: 16px; font-size: 10px; color: #334155; line-height: 1.4;">
+    <strong>Clinical Instruction:</strong> Perform prescribed dosages with controlled tempo. Maintain smooth diaphragmatic breathing. Expected discomfort should remain below 4/10 on the VAS pain scale and settle within 24 hours. Contact your practitioner immediately if sharp pain, joint swelling, or neurological symptoms occur.
+  </div>
+
+  <!-- Program Schedule Tables -->
+  ${daysTablesHtml}
+
+  <!-- Footer -->
+  <div style="margin-top: 24px; padding-top: 10px; border-top: 1px solid #cbd5e1; font-size: 9px; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
+    <span>PhysioClinic Practice Suite • 100% Offline Clinical Record &amp; Home Prescription</span>
+    <span>Page 1 • Strictly Confidential Medical Prescription</span>
+  </div>
+</body>
+</html>`;
+  }
+
   // ── UI Rendering: Tier 1 (Header & Template Selection) ──────────────────────
   function renderTier1Header() {
     const titleInput = document.getElementById('rb-program-title');
@@ -202,7 +375,7 @@ window.RehabBuilder = (() => {
     }
   }
 
-  // ── UI Rendering: Tier 2 (Weeks & Days Navigation) ──────────────────────────
+  // ── UI Rendering: Tier 2 (Weeks & Drag-and-Drop Days Navigation) ────────────
   function renderTier2Timeline() {
     // Week Tabs
     const weekTabsEl = document.getElementById('rb-week-tabs');
@@ -227,7 +400,7 @@ window.RehabBuilder = (() => {
       }
     }
 
-    // Day Pills
+    // Day Pills with HTML5 Drag-and-Drop Day Swapping
     const dayPillsEl = document.getElementById('rb-day-pills');
     if (dayPillsEl) {
       dayPillsEl.innerHTML = '';
@@ -238,7 +411,9 @@ window.RehabBuilder = (() => {
         const isActive = day === activeDay;
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+        btn.draggable = true;
+        btn.dataset.day = day;
+        btn.className = `px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none ${
           isActive
             ? 'bg-indigo-600 text-white shadow-sm'
             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60'
@@ -249,17 +424,63 @@ window.RehabBuilder = (() => {
             exCount > 0 ? (isActive ? 'bg-indigo-400/30 text-white' : 'bg-slate-200 dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 font-bold') : 'text-slate-400 dark:text-slate-600'
           }">${exCount}</span>
         `;
+
         btn.addEventListener('click', () => {
           activeDay = day;
           renderTier2Timeline();
           renderTier3Cards();
         });
+
+        // Drag and Drop Day Swapping
+        btn.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', day);
+          e.dataTransfer.effectAllowed = 'move';
+          btn.classList.add('opacity-40');
+        });
+
+        btn.addEventListener('dragend', () => {
+          btn.classList.remove('opacity-40');
+          document.querySelectorAll('#rb-day-pills button').forEach(el => {
+            el.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-500/20');
+          });
+        });
+
+        btn.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          btn.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-500/20');
+        });
+
+        btn.addEventListener('dragleave', () => {
+          btn.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-500/20');
+        });
+
+        btn.addEventListener('drop', (e) => {
+          e.preventDefault();
+          btn.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-500/20');
+          const sourceDay = e.dataTransfer.getData('text/plain');
+          const targetDay = day;
+
+          if (sourceDay && targetDay && sourceDay !== targetDay) {
+            const curWeek = program.weeks[activeWeek - 1];
+            if (curWeek && curWeek.days) {
+              const sourceList = curWeek.days[sourceDay] || [];
+              const targetList = curWeek.days[targetDay] || [];
+              curWeek.days[sourceDay] = targetList;
+              curWeek.days[targetDay] = sourceList;
+              activeDay = targetDay;
+              renderTier2Timeline();
+              renderTier3Cards();
+            }
+          }
+        });
+
         dayPillsEl.appendChild(btn);
       });
     }
   }
 
-  // ── UI Rendering: Tier 3 (Visual Exercise Cards) ────────────────────────────
+  // ── UI Rendering: Tier 3 (Visual Exercise Cards with SVG Controls) ───────────
   function renderTier3Cards() {
     const heading = document.getElementById('rb-active-day-heading');
     if (heading) {
@@ -307,22 +528,32 @@ window.RehabBuilder = (() => {
             </span>
           </div>
 
-          <!-- Card Controls (Zero broken images!) -->
+          <!-- Card Controls: Pure SVG Icons (No Emojis) -->
           <div class="flex items-center gap-1 self-end sm:self-auto shrink-0 bg-slate-50 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
             <button type="button" class="btn-card-replace text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Swap / Replace Exercise">
-              <span class="text-xs">⇄</span>
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
             </button>
             <button type="button" class="btn-card-up text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${idx === 0 ? 'opacity-30 pointer-events-none' : ''}" title="Move Up">
-              <span class="text-xs">▲</span>
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+              </svg>
             </button>
             <button type="button" class="btn-card-down text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${idx === dayExercises.length - 1 ? 'opacity-30 pointer-events-none' : ''}" title="Move Down">
-              <span class="text-xs">▼</span>
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
             </button>
             <button type="button" class="btn-card-dup text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Duplicate Exercise">
-              <span class="text-xs">+</span>
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+              </svg>
             </button>
             <button type="button" class="btn-card-del text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Delete Exercise">
-              <span class="text-xs">🗑️</span>
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
             </button>
           </div>
         </div>
@@ -566,7 +797,7 @@ window.RehabBuilder = (() => {
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <span class="text-[11px] font-mono text-slate-400">${ex.default_sets || 3}x${escapeHtml(ex.default_reps || '10')}</span>
-          <button type="button" class="btn-primary !py-1 !px-2 !text-[11px] shadow-sm">+ Add</button>
+          <button type="button" class="btn-primary !py-1 !px-2 !text-[11px] shadow-sm">Add</button>
         </div>
       `;
 
@@ -602,7 +833,7 @@ window.RehabBuilder = (() => {
     renderTier2Timeline();
     renderTier3Cards();
 
-    // Close inline search or keep ready
+    // Close inline search
     const searchBox = document.getElementById('rb-inline-search-box');
     if (searchBox) searchBox.classList.add('hidden');
 
@@ -633,7 +864,6 @@ window.RehabBuilder = (() => {
       sourceLabel.textContent = `Source: Week ${activeWeek} — ${activeDay} (${(program.weeks[activeWeek - 1]?.days[activeDay] || []).length} exercises)`;
     }
 
-    // Populate destination weeks dropdown
     const weekSelect = document.getElementById('shift-dest-week');
     if (weekSelect) {
       weekSelect.innerHTML = '';
@@ -646,7 +876,6 @@ window.RehabBuilder = (() => {
       }
     }
 
-    // Destination day
     const daySelect = document.getElementById('shift-dest-day');
     if (daySelect) {
       const nextDayIdx = (DAYS.indexOf(activeDay) + 1) % DAYS.length;
@@ -702,7 +931,6 @@ window.RehabBuilder = (() => {
       sourceWeek.days[activeDay] = [];
     }
 
-    // Switch view to target day & week
     activeWeek = destWeekNum;
     activeDay = destDay;
 
@@ -711,7 +939,7 @@ window.RehabBuilder = (() => {
     closeShiftDayModal();
   }
 
-  // ── Quick Replace Modal (No broken image icons!) ────────────────────────────
+  // ── Quick Replace Modal ─────────────────────────────────────────────────────
   function openQuickReplaceModal(weekIdx, day, exIdx) {
     replaceTarget = { weekIdx, day, exIdx };
     const modal = document.getElementById('modal-quick-replace');
@@ -764,7 +992,7 @@ window.RehabBuilder = (() => {
             </span>
           </div>
         </div>
-        <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">Select ⇄</span>
+        <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">Select</span>
       `;
 
       item.addEventListener('click', () => {
@@ -804,6 +1032,36 @@ window.RehabBuilder = (() => {
   function closeSaveTemplateModal() {
     const modal = document.getElementById('modal-save-template');
     if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+  }
+
+  // ── PDF Export Action ───────────────────────────────────────────────────────
+  async function exportPatientPdf() {
+    let patientInfo = null;
+    if (program.patient_id) {
+      patientInfo = patients.find(p => Number(p.id) === Number(program.patient_id));
+    }
+
+    const htmlContent = generatePatientPdfHtml(program, patientInfo);
+    const sanitizedTitle = (program.title || 'Rehab_Program').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const defaultFilename = `${sanitizedTitle}_TakeHome_Prescription.pdf`;
+
+    const btn = document.getElementById('rb-btn-export-pdf');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<span>Exporting PDF…</span>';
+
+    try {
+      const result = await window.api.rehab.exportPdf(htmlContent, defaultFilename);
+      if (result && result.success) {
+        if (btn) btn.innerHTML = '<span>PDF Saved!</span>';
+        setTimeout(() => { if (btn) btn.innerHTML = origHtml; }, 2500);
+      } else {
+        if (btn) btn.innerHTML = origHtml;
+      }
+    } catch (err) {
+      console.error('[RehabBuilder] PDF Export error:', err);
+      alert('Failed to export PDF: ' + err.message);
+      if (btn) btn.innerHTML = origHtml;
+    }
   }
 
   // ── Event Wiring ────────────────────────────────────────────────────────────
@@ -892,7 +1150,7 @@ window.RehabBuilder = (() => {
       }
     });
 
-    // Move / Copy Day Routine button
+    // Move / Copy Day Routine button (Modal fallback)
     document.getElementById('rb-btn-shift-day')?.addEventListener('click', openShiftDayModal);
     document.getElementById('btn-close-shift-day')?.addEventListener('click', closeShiftDayModal);
     document.getElementById('btn-cancel-shift-day')?.addEventListener('click', closeShiftDayModal);
@@ -997,7 +1255,7 @@ window.RehabBuilder = (() => {
 
         const btn = document.getElementById('rb-btn-copy-note');
         const origHtml = btn.innerHTML;
-        btn.innerHTML = '<span>✅ Table Copied to Clipboard!</span>';
+        btn.innerHTML = '<span>Table Copied!</span>';
         setTimeout(() => { btn.innerHTML = origHtml; }, 2000);
       } catch (e) {
         try {
@@ -1008,6 +1266,9 @@ window.RehabBuilder = (() => {
         }
       }
     });
+
+    // Export Patient PDF button
+    document.getElementById('rb-btn-export-pdf')?.addEventListener('click', exportPatientPdf);
 
     // Quick replace modal close & search
     document.getElementById('btn-close-quick-replace')?.addEventListener('click', closeQuickReplaceModal);
@@ -1043,7 +1304,6 @@ window.RehabBuilder = (() => {
             program.weeks = createBlankWeeks(program.duration_weeks);
           }
         } else {
-          // New program for this patient
           const targetPat = patients.find(p => Number(p.id) === Number(patientIdToLoad));
           program.id = null;
           program.title = targetPat ? `${targetPat.first_name}'s Rehab Program` : 'Patient Rehab Program';
@@ -1125,7 +1385,9 @@ window.RehabBuilder = (() => {
     loadProgramData,
     getProgram: () => program,
     formatProgramForSoapNote,
-    generateExcelTableForProgram
+    generateExcelTableForProgram,
+    generatePatientPdfHtml,
+    exportPatientPdf
   };
 
 })();

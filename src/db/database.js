@@ -258,20 +258,19 @@ try {
     console.log(`[DB] Seeded ${SEED_EXERCISES.length} exercises into exercise_library.`);
   }
 
-  const tmplCount = db.prepare('SELECT COUNT(*) AS count FROM pt_templates').get();
-  if (!tmplCount || tmplCount.count === 0) {
-    const insertTmpl = db.prepare(`
-      INSERT INTO pt_templates (name, category, duration_weeks, protocol_json)
-      VALUES (@name, @category, @duration_weeks, @protocol_json)
-    `);
-    const seedTmplTx = db.transaction((templates) => {
-      for (const tmpl of templates) {
-        insertTmpl.run(tmpl);
-      }
-    });
-    seedTmplTx(SEED_TEMPLATES);
-    console.log(`[DB] Seeded ${SEED_TEMPLATES.length} pre-configured protocols into pt_templates.`);
-  }
+  // Clean up any unapproved legacy placeholder templates to start clean
+  try {
+    db.prepare(`
+      DELETE FROM pt_templates 
+      WHERE name IN (
+        'ACL Reconstruction Phase 1: Weeks 1-4',
+        'Achilles Tendinopathy Loading',
+        'Subacromial Shoulder Rehab',
+        'Chronic Lumbar Motor Control & Stability',
+        'Lateral Ankle Sprain Phase 2'
+      )
+    `).run();
+  } catch (_) {}
 } catch (rehabSeedErr) {
   console.warn('[DB] Rehab seed warning:', rehabSeedErr.message);
 }

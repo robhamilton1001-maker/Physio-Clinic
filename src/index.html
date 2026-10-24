@@ -546,13 +546,13 @@
             <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
             </svg>
-            <span>📄 Import from PDF</span>
+            <span>Import from PDF</span>
           </button>
           <button id="sp-btn-new" class="btn-primary text-xs py-1.5 px-3.5">
           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          + New Smart Phrase
+          New Smart Phrase
         </button>
         </div>
       </div>
@@ -751,7 +751,9 @@
         <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[320px]">
           <div class="flex items-center gap-2">
             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 font-bold text-xs">
-              ⚡
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
             </span>
             <input id="rb-program-title" type="text"
                    class="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all w-60 md:w-72"
@@ -821,6 +823,15 @@
             </svg>
             Copy as Note Table
           </button>
+
+          <button id="rb-btn-export-pdf" type="button"
+                  class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 transition-colors"
+                  title="Export high-contrast print-ready patient take-home PDF">
+            <svg class="h-3.5 w-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            <span>Export Patient PDF</span>
+          </button>
         </div>
       </header>
 
@@ -837,7 +848,7 @@
           <button id="rb-btn-duplicate-week" type="button"
                   class="ml-2 text-xs py-1 px-2.5 rounded-lg border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1.5 transition-colors"
                   title="Copy all exercises from the current week to the next week">
-            <span>+ ⏩ Duplicate to Next Week</span>
+            <span>Duplicate to Next Week</span>
           </button>
         </div>
 
@@ -863,7 +874,7 @@
             </div>
             <div class="flex items-center gap-2">
               <button id="rb-btn-shift-day" type="button" class="btn-ghost text-xs py-1 px-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors" title="Move or copy this entire day routine to another day or week">
-                <span>⇄ Move / Copy Day</span>
+                <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg><span>Move / Copy Day</span>
               </button>
               <button id="rb-btn-clear-day" type="button" class="text-xs text-slate-400 hover:text-rose-500 py-1 px-2 transition-colors">Clear Day</button>
             </div>
@@ -876,7 +887,7 @@
 
           <!-- Empty State -->
           <div id="rb-cards-empty-state" class="hidden py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/20">
-            <div class="text-slate-400 dark:text-slate-600 mb-2 text-2xl">🏋️‍♂️</div>
+            <svg class="h-8 w-8 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
             <p class="text-sm font-medium text-slate-600 dark:text-slate-400">No exercises scheduled for this day</p>
             <p class="text-xs text-slate-400 dark:text-slate-600 mt-1">Click "+ Add Exercise" below to quickly add from the 170+ library or create a custom exercise.</p>
           </div>
@@ -889,7 +900,7 @@
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              <span>+ Add Exercise to Routine</span>
+              <span>Add Exercise to Routine</span>
             </button>
 
             <!-- Inline Lookup Box -->
@@ -926,6 +937,104 @@
 
     </div><!-- /view-programs -->
 
+    <!-- ── DEDICATED EXERCISE & PROTOCOL LIBRARY HUB ────────────────────────── -->
+    <div id="view-exercise-library" class="hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <!-- Header with Two Primary Tabs -->
+      <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div>
+          <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Exercise &amp; Protocol Library</h1>
+          <p class="text-xs text-slate-400 dark:text-slate-500">Standardized MSK rehabilitation movements and multi-week periodized protocols.</p>
+        </div>
+        <!-- Tabs -->
+        <div class="flex items-center gap-2">
+          <nav class="flex space-x-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+            <button id="exlib-tab-protocols" type="button" class="px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all">
+              Multi-Week Protocols
+            </button>
+            <button id="exlib-tab-exercises" type="button" class="px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all">
+              Individual Exercises (170+)
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <!-- Tab Pane 1: Multi-Week Protocols & Workout Plans -->
+      <div id="exlib-pane-protocols" class="flex-1 flex flex-col min-h-0 p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Periodized Multi-Week Protocols</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Author and manage phased rehabilitation protocols from scratch.</p>
+          </div>
+          <button id="btn-new-protocol-template" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>New Protocol Template</span>
+          </button>
+        </div>
+
+        <!-- Protocols Grid / List -->
+        <div id="exlib-protocols-grid" class="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+          <!-- Populated dynamically via renderer.js -->
+        </div>
+      </div>
+
+      <!-- Tab Pane 2: Individual Exercise Database (Gross Movement Library) -->
+      <div id="exlib-pane-exercises" class="hidden flex-1 flex flex-col min-h-0 p-6 space-y-4">
+        <!-- Filter bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+            <div class="relative flex-1 max-w-md">
+              <input id="exlib-search" type="search"
+                     class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                     placeholder="Search 170+ exercises by name or cues..." />
+              <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
+            <select id="exlib-cat" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none">
+              <option value="All">All Categories (170+)</option>
+              <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
+              <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
+              <option value="Glute & Hip">Glute &amp; Hip</option>
+              <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
+              <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
+              <option value="Chest & Triceps">Chest &amp; Triceps</option>
+              <option value="Back & Biceps">Back &amp; Biceps</option>
+              <option value="Spine & Core">Spine &amp; Core</option>
+              <option value="Custom Rehab">Custom Rehab</option>
+            </select>
+            <span id="exlib-count-badge" class="text-xs text-slate-500 font-medium">170 exercises</span>
+          </div>
+          <button id="exlib-btn-new-exercise" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>New Exercise</span>
+          </button>
+        </div>
+
+        <!-- Table container -->
+        <div class="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-sm">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-2.5 px-4">Exercise Name</th>
+                <th class="py-2.5 px-4">Category</th>
+                <th class="py-2.5 px-4 text-center">Default Sets</th>
+                <th class="py-2.5 px-4 text-center">Default Reps / Tempo</th>
+                <th class="py-2.5 px-4">Technique Cues</th>
+                <th class="py-2.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="exlib-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <!-- Rows dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
 <div id="view-invoicing" class="hidden flex-col h-full items-center justify-center">
       <div class="text-center space-y-2.5 animate-fade-in">
         <svg class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700"
@@ -945,91 +1054,90 @@
       </div>
     </div>
 
-        <div id="view-settings" class="hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <!-- Settings Header & Tabs -->
-      <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <!-- ── PRACTICE SETTINGS & CLINIC PREFERENCES (DEFAULT VIEW) ──────────── -->
+    <div id="view-settings" class="hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div>
-          <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings</h1>
-          <p class="text-xs text-slate-400 dark:text-slate-500">Configure exercise protocols, library defaults, and clinic preferences.</p>
+          <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings &amp; Preferences</h1>
+          <p class="text-xs text-slate-400 dark:text-slate-500">Clinic information, practitioner credentials, theme configuration, and shortcuts.</p>
         </div>
         <div class="flex items-center gap-2">
-          <!-- Tabs -->
-          <nav class="flex space-x-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
-            <button id="set-tab-btn-exercises" type="button" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all">
-              Exercise Library
-            </button>
-            <button id="set-tab-btn-general" type="button" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all">
-              General &amp; Preferences
-            </button>
-          </nav>
+          <!-- Clean sub-navigation pills to jump to hubs -->
+          <button id="set-jump-exlib" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors">
+            <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+            </svg>
+            <span>Exercise Library Hub →</span>
+          </button>
+          <button id="set-jump-smartphrases" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors">
+            <svg class="h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+            </svg>
+            <span>Smart Phrases Hub →</span>
+          </button>
         </div>
       </header>
 
-      <!-- Content pane: Exercise Library Tab -->
-      <div id="set-pane-exercises" class="flex-1 flex flex-col min-h-0 p-6 space-y-4">
-        <!-- Filter bar -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
-            <div class="relative flex-1 max-w-md">
-              <input id="set-ex-search" type="search"
-                     class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                     placeholder="Search 170+ exercises by name or cues..." />
-              <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
+      <!-- Settings Content (Always defaults to General & Clinic Preferences) -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl">
+        <!-- Clinic & Practitioner Info -->
+        <div class="card p-5 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Appears on patient take-home PDFs, clinical SOAP exports, and formal documentation.</p>
             </div>
-            <select id="set-ex-cat" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none">
-              <option value="All">All Categories (170+)</option>
-              <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
-              <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
-              <option value="Glute & Hip">Glute &amp; Hip</option>
-              <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
-              <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
-              <option value="Chest & Triceps">Chest &amp; Triceps</option>
-              <option value="Back & Biceps">Back &amp; Biceps</option>
-              <option value="Spine & Core">Spine &amp; Core</option>
-              <option value="Custom Rehab">Custom Rehab</option>
-            </select>
-            <span id="set-ex-count-badge" class="text-xs text-slate-500 font-medium">170 exercises</span>
           </div>
-          <button id="set-ex-btn-new" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            + New Exercise
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Name</label>
+              <input id="set-clinic-name" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     value="PhysioClinic Practice Suite" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lead Practitioner &amp; Credentials</label>
+              <input id="set-practitioner-name" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     value="Lead Musculoskeletal Physiotherapist, MCSP, HCPC" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Contact Phone</label>
+              <input id="set-clinic-phone" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     placeholder="+44 (0) 20 7946 0912" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Practice Working Hours</label>
+              <input id="set-clinic-hours" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     value="08:00 – 18:00 (Mon–Fri)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Medico-Legal Audit Compliance Notice -->
+        <div class="card p-5 space-y-3 border-l-4 border-l-indigo-500">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+              Active Compliance
+            </span>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">24-Hour Note Locking Engine</h2>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Clinical entries older than 24 hours are permanently sealed to prevent retrospective alterations. Amendments past 24 hours are appended as cryptographically timestamped addendums. All clinical notes and audit logs reside strictly in local SQLite (<code class="font-mono text-indigo-600 dark:text-indigo-400">clinic_data.db</code>).
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end">
+          <button id="set-btn-save-prefs" type="button" class="btn-primary text-xs py-2 px-4 shadow-sm">
+            Save Clinic Preferences
           </button>
         </div>
-
-        <!-- Table container -->
-        <div class="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-sm">
-          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th class="py-2.5 px-4">Exercise Name</th>
-                <th class="py-2.5 px-4">Category</th>
-                <th class="py-2.5 px-4">Default Sets</th>
-                <th class="py-2.5 px-4">Default Reps</th>
-                <th class="py-2.5 px-4">Coaching Cues</th>
-                <th class="py-2.5 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="set-ex-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80">
-              <!-- Rows dynamically rendered -->
-            </tbody>
-          </table>
-        </div>
       </div>
+    </div>
 
-      <!-- Content pane: General Tab -->
-      <div id="set-pane-general" class="hidden flex-1 p-6 space-y-6 max-w-2xl">
-        <div class="card p-5 space-y-4">
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Information</h3>
-          <p class="text-xs text-slate-500 leading-relaxed">PhysioClinic Suite v1.0.0 — Offline-first local musculoskeletal practice management and rehabilitation suite.</p>
-        </div>
-      </div>
-    </div></div>
-
-  </div><!-- /main content container -->
+</div><!-- /main content container -->
 
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -1674,13 +1782,13 @@
           <svg class="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
           </svg>
-          ⚡ Rehab Program
+          Rehab Program
         </button>
         <button id="btn-quick-new-note" class="btn-primary text-xs py-2 px-3.5">
           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          + New Clinical Note
+          New Clinical Note
         </button>
         <button id="btn-profile-book-appt" class="btn-ghost text-xs border border-slate-200 dark:border-slate-700">
           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
@@ -1767,7 +1875,7 @@
             <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            + Create Program
+            Create Program
           </button>
         </div>
 
@@ -1795,7 +1903,7 @@
                     class="px-2.5 py-1 text-xs font-semibold rounded-md
                            bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400
                            hover:bg-indigo-100 dark:hover:bg-indigo-500/25 transition-colors">
-              📋 + SOAP Template
+              SOAP Note Template
             </button>
             <button id="btn-insert-table" type="button"
                     class="px-2.5 py-1 text-xs font-semibold rounded-md
@@ -1808,7 +1916,11 @@
               + Insert Table
             </button>
             <button id="btn-insert-bullet" type="button" class="btn-icon h-7 w-7 text-xs font-bold" title="Insert Bullet (- )">•</button>
-            <button id="btn-insert-timestamp" type="button" class="btn-icon h-7 w-7 text-[11px]" title="Insert Current Time">🕒</button>
+            <button id="btn-insert-timestamp" type="button" class="btn-icon h-7 w-7 text-[11px]" title="Insert Current Time">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </button>
             <button id="btn-insert-bold" type="button" class="btn-icon h-7 w-7 font-bold text-xs" title="Bold (**text**)">B</button>
             <button id="btn-insert-h3" type="button" class="btn-icon h-7 w-7 font-semibold text-xs" title="Heading (### )">H3</button>
             <div class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
@@ -1938,7 +2050,7 @@
     <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2">
-          <span class="text-amber-500 text-lg">💾</span>
+          <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
           <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Save as Reusable Protocol Template</h2>
         </div>
         <button id="btn-close-save-template" type="button" class="btn-icon">✕</button>
@@ -2123,6 +2235,63 @@
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
           <button type="button" id="btn-cancel-edit-ex" class="btn-ghost text-xs">Cancel</button>
           <button type="submit" class="btn-primary text-xs py-2 px-4">Save Exercise</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Create / Edit Protocol Template ────────────────────────────── -->
+  <div id="modal-edit-protocol-template"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm
+              opacity-0 pointer-events-none transition-opacity duration-200"
+       role="dialog" aria-modal="true">
+    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h2 id="modal-proto-title" class="text-sm font-semibold text-slate-900 dark:text-slate-100">New Protocol Template</h2>
+        <button id="btn-close-proto-modal" type="button" class="btn-icon">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="form-edit-protocol-template" class="space-y-3.5">
+        <input type="hidden" id="edit-proto-id" value="" />
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Protocol Name *</label>
+          <input type="text" id="edit-proto-name" required
+                 class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                 placeholder="e.g. Patellar Tendinopathy Stage 2" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Clinical Category *</label>
+          <select id="edit-proto-cat" required
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
+            <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
+            <option value="Glute & Hip">Glute &amp; Hip</option>
+            <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
+            <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
+            <option value="Chest & Triceps">Chest &amp; Triceps</option>
+            <option value="Back & Biceps">Back &amp; Biceps</option>
+            <option value="Spine & Core">Spine &amp; Core</option>
+            <option value="General Rehab">General Rehab</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Duration (Weeks)</label>
+          <select id="edit-proto-duration"
+                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="2">2 Weeks</option>
+            <option value="4" selected>4 Weeks</option>
+            <option value="6">6 Weeks</option>
+            <option value="8">8 Weeks</option>
+            <option value="12">12 Weeks</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" id="btn-cancel-proto-modal" class="btn-ghost text-xs">Cancel</button>
+          <button type="submit" class="btn-primary text-xs py-2 px-4">Create &amp; Open in Builder</button>
         </div>
       </form>
     </div>
