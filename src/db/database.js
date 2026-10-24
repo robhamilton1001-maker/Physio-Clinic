@@ -104,7 +104,7 @@ db.transaction(() => {
     );
   `);
 
-  // -- Phase 5: Dynamic Smart Phrases ----------------------------------------
+  // -- Phase 5: Dynamic Smart Phrases & Trigger Categories -------------------
   db.exec(`
     CREATE TABLE IF NOT EXISTS smart_phrases (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,6 +116,13 @@ db.transaction(() => {
       category        TEXT    DEFAULT 'general',
       created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
       updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS trigger_categories (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      prefix          TEXT    NOT NULL UNIQUE,
+      label           TEXT    NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     );
   `);
 
@@ -148,13 +155,45 @@ db.transaction(() => {
 
 console.log(`[DB] SQLite database initialised at: ${DB_PATH}`);
 
-// ── Seed Smart Phrases if table is empty ──────────────────────────────────
+// ── Seed Trigger Categories if table is empty ─────────────────────────────
+try {
+  const catCount = db.prepare('SELECT COUNT(*) AS count FROM trigger_categories').get();
+  if (!catCount || catCount.count === 0) {
+    const insertCat = db.prepare('INSERT OR IGNORE INTO trigger_categories (prefix, label) VALUES (?, ?)');
+    const defaultCategories = [
+      { prefix: '@', label: 'Shortcuts' },
+      { prefix: '!', label: 'MSK Measures' },
+      { prefix: '#', label: 'Rehab Protocols' },
+      { prefix: '.', label: 'Billing & Admin' },
+      { prefix: '?', label: 'Red Flag Screens' },
+    ];
+    const catTx = db.transaction((cats) => {
+      for (const c of cats) {
+        insertCat.run(c.prefix, c.label);
+      }
+    });
+    catTx(defaultCategories);
+    console.log('[DB] Seeded default trigger categories into database.');
+  }
+} catch (catErr) {
+  console.warn('[DB] Trigger categories seed warning:', catErr.message);
+}
+
+// ── Seed & Upgrade Smart Phrases Library ──────────────────────────────────
 try {
   const { SEED_SMART_PHRASES } = require('./smart_phrases_seed');
+  // Check if legacy lowercase outcome measures or old templates exist
+  const legacySeed = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'odi' LIMIT 1").get();
+  if (legacySeed) {
+    console.log('[DB] Upgrading existing smart phrases to uppercase Excel-style tables...');
+    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '!'").run();
+    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '@' AND code IN ('rom-table', 'neuro-table', 'ligament-table', 'c-spine', 'l-spine', 'shoulder', 'knee', 'hip', 'ankle')").run();
+  }
+
   const countRow = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get();
-  if (!countRow || countRow.count === 0) {
+  if (!countRow || countRow.count === 0 || legacySeed) {
     const insertSP = db.prepare(`
-      INSERT INTO smart_phrases (trigger_prefix, code, title, content, category)
+      INSERT OR REPLACE INTO smart_phrases (trigger_prefix, code, title, content, category)
       VALUES (@trigger_prefix, @code, @title, @content, @category)
     `);
     const seedTx = db.transaction((phrases) => {
@@ -163,7 +202,7 @@ try {
       }
     });
     seedTx(SEED_SMART_PHRASES);
-    console.log(`[DB] Seeded ${SEED_SMART_PHRASES.length} MSK smart phrases into database.`);
+    console.log(`[DB] Synchronized ${SEED_SMART_PHRASES.length} MSK smart phrases into database.`);
   }
 } catch (seedErr) {
   console.warn('[DB] Smart phrases seed warning:', seedErr.message);
@@ -535,7 +574,8 @@ const smartPhrases = {
 
   create(data) {
     const trigger_prefix = (data.trigger_prefix || '@').trim();
-    const code = (data.code || '').trim().toLowerCase().replace(/\s+/g, '-');
+    let rawCode = (data.code || '').trim().replace(/\s+/g, '-');
+    const code = (trigger_prefix === '!' ? rawCode.toUpperCase() : rawCode);
     const title = (data.title || '').trim();
     const content = (data.content || '').trim();
     const category = (data.category || 'general').trim();
@@ -557,7 +597,8 @@ const smartPhrases = {
     if (!sp) throw new Error('Smart phrase not found.');
 
     const trigger_prefix = (data.trigger_prefix !== undefined ? data.trigger_prefix : sp.trigger_prefix).trim();
-    const code = (data.code ? data.code.trim().toLowerCase().replace(/\s+/g, '-') : sp.code);
+    let rawCode = (data.code !== undefined ? data.code.trim().replace(/\s+/g, '-') : sp.code);
+    const code = (trigger_prefix === '!' ? rawCode.toUpperCase() : rawCode);
     const title = (data.title !== undefined ? data.title : sp.title).trim();
     const content = (data.content !== undefined ? data.content : sp.content).trim();
     const category = (data.category !== undefined ? data.category : sp.category).trim();
@@ -585,6 +626,33 @@ const smartPhrases = {
   }
 };
 
+// ── Domain: Trigger Categories ────────────────────────────────────────────
+const triggerCategories = {
+  list() {
+    return db.prepare('SELECT id, prefix, label, created_at FROM trigger_categories ORDER BY id ASC').all();
+  },
+  save(prefix, label) {
+    if (!prefix || !prefix.trim()) throw new Error('Prefix symbol cannot be empty.');
+    if (!label || !label.trim()) throw new Error('Category label cannot be empty.');
+    const p = prefix.trim();
+    const l = label.trim();
+    const existing = db.prepare('SELECT * FROM trigger_categories WHERE prefix = ?').get(p);
+    if (existing) {
+      db.prepare('UPDATE trigger_categories SET label = ? WHERE prefix = ?').run(l, p);
+      return db.prepare('SELECT * FROM trigger_categories WHERE prefix = ?').get(p);
+    } else {
+      const info = db.prepare('INSERT INTO trigger_categories (prefix, label) VALUES (?, ?)').run(p, l);
+      return db.prepare('SELECT * FROM trigger_categories WHERE id = ?').get(info.lastInsertRowid);
+    }
+  },
+  delete(prefix) {
+    if (prefix === '@' || prefix === '!') {
+      throw new Error('Default system prefixes (@ and !) cannot be deleted.');
+    }
+    return db.prepare('DELETE FROM trigger_categories WHERE prefix = ?').run(prefix);
+  }
+};
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -598,6 +666,7 @@ module.exports = {
   notes,
   stats,
   smartPhrases,
+  triggerCategories,
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {

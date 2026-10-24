@@ -540,7 +540,16 @@ function escapeHtml(str) {
 
 function renderMarkdown(raw) {
   if (!raw) return '';
-  const escaped = escapeHtml(raw);
+
+  // Extract HTML tags so their attributes (class, data-*, style, placeholder) are preserved
+  const htmlTokens = [];
+  const tokenized = raw.replace(/<\/?(?:div|table|thead|tbody|tfoot|tr|th|td|input|span|label|button|code|pre|br|b|strong|i|em)\b[^>]*>/gi, (tag) => {
+    const idx = htmlTokens.length;
+    htmlTokens.push(tag);
+    return `%%HTML_TOKEN_${idx}%%`;
+  });
+
+  const escaped = escapeHtml(tokenized);
   const lines = escaped.split('\n');
   const out = [];
   let inUl = false;
@@ -558,7 +567,7 @@ function renderMarkdown(raw) {
       if (inOl) { out.push('</ol>'); inOl = false; }
 
       if (!inTable) {
-        out.push('<table><thead>');
+        out.push('<div class="excel-table-wrap"><table class="excel-table"><thead>');
         inTable = true;
         isTableHeader = true;
       }
@@ -572,13 +581,21 @@ function renderMarkdown(raw) {
 
       const cells = trimmed.split('|').slice(1, -1).map(c => c.trim());
       const tag = isTableHeader ? 'th' : 'td';
-      out.push('<tr>' + cells.map(c => `<${tag}>${formatInline(c)}</${tag}>`).join('') + '</tr>');
+      out.push('<tr>' + cells.map(c => `<${tag}>${formatInline(c)}${isTableHeader ? '<div class="col-resizer"></div>' : ''}</${tag}>`).join('') + '</tr>');
       continue;
     }
 
     if (inTable) {
-      out.push('</tbody></table>');
+      out.push('</tbody></table></div>');
       inTable = false;
+    }
+
+    // Lines that are only an HTML token placeholder (e.g. %%HTML_TOKEN_0%%) shouldn't be wrapped in <p>
+    if (/^%%HTML_TOKEN_\d+%%$/.test(trimmed)) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      out.push(trimmed);
+      continue;
     }
 
     // Heading 3 or 2
@@ -623,8 +640,168 @@ function renderMarkdown(raw) {
 
   if (inUl) out.push('</ul>');
   if (inOl) out.push('</ol>');
-  if (inTable) out.push('</tbody></table>');
-  return out.join('');
+  if (inTable) out.push('</tbody></table></div>');
+
+  let result = out.join('\n');
+  result = result.replace(/%%HTML_TOKEN_(\d+)%%/g, (_m, id) => {
+    return htmlTokens[Number(id)] || '';
+  });
+
+  return result;
+}
+
+// ── Excel-Style Interactive Table Calculations & Column Resizing ──────────
+function initExcelTables(container, optionalTextarea) {
+  if (!container) return;
+
+  // 1. Column Resizers
+  container.querySelectorAll('.col-resizer').forEach(resizer => {
+    resizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const th = resizer.parentElement;
+      if (!th) return;
+      const startX = e.clientX;
+      const startWidth = th.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      function onMouseMove(moveEvent) {
+        const newWidth = Math.max(35, startWidth + (moveEvent.clientX - startX));
+        th.style.width = `${newWidth}px`;
+      }
+
+      function onMouseUp() {
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
+
+  // 2. Interactive in-cell calculations & auto-summed rows
+  container.querySelectorAll('.excel-table').forEach(table => {
+    function recalcTable() {
+      const groupSums = {};
+
+      table.querySelectorAll('.excel-input[data-group]').forEach(inp => {
+        const g = inp.dataset.group;
+        const val = parseFloat(inp.value) || 0;
+        groupSums[g] = (groupSums[g] || 0) + val;
+      });
+
+      const tableGroup = table.dataset.calcGroup;
+
+      // Update [data-sum-target]
+      table.querySelectorAll('[data-sum-target]').forEach(target => {
+        const g = target.dataset.sumTarget;
+        let sum = 0;
+        if (groupSums[g] !== undefined) {
+          sum = groupSums[g];
+        } else if (tableGroup === g) {
+          sum = Array.from(table.querySelectorAll('.excel-input[data-group]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        }
+        target.textContent = Number.isInteger(sum) ? String(sum) : sum.toFixed(1);
+      });
+
+      // Update [data-percent-target]
+      table.querySelectorAll('[data-percent-target]').forEach(target => {
+        const g = target.dataset.percentTarget;
+        const max = parseFloat(target.dataset.max) || 100;
+        let sum = groupSums[g] !== undefined ? groupSums[g] : (tableGroup === g ? Array.from(table.querySelectorAll('.excel-input[data-group]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0) : 0);
+        const pct = Math.min(100, Math.max(0, Math.round((sum / max) * 100)));
+        target.textContent = `${pct}%`;
+      });
+
+      // Update [data-severity-target] (ODI & NDI)
+      table.querySelectorAll('[data-severity-target]').forEach(sevTarget => {
+        const type = sevTarget.dataset.severityTarget;
+        if (type === 'odi') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          const pct = Math.round((sum / 50) * 100);
+          let label = 'Minimal Disability';
+          let cls = 'risk-pill risk-low';
+          if (pct > 20 && pct <= 40) { label = 'Moderate Disability'; cls = 'risk-pill risk-med'; }
+          else if (pct > 40 && pct <= 60) { label = 'Severe Disability'; cls = 'risk-pill risk-high'; }
+          else if (pct > 60 && pct <= 80) { label = 'Crippled'; cls = 'risk-pill risk-high'; }
+          else if (pct > 80) { label = 'Bed-Bound'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'ndi') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'No Disability';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 5 && sum <= 14) { label = 'Mild Disability'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 15 && sum <= 24) { label = 'Moderate Disability'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 25 && sum <= 34) { label = 'Severe Disability'; cls = 'risk-pill risk-high'; }
+          else if (sum >= 35) { label = 'Complete Disability'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        }
+      });
+
+      // Update [data-dash-formula-target]
+      table.querySelectorAll('[data-dash-formula-target]').forEach(target => {
+        const g = target.dataset.dashFormulaTarget;
+        const inputs = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`));
+        const sum = inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 1), 0);
+        const n = inputs.length || 11;
+        const score = Math.max(0, Math.min(100, ((sum / n) - 1) * 25));
+        target.textContent = `${score.toFixed(1)}%`;
+      });
+
+      // Update [data-cutoff-target]
+      table.querySelectorAll('[data-cutoff-target]').forEach(pill => {
+        const g = pill.dataset.cutoffTarget;
+        const cutoff = parseFloat(pill.dataset.cutoffVal) || 0;
+        const sum = groupSums[g] !== undefined ? groupSums[g] : (parseFloat(table.querySelector(`[data-sum-target="${g}"]`)?.textContent) || 0);
+        if (sum >= cutoff) {
+          pill.classList.remove('risk-low', 'risk-neutral');
+          pill.classList.add('risk-red');
+        } else {
+          pill.classList.remove('risk-red');
+          pill.classList.add('risk-low');
+        }
+      });
+    }
+
+    table.addEventListener('input', (e) => {
+      if (e.target && e.target.classList.contains('excel-input')) {
+        recalcTable();
+        if (optionalTextarea) {
+          syncPreviewValuesToTextarea(container, optionalTextarea);
+        }
+      }
+    });
+
+    recalcTable();
+  });
+}
+
+function syncPreviewValuesToTextarea(previewPane, textarea) {
+  if (!previewPane || !textarea) return;
+  const renderedInputs = previewPane.querySelectorAll('.excel-input');
+  if (!renderedInputs.length) return;
+
+  let val = textarea.value;
+  let idx = 0;
+  val = val.replace(/<input\b([^>]*\bclass="[^"]*excel-input[^"]*"[^>]*)>/gi, (fullTag, attrs) => {
+    if (idx >= renderedInputs.length) return fullTag;
+    const currentInput = renderedInputs[idx++];
+    const newVal = currentInput.value;
+    let newAttrs = attrs;
+    if (/value="[^"]*"/.test(newAttrs)) {
+      newAttrs = newAttrs.replace(/value="[^"]*"/, `value="${escapeHtml(newVal)}"`);
+    } else {
+      newAttrs = `${newAttrs} value="${escapeHtml(newVal)}"`;
+    }
+    return `<input${newAttrs}>`;
+  });
+  textarea.value = val;
 }
 
 function formatInline(str) {
@@ -796,6 +973,7 @@ function setNotePreviewMode(isPreview) {
 
   if (isPreview) {
     pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty note.</p>';
+    initExcelTables(pane, input);
     pane.classList.remove('hidden');
     input.classList.add('hidden');
     if (tabP) tabP.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
@@ -990,6 +1168,8 @@ async function refreshPatientNotesFeed(patientId) {
       </article>
     `;
   }).join('');
+
+  initExcelTables(feedEl);
 
   // Wire event handlers for the rendered notes
   wireNoteInteractions(patientId);
@@ -1327,6 +1507,7 @@ loadStats();
 // ═══════════════════════════════════════════════════════════════════════════
 
 let smartPhrasesCache = [];
+let triggerCategoriesCache = [];
 let selectedSmartPhraseId = null;
 let currentPrefixFilter = 'all';
 
@@ -1338,8 +1519,55 @@ async function loadSmartPhrasesCache() {
   }
 }
 
+async function loadTriggerCategories() {
+  try {
+    triggerCategoriesCache = await window.api.triggerCategories.list();
+    renderDynamicCategoryTabs();
+    populatePrefixSelect();
+  } catch (err) {
+    console.error('[SmartPhrases] Failed to load trigger categories:', err);
+  }
+}
+
+function renderDynamicCategoryTabs() {
+  const container = $('sp-dynamic-category-tabs');
+  if (!container) return;
+  container.innerHTML = triggerCategoriesCache.map(cat => {
+    const isActive = currentPrefixFilter === cat.prefix;
+    return `
+      <button class="sp-tab-btn ${isActive ? 'active bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'} px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap"
+              data-filter="${escapeHtml(cat.prefix)}"
+              title="Filter by ${escapeHtml(cat.prefix)} (${escapeHtml(cat.label)})">
+        <span class="font-mono font-bold">${escapeHtml(cat.prefix)}</span> ${escapeHtml(cat.label)}
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.sp-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $('sp-prefix-tabs')?.querySelectorAll('.sp-tab-btn').forEach(b => {
+        b.className = 'sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap';
+      });
+      btn.className = 'sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 whitespace-nowrap';
+      currentPrefixFilter = btn.dataset.filter;
+      renderSmartPhrasesList();
+    });
+  });
+}
+
+function populatePrefixSelect() {
+  const select = $('sp-prefix-select');
+  if (!select) return;
+  const currentVal = select.value;
+  select.innerHTML = triggerCategoriesCache.map(cat => {
+    return `<option value="${escapeHtml(cat.prefix)}">${escapeHtml(cat.prefix)} (${escapeHtml(cat.label)})</option>`;
+  }).join('') + '<option value="custom">Custom…</option>';
+  if (currentVal) select.value = currentVal;
+}
+
 // Master-detail ledger population
 async function loadSmartPhrasesHub() {
+  await loadTriggerCategories();
   await loadSmartPhrasesCache();
   renderSmartPhrasesList();
   wireSmartPhraseEditorEvents();
@@ -1354,13 +1582,9 @@ function renderSmartPhrasesList() {
   const query = (searchInput?.value || '').trim().toLowerCase();
   let phrases = smartPhrasesCache;
 
-  // Filter by prefix quick tab
-  if (currentPrefixFilter === '@') {
-    phrases = phrases.filter(sp => sp.trigger_prefix === '@');
-  } else if (currentPrefixFilter === '!') {
-    phrases = phrases.filter(sp => sp.trigger_prefix === '!');
-  } else if (currentPrefixFilter === 'custom') {
-    phrases = phrases.filter(sp => sp.trigger_prefix !== '@' && sp.trigger_prefix !== '!');
+  // Filter by dynamic prefix quick tab
+  if (currentPrefixFilter && currentPrefixFilter !== 'all') {
+    phrases = phrases.filter(sp => sp.trigger_prefix === currentPrefixFilter);
   }
 
   // Filter by search query
@@ -1393,7 +1617,7 @@ function renderSmartPhrasesList() {
           <span class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 dark:text-slate-500">${escapeHtml(sp.category || 'general')}</span>
         </div>
         <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">${escapeHtml(sp.title)}</p>
-        <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">${escapeHtml((sp.content || '').replace(/[\n#|]/g, ' ').substring(0, 75))}…</p>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">${escapeHtml((sp.content || '').replace(/<[^>]*>/g, ' ').replace(/[\n#|]/g, ' ').substring(0, 75))}…</p>
       </div>
     `;
   }).join('');
@@ -1438,7 +1662,8 @@ function selectSmartPhrase(id) {
   // Handle prefix select vs custom input
   const select = $('sp-prefix-select');
   const customInput = $('sp-prefix-input');
-  if (['@', '!', '#', '.'].includes(sp.trigger_prefix)) {
+  const knownPrefix = triggerCategoriesCache.some(c => c.prefix === sp.trigger_prefix);
+  if (knownPrefix) {
     if (select) select.value = sp.trigger_prefix;
     if (customInput) customInput.classList.add('hidden');
   } else {
@@ -1457,7 +1682,8 @@ function updateTriggerBadgePreview() {
   const select = $('sp-prefix-select');
   const customInput = $('sp-prefix-input');
   const pfx = select && select.value === 'custom' ? (customInput?.value || '@') : (select?.value || '@');
-  const code = ($('sp-code-input')?.value || 'code').trim().toLowerCase().replace(/\s+/g, '-');
+  let rawCode = ($('sp-code-input')?.value || 'code').trim().replace(/\s+/g, '-');
+  const code = (pfx === '!' ? rawCode.toUpperCase() : rawCode);
   const full = `${pfx}${code}`;
 
   const preview = $('sp-trigger-preview');
@@ -1474,6 +1700,7 @@ function setSmartPhrasePreviewMode(isPreview) {
 
   if (isPreview) {
     pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty template body.</p>';
+    initExcelTables(pane, input);
     pane.classList.remove('hidden');
     input.classList.add('hidden');
     if (btn) btn.textContent = 'Edit Markdown';
@@ -1492,16 +1719,53 @@ function wireSmartPhraseEditorEvents() {
   // Search filter
   $('sp-search-input')?.addEventListener('input', debounce(renderSmartPhrasesList, 150));
 
-  // Quick prefix tabs
-  $('sp-prefix-tabs')?.querySelectorAll('.sp-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      $('sp-prefix-tabs').querySelectorAll('.sp-tab-btn').forEach(b => {
-        b.className = 'sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800';
-      });
-      btn.className = 'sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400';
-      currentPrefixFilter = btn.dataset.filter;
-      renderSmartPhrasesList();
+  // "All" prefix tab
+  $('sp-prefix-tabs')?.querySelector('[data-filter="all"]')?.addEventListener('click', (e) => {
+    $('sp-prefix-tabs').querySelectorAll('.sp-tab-btn').forEach(b => {
+      b.className = 'sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap';
     });
+    e.currentTarget.className = 'sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 whitespace-nowrap';
+    currentPrefixFilter = 'all';
+    renderSmartPhrasesList();
+  });
+
+  // + New Category modal wiring
+  const catModal = $('modal-new-category');
+  const catBackdrop = $('cat-modal-backdrop');
+
+  function openCatModal() {
+    if ($('new-cat-prefix-input')) $('new-cat-prefix-input').value = '';
+    if ($('new-cat-label-input')) $('new-cat-label-input').value = '';
+    catBackdrop?.classList.remove('opacity-0', 'pointer-events-none');
+    catModal?.classList.remove('opacity-0', 'pointer-events-none');
+    $('new-cat-prefix-input')?.focus();
+  }
+
+  function closeCatModal() {
+    catBackdrop?.classList.add('opacity-0', 'pointer-events-none');
+    catModal?.classList.add('opacity-0', 'pointer-events-none');
+  }
+
+  $('sp-btn-add-category')?.addEventListener('click', openCatModal);
+  $('modal-new-category-close')?.addEventListener('click', closeCatModal);
+  $('modal-new-category-cancel')?.addEventListener('click', closeCatModal);
+  catBackdrop?.addEventListener('click', closeCatModal);
+
+  $('modal-new-category-save')?.addEventListener('click', async () => {
+    const prefix = ($('new-cat-prefix-input')?.value || '').trim();
+    const label = ($('new-cat-label-input')?.value || '').trim();
+    if (!prefix) { alert('Prefix symbol is required.'); $('new-cat-prefix-input')?.focus(); return; }
+    if (!label) { alert('Category label is required.'); $('new-cat-label-input')?.focus(); return; }
+
+    try {
+      await window.api.triggerCategories.save(prefix, label);
+      await loadTriggerCategories();
+      closeCatModal();
+      currentPrefixFilter = prefix;
+      renderSmartPhrasesList();
+    } catch (err) {
+      alert(err.message || 'Failed to save category.');
+    }
   });
 
   // Prefix select change
@@ -1538,17 +1802,123 @@ function wireSmartPhraseEditorEvents() {
     $('sp-title-input')?.focus();
   });
 
-  // Table Inserters
+  // Quick Table Presets (Rich Excel Tables)
   $('sp-insert-rom')?.addEventListener('click', () => {
-    insertInSpEditor(`\n| Joint / Movement | Active ROM | Passive ROM | End-Feel | Pain (0-10) |\n|:---|:---|:---|:---|:---|\n| Flexion | | | Firm | |\n| Extension | | | Hard | |\n`);
+    insertInSpEditor(`\n<div class="excel-table-wrap">
+  <table class="excel-table">
+    <thead>
+      <tr>
+        <th style="width: 140px;">Joint &amp; Movement<div class="col-resizer"></div></th>
+        <th style="width: 100px;">Normative<div class="col-resizer"></div></th>
+        <th style="width: 110px;">Active ROM<div class="col-resizer"></div></th>
+        <th style="width: 110px;">Passive ROM<div class="col-resizer"></div></th>
+        <th style="width: 130px;">End-Feel<div class="col-resizer"></div></th>
+        <th>Pain / Restriction Notes<div class="col-resizer"></div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="font-semibold">Flexion</td>
+        <td class="text-slate-400">Normal</td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input" placeholder="Firm / stretch" /></td>
+        <td><input type="text" class="excel-input text-left" placeholder="Pain-free" /></td>
+      </tr>
+      <tr>
+        <td class="font-semibold">Extension</td>
+        <td class="text-slate-400">Normal</td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input" placeholder="Firm / bone" /></td>
+        <td><input type="text" class="excel-input text-left" placeholder="Pain-free" /></td>
+      </tr>
+      <tr>
+        <td class="font-semibold">Lateral Flexion / Rotation</td>
+        <td class="text-slate-400">Normal</td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
+        <td><input type="text" class="excel-input" placeholder="Tissue stretch" /></td>
+        <td><input type="text" class="excel-input text-left" placeholder="Symmetric" /></td>
+      </tr>
+    </tbody>
+  </table>
+</div>\n`);
   });
 
   $('sp-insert-neuro')?.addEventListener('click', () => {
-    insertInSpEditor(`\n| Level | Dermatome | Myotome (0-5) | Reflex |\n|:---|:---|:---|:---|\n| C5 / L4 | Normal | 5/5 | 2+ |\n| C6 / L5 | Normal | 5/5 | 2+ |\n| C7 / S1 | Normal | 5/5 | 2+ |\n`);
+    insertInSpEditor(`\n<div class="excel-table-wrap">
+  <table class="excel-table">
+    <thead>
+      <tr>
+        <th style="width: 80px;">Level<div class="col-resizer"></div></th>
+        <th style="width: 150px;">Dermatome Sensory<div class="col-resizer"></div></th>
+        <th style="width: 150px;">Myotome Key Muscle<div class="col-resizer"></div></th>
+        <th style="width: 110px;">Power (0-5)<div class="col-resizer"></div></th>
+        <th style="width: 120px;">Reflex (0-4+)<div class="col-resizer"></div></th>
+        <th>Clinical Notes<div class="col-resizer"></div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="font-bold text-center">L4 / C5</td>
+        <td>Medial foot / Lateral arm</td>
+        <td>Tibialis Anterior / Deltoid</td>
+        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
+        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
+      </tr>
+      <tr>
+        <td class="font-bold text-center">L5 / C6</td>
+        <td>Dorsum foot / Thumb</td>
+        <td>EHL / Wrist Extensors</td>
+        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
+        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
+      </tr>
+      <tr>
+        <td class="font-bold text-center">S1 / C7</td>
+        <td>Lateral foot / Middle finger</td>
+        <td>Gastrocs / Triceps</td>
+        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
+        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
+      </tr>
+    </tbody>
+  </table>
+</div>\n`);
   });
 
   $('sp-insert-stability')?.addEventListener('click', () => {
-    insertInSpEditor(`\n| Ligament | Test | Laxity Grade | Endpoint |\n|:---|:---|:---|:---|\n| Structure 1 | Test A | Grade 0 | Firm |\n`);
+    insertInSpEditor(`\n<div class="excel-table-wrap">
+  <table class="excel-table">
+    <thead>
+      <tr>
+        <th style="width: 160px;">Structure Tested<div class="col-resizer"></div></th>
+        <th style="width: 160px;">Test Performed<div class="col-resizer"></div></th>
+        <th style="width: 130px;">Laxity Grade<div class="col-resizer"></div></th>
+        <th style="width: 130px;">Endpoint Quality<div class="col-resizer"></div></th>
+        <th>Symptom Reproduction<div class="col-resizer"></div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="font-semibold">ACL / Collateral</td>
+        <td>Lachman / Stress test</td>
+        <td><input type="text" class="excel-input text-center" placeholder="Grade 0" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="Crisp &amp; firm" /></td>
+        <td><input type="text" class="excel-input" placeholder="Pain-free" /></td>
+      </tr>
+      <tr>
+        <td class="font-semibold">Meniscus / Labrum</td>
+        <td>McMurray / Compression</td>
+        <td><input type="text" class="excel-input text-center" placeholder="Negative" /></td>
+        <td><input type="text" class="excel-input text-center" placeholder="Smooth" /></td>
+        <td><input type="text" class="excel-input" placeholder="No click" /></td>
+      </tr>
+    </tbody>
+  </table>
+</div>\n`);
   });
 
   // Live preview toggle
@@ -1563,7 +1933,8 @@ function wireSmartPhraseEditorEvents() {
     const select = $('sp-prefix-select');
     const custom = $('sp-prefix-input');
     const prefix = select && select.value === 'custom' ? (custom?.value || '@').trim() : (select?.value || '@');
-    const code = ($('sp-code-input')?.value || '').trim().toLowerCase().replace(/\s+/g, '-');
+    let rawCode = ($('sp-code-input')?.value || '').trim().replace(/\s+/g, '-');
+    const code = (prefix === '!' ? rawCode.toUpperCase() : rawCode);
     const content = ($('sp-content-input')?.value || '').trim();
     const category = ($('sp-category-input')?.value || 'general').trim();
 
@@ -1815,6 +2186,7 @@ function initSmartPhraseExpansionEngine() {
   });
 }
 
-// Initialise Smart Phrases Cache & Expansion Engine
+// Initialise Smart Phrases Cache, Categories & Expansion Engine
+loadTriggerCategories();
 loadSmartPhrasesCache();
 initSmartPhraseExpansionEngine();

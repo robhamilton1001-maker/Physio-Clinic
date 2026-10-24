@@ -567,10 +567,15 @@
 
             <!-- Prefix Quick Tabs -->
             <div class="flex items-center gap-1 overflow-x-auto pb-0.5" id="sp-prefix-tabs">
-              <button class="sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400" data-filter="all">All</button>
-              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="@">@ Shortcuts</button>
-              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="!">! MSK Measures</button>
-              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="custom">Custom</button>
+              <button class="sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 whitespace-nowrap" data-filter="all">All</button>
+              <div id="sp-dynamic-category-tabs" class="flex items-center gap-1">
+                <!-- Populated dynamically via triggerCategories -->
+              </div>
+              <button id="sp-btn-add-category" type="button"
+                      class="px-2 py-1 rounded-md text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1 border border-dashed border-indigo-300 dark:border-indigo-500/30 whitespace-nowrap"
+                      title="Add custom trigger category prefix">
+                + New Category
+              </button>
             </div>
           </div>
 
@@ -1119,6 +1124,37 @@
           </svg>
           <span id="np-submit-label">Save Patient</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       [3B] NEW TRIGGER CATEGORY MODAL — z-60
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="cat-modal-backdrop"
+       class="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-[2px] opacity-0 pointer-events-none transition-opacity duration-200">
+  </div>
+  <div id="modal-new-category"
+       class="fixed inset-0 z-60 flex items-center justify-center p-4 pointer-events-none opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 pointer-events-auto">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Add Trigger Category</h3>
+        <button id="modal-new-category-close" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none">&times;</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label for="new-cat-prefix-input" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Prefix Symbol (e.g. #, ., ?, %, ~) <span class="text-red-500">*</span></label>
+          <input id="new-cat-prefix-input" type="text" maxlength="3" class="form-input text-xs font-mono" placeholder="#" />
+        </div>
+        <div>
+          <label for="new-cat-label-input" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Category Label <span class="text-red-500">*</span></label>
+          <input id="new-cat-label-input" type="text" class="form-input text-xs" placeholder="e.g. Rehab Protocols" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="modal-new-category-cancel" type="button" class="btn-ghost text-xs py-1.5 px-3">Cancel</button>
+        <button id="modal-new-category-save" type="button" class="btn-primary text-xs py-1.5 px-4 font-semibold">Save Category</button>
       </div>
     </div>
   </div>

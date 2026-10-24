@@ -127,4 +127,11 @@ contextBridge.exposeInMainWorld('api', {
     delete:       (id)              => ipcRenderer.invoke('smartPhrases:delete', id),
   },
 
+  // ── Domain: Trigger Categories ────────────────────────────────────────
+  triggerCategories: {
+    list:   ()              => ipcRenderer.invoke('triggerCategories:list'),
+    save:   (prefix, label) => ipcRenderer.invoke('triggerCategories:save', prefix, label),
+    delete: (prefix)        => ipcRenderer.invoke('triggerCategories:delete', prefix),
+  },
+
 });

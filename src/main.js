@@ -201,6 +201,20 @@ ipcMain.handle('smartPhrases:delete', (_e, id) => {
   return db.smartPhrases.delete(Number(id));
 });
 
+// ── Trigger Categories ────────────────────────────────────────────────────
+
+ipcMain.handle('triggerCategories:list', () => {
+  return db.triggerCategories.list();
+});
+
+ipcMain.handle('triggerCategories:save', (_e, prefix, label) => {
+  return db.triggerCategories.save(prefix, label);
+});
+
+ipcMain.handle('triggerCategories:delete', (_e, prefix) => {
+  return db.triggerCategories.delete(prefix);
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // APP LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════
