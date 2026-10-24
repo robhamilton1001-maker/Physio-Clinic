@@ -251,6 +251,12 @@ ipcMain.handle('rehab:listExercises', (_e, category, search) => {
 ipcMain.handle('rehab:createExercise', (_e, data) => {
   return db.rehab.createExercise(data);
 });
+ipcMain.handle('rehab:updateExercise', (_e, id, data) => {
+  return db.rehab.updateExercise(id, data);
+});
+ipcMain.handle('rehab:deleteExercise', (_e, id) => {
+  return db.rehab.deleteExercise(id);
+});
 
 // Templates / Protocols
 ipcMain.handle('rehab:listTemplates', () => {

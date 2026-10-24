@@ -236,14 +236,22 @@ try {
   const { SEED_EXERCISES, SEED_TEMPLATES } = require('./rehab_seed');
 
   const exCount = db.prepare('SELECT COUNT(*) AS count FROM exercise_library').get();
-  if (!exCount || exCount.count === 0) {
+  if (!exCount || exCount.count < 100) {
+    db.prepare('DELETE FROM exercise_library').run();
     const insertEx = db.prepare(`
       INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
       VALUES (@name, @category, @default_sets, @default_reps, @thumbnail_path, @cues)
     `);
     const seedExTx = db.transaction((exercises) => {
       for (const ex of exercises) {
-        insertEx.run(ex);
+        insertEx.run({
+          name: ex.name,
+          category: ex.category || 'General',
+          default_sets: ex.default_sets || 3,
+          default_reps: ex.default_reps || '10',
+          thumbnail_path: ex.thumbnail_path || null,
+          cues: ex.cues || ''
+        });
       }
     });
     seedExTx(SEED_EXERCISES);
@@ -754,6 +762,26 @@ const rehab = {
       cues: data.cues || ''
     });
     return db.prepare('SELECT * FROM exercise_library WHERE id = ?').get(info.lastInsertRowid);
+  },
+
+  updateExercise(id, data) {
+    db.prepare(`
+      UPDATE exercise_library
+      SET name = @name, category = @category, default_sets = @default_sets, default_reps = @default_reps, cues = @cues
+      WHERE id = @id
+    `).run({
+      id: Number(id),
+      name: data.name,
+      category: data.category || 'General',
+      default_sets: data.default_sets || 3,
+      default_reps: data.default_reps || '10',
+      cues: data.cues || ''
+    });
+    return this.getExerciseById(Number(id));
+  },
+
+  deleteExercise(id) {
+    return db.prepare('DELETE FROM exercise_library WHERE id = ?').run(Number(id));
   },
 
   // Protocols / Templates

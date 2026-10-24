@@ -139,6 +139,8 @@ contextBridge.exposeInMainWorld('api', {
   rehab: {
     listExercises:  (category, search) => ipcRenderer.invoke('rehab:listExercises', category, search),
     createExercise: (data)             => ipcRenderer.invoke('rehab:createExercise', data),
+    updateExercise: (id, data)         => ipcRenderer.invoke('rehab:updateExercise', id, data),
+    deleteExercise: (id)               => ipcRenderer.invoke('rehab:deleteExercise', id),
     listTemplates:  ()                 => ipcRenderer.invoke('rehab:listTemplates'),
     getTemplate:    (id)               => ipcRenderer.invoke('rehab:getTemplate', id),
     saveTemplate:   (data)             => ipcRenderer.invoke('rehab:saveTemplate', data),

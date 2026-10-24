@@ -39,12 +39,13 @@ function fmtDateTime(iso) {
 // THEME ENGINE
 // ═══════════════════════════════════════════════════════════════════════════
 
-const THEME_KEY = 'clinic:theme';
+const THEME_KEY = 'theme';
 
 function initTheme() {
-  const saved  = localStorage.getItem(THEME_KEY);
-  const osDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyTheme(saved ? saved === 'dark' : osDark, false);
+  const saved  = localStorage.getItem('theme') || localStorage.getItem('clinic:theme');
+  const osDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved !== null ? saved === 'dark' : osDark;
+  applyTheme(isDark, false);
 }
 
 function applyTheme(isDark, animate = true) {
@@ -59,6 +60,10 @@ function applyTheme(isDark, animate = true) {
   } else {
     document.documentElement.classList.toggle('dark', isDark);
   }
+
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('clinic:theme', isDark ? 'dark' : 'light');
+
   const iconSun  = $('icon-sun');
   const iconMoon = $('icon-moon');
   const label    = $('theme-label');
@@ -69,7 +74,6 @@ function applyTheme(isDark, animate = true) {
 
 function toggleTheme() {
   const isDark = document.documentElement.classList.contains('dark');
-  localStorage.setItem(THEME_KEY, isDark ? 'light' : 'dark');
   applyTheme(!isDark, true);
 }
 
@@ -113,6 +117,11 @@ function switchView(target) {
   // Activate rehab builder when navigating to it (Phase 7)
   if (target === 'programs' && window.RehabBuilder) {
     requestAnimationFrame(() => window.RehabBuilder.activate());
+  }
+
+  // Activate settings exercise library when navigating to it
+  if (target === 'settings') {
+    loadSettingsExerciseLibrary();
   }
 }
 
@@ -1231,6 +1240,7 @@ async function openPatientProfile(id, preloaded = null) {
 
   // Render clinical notes feed
   await refreshPatientNotesFeed(patient.id);
+  await renderPatientRehabPrograms(patient.id);
 }
 
 function closePatientProfile() {
@@ -1276,6 +1286,15 @@ if (btnProfileRehabProgram) {
     }
   });
 }
+
+$('btn-profile-new-program')?.addEventListener('click', () => {
+  const patId = activePortfolioPatientId;
+  closePatientProfile();
+  switchView('programs');
+  if (window.RehabBuilder) {
+    window.RehabBuilder.openForPatient(patId);
+  }
+});
 
 // ── Distraction-free Note Editor Controls ───────────────────────────────────
 
@@ -2662,3 +2681,293 @@ function initSmartPhraseExpansionEngine() {
 loadTriggerCategories();
 loadSmartPhrasesCache();
 initSmartPhraseExpansionEngine();
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATIENT PORTFOLIO: REHAB & PT PROGRAMS SECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function renderPatientRehabPrograms(patientId) {
+  const container = $('profile-rehab-programs-list');
+  const countBadge = $('profile-rehab-count');
+  if (!container) return;
+
+  try {
+    const programs = await window.api.rehab.listPrograms(patientId);
+    if (countBadge) {
+      countBadge.textContent = `${programs.length} active`;
+    }
+
+    if (!programs || programs.length === 0) {
+      container.innerHTML = `
+        <div class="py-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+          <p class="text-xs text-slate-500 italic">No rehabilitation programs currently assigned to this patient.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    programs.forEach(prog => {
+      const item = document.createElement('div');
+      item.className = 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm';
+
+      let exerciseCount = 0;
+      try {
+        const sched = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
+        if (sched && sched.weeks) {
+          sched.weeks.forEach(w => {
+            if (w.days) {
+              Object.values(w.days).forEach(arr => {
+                exerciseCount += (arr || []).length;
+              });
+            }
+          });
+        }
+      } catch (e) {}
+
+      item.innerHTML = `
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">${escapeHtml(prog.title || 'Rehabilitation Routine')}</span>
+            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
+              ${prog.duration_weeks || 4} Weeks
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            ${exerciseCount} scheduled exercise doses · Created ${fmtDate(prog.created_at)}
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" class="btn-prog-view btn-ghost text-xs py-1.5 px-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 transition-colors">
+            <span>⚡ View in Builder</span>
+          </button>
+          <button type="button" class="btn-prog-copy btn-ghost text-xs py-1.5 px-2.5 border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 flex items-center gap-1 transition-colors">
+            <span>📋 Copy as Note Table</span>
+          </button>
+        </div>
+      `;
+
+      item.querySelector('.btn-prog-view')?.addEventListener('click', () => {
+        closePatientProfile();
+        switchView('programs');
+        if (window.RehabBuilder) {
+          window.RehabBuilder.loadProgramData(prog);
+        }
+      });
+
+      item.querySelector('.btn-prog-copy')?.addEventListener('click', async (e) => {
+        if (!window.RehabBuilder) return;
+        const btn = e.currentTarget;
+        const origText = btn.innerHTML;
+
+        let sched = null;
+        try {
+          sched = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
+        } catch (err) {}
+
+        const progObj = {
+          title: prog.title,
+          duration_weeks: prog.duration_weeks,
+          weeks: sched?.weeks || []
+        };
+
+        const tableHtml = window.RehabBuilder.generateExcelTableForProgram(progObj, 1);
+        const plainFallback = window.RehabBuilder.formatProgramForSoapNote(progObj, 1);
+
+        try {
+          const blobHtml = new Blob([tableHtml], { type: 'text/html' });
+          const blobText = new Blob([plainFallback], { type: 'text/plain' });
+          const clipItem = new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText
+          });
+          await navigator.clipboard.write([clipItem]);
+          btn.innerHTML = '<span>✅ Copied Table!</span>';
+          setTimeout(() => { btn.innerHTML = origText; }, 2000);
+        } catch {
+          await navigator.clipboard.writeText(plainFallback);
+          btn.innerHTML = '<span>✅ Copied Text!</span>';
+          setTimeout(() => { btn.innerHTML = origText; }, 2000);
+        }
+      });
+
+      container.appendChild(item);
+    });
+  } catch (err) {
+    console.error('Error rendering patient rehab programs:', err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS: EXERCISE LIBRARY MANAGEMENT & APP PREFERENCES
+// ═══════════════════════════════════════════════════════════════════════════
+
+let settingsExercises = [];
+
+function initSettingsView() {
+  const tabExercises = $('set-tab-btn-exercises');
+  const tabGeneral = $('set-tab-btn-general');
+  const paneExercises = $('set-pane-exercises');
+  const paneGeneral = $('set-pane-general');
+
+  if (tabExercises && tabGeneral) {
+    tabExercises.addEventListener('click', () => {
+      tabExercises.className = 'px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
+      tabGeneral.className = 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
+      paneExercises?.classList.remove('hidden');
+      paneGeneral?.classList.add('hidden');
+    });
+
+    tabGeneral.addEventListener('click', () => {
+      tabGeneral.className = 'px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
+      tabExercises.className = 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
+      paneGeneral?.classList.remove('hidden');
+      paneExercises?.classList.add('hidden');
+    });
+  }
+
+  // Search and filter listeners
+  $('set-ex-search')?.addEventListener('input', debounce(renderSettingsExercisesTable, 150));
+  $('set-ex-cat')?.addEventListener('change', renderSettingsExercisesTable);
+
+  // New Exercise button
+  $('set-ex-btn-new')?.addEventListener('click', () => openEditExerciseModal(null));
+
+  // Modal close buttons
+  $('btn-close-edit-ex')?.addEventListener('click', closeEditExerciseModal);
+  $('btn-cancel-edit-ex')?.addEventListener('click', closeEditExerciseModal);
+
+  // Form submit
+  $('form-edit-exercise')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('edit-ex-id')?.value;
+    const name = $('edit-ex-name')?.value?.trim();
+    const category = $('edit-ex-cat')?.value;
+    const default_sets = parseInt($('edit-ex-sets')?.value, 10) || 3;
+    const default_reps = $('edit-ex-reps')?.value?.trim() || '10';
+    const cues = $('edit-ex-cues')?.value?.trim() || '';
+
+    if (!name) return;
+
+    const payload = { name, category, default_sets, default_reps, cues };
+
+    try {
+      if (id) {
+        await window.api.rehab.updateExercise(Number(id), payload);
+      } else {
+        await window.api.rehab.createExercise(payload);
+      }
+      closeEditExerciseModal();
+      await loadSettingsExerciseLibrary();
+    } catch (err) {
+      alert('Failed to save exercise: ' + err.message);
+    }
+  });
+}
+
+async function loadSettingsExerciseLibrary() {
+  try {
+    settingsExercises = await window.api.rehab.listExercises();
+    renderSettingsExercisesTable();
+  } catch (err) {
+    console.error('Error loading exercises for settings:', err);
+  }
+}
+
+function renderSettingsExercisesTable() {
+  const tbody = $('set-ex-table-body');
+  const countBadge = $('set-ex-count-badge');
+  if (!tbody) return;
+
+  const searchVal = ($('set-ex-search')?.value || '').toLowerCase().trim();
+  const catVal = $('set-ex-cat')?.value || 'All';
+
+  const filtered = settingsExercises.filter(ex => {
+    if (catVal !== 'All' && ex.category !== catVal) return false;
+    if (searchVal) {
+      return (ex.name && ex.name.toLowerCase().includes(searchVal)) ||
+             (ex.cues && ex.cues.toLowerCase().includes(searchVal)) ||
+             (ex.category && ex.category.toLowerCase().includes(searchVal));
+    }
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length} of ${settingsExercises.length} exercises`;
+  }
+
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="p-8 text-center text-slate-400 dark:text-slate-500 italic">
+          No matching exercises found.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  filtered.forEach(ex => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+
+    tr.innerHTML = `
+      <td class="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(ex.name)}</td>
+      <td class="py-2.5 px-4">
+        <span class="inline-flex px-2 py-0.5 text-[10px] uppercase font-semibold rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30">
+          ${escapeHtml(ex.category || 'General')}
+        </span>
+      </td>
+      <td class="py-2.5 px-4 font-mono text-center">${ex.default_sets || 3}</td>
+      <td class="py-2.5 px-4 font-mono text-center">${escapeHtml(ex.default_reps || '10')}</td>
+      <td class="py-2.5 px-4 max-w-xs truncate text-slate-500 dark:text-slate-400">${escapeHtml(ex.cues || '—')}</td>
+      <td class="py-2.5 px-4 text-right space-x-1 whitespace-nowrap">
+        <button type="button" class="btn-ex-edit btn-ghost !py-1 !px-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
+        <button type="button" class="btn-ex-del btn-ghost !py-1 !px-2 text-xs text-rose-500 hover:underline">Delete</button>
+      </td>
+    `;
+
+    tr.querySelector('.btn-ex-edit')?.addEventListener('click', () => openEditExerciseModal(ex));
+    tr.querySelector('.btn-ex-del')?.addEventListener('click', async () => {
+      if (confirm(`Are you sure you want to delete "${ex.name}" from the exercise library?`)) {
+        try {
+          await window.api.rehab.deleteExercise(ex.id);
+          await loadSettingsExerciseLibrary();
+        } catch (err) {
+          alert('Failed to delete exercise: ' + err.message);
+        }
+      }
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+function openEditExerciseModal(exercise = null) {
+  const modal = $('modal-edit-exercise');
+  const title = $('modal-edit-ex-title');
+  if (!modal) return;
+
+  $('edit-ex-id').value = exercise ? exercise.id : '';
+  $('edit-ex-name').value = exercise ? exercise.name : '';
+  $('edit-ex-cat').value = exercise ? (exercise.category || 'Knee & Quadriceps') : 'Knee & Quadriceps';
+  $('edit-ex-sets').value = exercise ? (exercise.default_sets || 3) : 3;
+  $('edit-ex-reps').value = exercise ? (exercise.default_reps || '10-12') : '10-12';
+  $('edit-ex-cues').value = exercise ? (exercise.cues || '') : '';
+
+  if (title) {
+    title.textContent = exercise ? 'Edit Exercise' : 'Add New Exercise';
+  }
+
+  modal.classList.remove('opacity-0', 'pointer-events-none');
+  $('edit-ex-name')?.focus();
+}
+
+function closeEditExerciseModal() {
+  const modal = $('modal-edit-exercise');
+  if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+}
+
+// Initialise Settings View listeners
+initSettingsView();
