@@ -81,6 +81,16 @@
         Patients
       </a>
 
+      <!-- Smart Phrases (Phase 5) -->
+      <a href="#" data-view="smart-phrases" class="nav-item" id="nav-smart-phrases">
+        <svg class="h-[17px] w-[17px] shrink-0" fill="none" viewBox="0 0 24 24"
+             stroke-width="1.7" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+        </svg>
+        Smart Phrases
+      </a>
+
       <!-- PT Programs -->
       <a href="#" data-view="programs" class="nav-item" id="nav-programs">
         <svg class="h-[17px] w-[17px] shrink-0" fill="none" viewBox="0 0 24 24"
@@ -508,6 +518,216 @@
         </div>
       </div>
     </div><!-- /view-patients -->
+
+
+    <!-- ── SMART PHRASES MASTER-DETAIL HUB (Phase 5) ─────────────────────── -->
+    <div id="view-smart-phrases" class="hidden flex-col h-full overflow-hidden">
+
+      <!-- Hub Header Toolbar -->
+      <div class="flex-none flex items-center justify-between px-6 py-4
+                  bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Smart Phrases &amp; Clinical Macros</h1>
+            <span id="sp-count-badge"
+                  class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                         bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400">
+              0 phrases
+            </span>
+          </div>
+          <p class="hidden md:block text-xs text-slate-400 dark:text-slate-500">
+            Type symbols like <code class="font-mono text-indigo-600 dark:text-indigo-400">@</code> or <code class="font-mono text-indigo-600 dark:text-indigo-400">!</code> in clinical notes for instant expansion.
+          </p>
+        </div>
+
+        <button id="sp-btn-new" class="btn-primary text-xs py-1.5 px-3.5">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          + New Smart Phrase
+        </button>
+      </div>
+
+      <!-- Master-Detail Split Grid (2-Pane) -->
+      <div class="flex-1 grid grid-cols-[340px_1fr] overflow-hidden min-h-0 bg-slate-50 dark:bg-slate-950">
+
+        <!-- ── Left Pane: Library Ledger ───────────────────────────────── -->
+        <div class="flex flex-col h-full border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 overflow-hidden">
+          
+          <!-- Search & Filter Bar -->
+          <div class="p-3.5 space-y-2.5 border-b border-slate-100 dark:border-slate-800">
+            <div class="relative">
+              <input id="sp-search-input" type="search"
+                     class="form-input !py-1.5 !pl-8 !text-xs"
+                     placeholder="Filter phrases (e.g. odi, knee, rom)…" />
+              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
+
+            <!-- Prefix Quick Tabs -->
+            <div class="flex items-center gap-1 overflow-x-auto pb-0.5" id="sp-prefix-tabs">
+              <button class="sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400" data-filter="all">All</button>
+              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="@">@ Shortcuts</button>
+              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="!">! MSK Measures</button>
+              <button class="sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="custom">Custom</button>
+            </div>
+          </div>
+
+          <!-- Phrases List -->
+          <div id="sp-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 min-h-0">
+            <div class="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+              Loading smart phrases library…
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Right Pane: Live View & Markdown/Table Editor ────────────── -->
+        <div class="flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950" id="sp-editor-pane">
+          
+          <!-- Empty State (when nothing is selected) -->
+          <div id="sp-empty-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
+            <div class="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-mono text-xl">
+              @!
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Select or create a Smart Phrase</h3>
+            <p class="text-xs text-slate-400 dark:text-slate-500 max-w-sm leading-relaxed">
+              Choose a phrase from the ledger on the left to edit its trigger tag and Markdown content, or click "+ New Smart Phrase" above.
+            </p>
+          </div>
+
+          <!-- Editor Form Body -->
+          <div id="sp-editor-form" class="flex-1 flex flex-col overflow-hidden min-h-0">
+
+            <!-- Top Editor Controls Bar -->
+            <div class="flex-none flex items-center justify-between px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-3">
+                <span id="sp-trigger-preview" class="sp-tag-badge text-sm py-1 px-2.5 font-mono">
+                  @new-phrase
+                </span>
+                <span id="sp-save-indicator" class="text-xs text-emerald-600 dark:text-emerald-400 hidden">Saved ✓</span>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <button id="sp-btn-preview-toggle" type="button"
+                        class="btn-ghost text-xs py-1.5 px-3 border border-slate-200 dark:border-slate-700">
+                  Live Preview
+                </button>
+                <button id="sp-btn-delete" type="button"
+                        class="btn-ghost text-xs py-1.5 px-3 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10">
+                  Delete Phrase
+                </button>
+                <button id="sp-btn-save" type="button" class="btn-primary text-xs py-1.5 px-4 font-semibold">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+
+            <!-- Scrollable Editor Settings & Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-5 min-h-0">
+
+              <!-- Trigger & Metadata Row -->
+              <div class="card p-4 space-y-3">
+                <p class="section-label">Trigger Configuration &amp; Metadata</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <!-- Title -->
+                  <div class="md:col-span-2">
+                    <label for="sp-title-input" class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Phrase Title <span class="text-red-500">*</span>
+                    </label>
+                    <input id="sp-title-input" type="text" class="form-input !py-1.5 text-xs"
+                           placeholder="e.g. Cervical Spine Comprehensive Assessment" />
+                  </div>
+
+                  <!-- Trigger Prefix (Dropdown or Custom) -->
+                  <div>
+                    <label for="sp-prefix-input" class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Trigger Prefix Symbol <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                      <select id="sp-prefix-select" class="form-input !py-1.5 text-xs font-mono w-24">
+                        <option value="@">@ (Clinician)</option>
+                        <option value="!">! (MSK Measure)</option>
+                        <option value="#"># (Hashtag)</option>
+                        <option value=".">. (Dot command)</option>
+                        <option value="custom">Custom…</option>
+                      </select>
+                      <input id="sp-prefix-input" type="text" maxlength="2"
+                             class="form-input !py-1.5 text-xs font-mono text-center w-12 hidden"
+                             value="@" />
+                    </div>
+                  </div>
+
+                  <!-- Keyword Code -->
+                  <div>
+                    <label for="sp-code-input" class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Keyword Code <span class="text-red-500">*</span>
+                    </label>
+                    <input id="sp-code-input" type="text" class="form-input !py-1.5 text-xs font-mono"
+                           placeholder="e.g. c-spine" />
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500">Category:</span>
+                    <select id="sp-category-input" class="form-input !py-1 !text-xs w-44">
+                      <option value="msk_templates">MSK Assessment Template</option>
+                      <option value="outcome_measures">Outcome Measure Instrument</option>
+                      <option value="rehab_protocols">Rehab &amp; Exercise Protocol</option>
+                      <option value="general">General Clinical Shortcut</option>
+                    </select>
+                  </div>
+                  <span class="text-[11px] text-slate-400 dark:text-slate-500">
+                    Full trigger: <code id="sp-full-trigger-lbl" class="font-mono font-semibold text-indigo-600 dark:text-indigo-400">@c-spine</code>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Content Editor Area -->
+              <div class="card p-4 space-y-3 flex flex-col flex-1">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <p class="section-label">Expansion Content (Markdown &amp; Grids)</p>
+                  </div>
+
+                  <!-- Quick Grid / Table Helpers -->
+                  <div class="flex items-center gap-1.5">
+                    <button id="sp-insert-rom" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
+                      + ROM Grid
+                    </button>
+                    <button id="sp-insert-neuro" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
+                      + Neuro Grid
+                    </button>
+                    <button id="sp-insert-stability" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
+                      + Stability Grid
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Textarea -->
+                <textarea id="sp-content-input" rows="18"
+                          class="w-full p-4 rounded-xl text-xs font-mono leading-relaxed
+                                 bg-slate-50 dark:bg-slate-900/60
+                                 border border-slate-200 dark:border-slate-700/80
+                                 text-slate-900 dark:text-slate-100
+                                 placeholder:text-slate-400 dark:placeholder:text-slate-600
+                                 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+                                 resize-y"
+                          placeholder="Enter markdown template body, questions, scoring rubrics, or Markdown tables…"></textarea>
+
+                <!-- Formatted Live Preview Pane -->
+                <div id="sp-preview-pane"
+                     class="hidden p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 note-prose overflow-x-auto">
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /view-smart-phrases -->
 
 
     <!-- ── PLACEHOLDER VIEWS ─────────────────────────────────────────────── -->
@@ -1376,6 +1596,29 @@
       </section>
 
     </main>
+  </div><!-- /patient-profile -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       [8] DYNAMIC IN-EDITOR SMART PHRASE AUTOCOMPLETE POPOVER — z-[60]
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="sp-autocomplete-popover"
+       class="fixed z-[60] hidden w-80 max-h-72 flex flex-col
+              bg-white dark:bg-slate-900
+              border border-slate-200 dark:border-slate-800
+              rounded-xl shadow-2xl shadow-slate-950/40
+              overflow-hidden"
+       role="listbox" aria-label="Smart phrase autocomplete suggestions">
+    <div class="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        Smart Phrase Autocomplete
+      </span>
+      <span class="text-[10px] text-slate-400">
+        <kbd class="kbd">↑↓</kbd> navigate <kbd class="kbd">↵</kbd> insert
+      </span>
+    </div>
+    <ul id="sp-popover-list" class="py-1 overflow-y-auto overscroll-contain divide-y divide-slate-100/60 dark:divide-slate-800/40">
+    </ul>
   </div>
 
 

@@ -171,6 +171,36 @@ ipcMain.handle('diary:deleteEvent', (_e, id) => {
   return db.diary.deleteEvent(Number(id));
 });
 
+// ── Smart Phrases (Phase 5) ───────────────────────────────────────────────
+
+ipcMain.handle('smartPhrases:list', (_e, filter) => {
+  return db.smartPhrases.list(filter || {});
+});
+
+ipcMain.handle('smartPhrases:getById', (_e, id) => {
+  return db.smartPhrases.getById(Number(id));
+});
+
+ipcMain.handle('smartPhrases:getByTrigger', (_e, fullTrigger) => {
+  return db.smartPhrases.getByTrigger(String(fullTrigger || ''));
+});
+
+ipcMain.handle('smartPhrases:search', (_e, prefix, query) => {
+  return db.smartPhrases.search(String(prefix || ''), String(query || ''));
+});
+
+ipcMain.handle('smartPhrases:create', (_e, data) => {
+  return db.smartPhrases.create(data);
+});
+
+ipcMain.handle('smartPhrases:update', (_e, id, data) => {
+  return db.smartPhrases.update(Number(id), data);
+});
+
+ipcMain.handle('smartPhrases:delete', (_e, id) => {
+  return db.smartPhrases.delete(Number(id));
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // APP LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════

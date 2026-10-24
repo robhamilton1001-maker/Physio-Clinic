@@ -9,7 +9,10 @@ const Database = require('better-sqlite3');
 //   Windows : C:\Users\<user>\AppData\Roaming\physio-clinic-app
 //   macOS   : ~/Library/Application Support/physio-clinic-app
 //   Linux   : ~/.config/physio-clinic-app
-const DB_PATH = path.join(app.getPath('userData'), 'clinic_data.db');
+const userDataPath = (app && typeof app.getPath === 'function')
+  ? app.getPath('userData')
+  : path.join(process.env.APPDATA || process.env.HOME || '.', 'physio-clinic-app');
+const DB_PATH = path.join(userDataPath, 'clinic_data.db');
 
 // ── Open / create the database ────────────────────────────────────────────
 const db = new Database(DB_PATH, {
@@ -101,6 +104,21 @@ db.transaction(() => {
     );
   `);
 
+  // -- Phase 5: Dynamic Smart Phrases ----------------------------------------
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS smart_phrases (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      trigger_prefix  TEXT    NOT NULL,
+      code            TEXT    NOT NULL,
+      full_trigger    TEXT    GENERATED ALWAYS AS (trigger_prefix || code) VIRTUAL UNIQUE,
+      title           TEXT    NOT NULL,
+      content         TEXT    NOT NULL,
+      category        TEXT    DEFAULT 'general',
+      created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+  `);
+
   // -- Phase 3 columns (safe migrations for existing databases) ------------
   [
     `ALTER TABLE appointments ADD COLUMN event_type   TEXT    DEFAULT 'clinical_fup'`,
@@ -121,11 +139,35 @@ db.transaction(() => {
     CREATE INDEX IF NOT EXISTS idx_p4_notes_patient       ON notes(patient_id);
     CREATE INDEX IF NOT EXISTS idx_p4_notes_created       ON notes(created_at);
     CREATE INDEX IF NOT EXISTS idx_p4_addendums_note      ON addendums(note_id);
+    CREATE INDEX IF NOT EXISTS idx_sp_prefix              ON smart_phrases(trigger_prefix);
+    CREATE INDEX IF NOT EXISTS idx_sp_code                ON smart_phrases(code);
+    CREATE INDEX IF NOT EXISTS idx_sp_full                ON smart_phrases(full_trigger);
   `);
 
 })();
 
 console.log(`[DB] SQLite database initialised at: ${DB_PATH}`);
+
+// ── Seed Smart Phrases if table is empty ──────────────────────────────────
+try {
+  const { SEED_SMART_PHRASES } = require('./smart_phrases_seed');
+  const countRow = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get();
+  if (!countRow || countRow.count === 0) {
+    const insertSP = db.prepare(`
+      INSERT INTO smart_phrases (trigger_prefix, code, title, content, category)
+      VALUES (@trigger_prefix, @code, @title, @content, @category)
+    `);
+    const seedTx = db.transaction((phrases) => {
+      for (const sp of phrases) {
+        insertSP.run(sp);
+      }
+    });
+    seedTx(SEED_SMART_PHRASES);
+    console.log(`[DB] Seeded ${SEED_SMART_PHRASES.length} MSK smart phrases into database.`);
+  }
+} catch (seedErr) {
+  console.warn('[DB] Smart phrases seed warning:', seedErr.message);
+}
 
 // ── Prepared statements ───────────────────────────────────────────────────
 // Pre-compiled once at startup for maximum performance on hot paths.
@@ -449,6 +491,100 @@ const stats = {
   },
 };
 
+const smartPhrases = {
+  list(filter = {}) {
+    let sql = 'SELECT * FROM smart_phrases WHERE 1=1';
+    const params = [];
+    if (filter.category && filter.category !== 'all') {
+      sql += ' AND category = ?';
+      params.push(filter.category);
+    }
+    if (filter.prefix) {
+      sql += ' AND trigger_prefix = ?';
+      params.push(filter.prefix);
+    }
+    if (filter.search) {
+      const q = `%${filter.search.trim()}%`;
+      sql += ' AND (title LIKE ? OR code LIKE ? OR full_trigger LIKE ? OR content LIKE ?)';
+      params.push(q, q, q, q);
+    }
+    sql += ' ORDER BY trigger_prefix ASC, code ASC';
+    return db.prepare(sql).all(...params);
+  },
+
+  getById(id) {
+    return db.prepare('SELECT * FROM smart_phrases WHERE id = ?').get(id);
+  },
+
+  getByTrigger(fullTrigger) {
+    return db.prepare('SELECT * FROM smart_phrases WHERE full_trigger = ?').get(fullTrigger);
+  },
+
+  search(prefix, query) {
+    const q = `%${(query || '').trim()}%`;
+    return db.prepare(`
+      SELECT id, trigger_prefix, code, full_trigger, title, category,
+             substr(content, 1, 150) as snippet
+      FROM   smart_phrases
+      WHERE  trigger_prefix = ?
+        AND  (code LIKE ? OR title LIKE ?)
+      ORDER  BY code ASC
+      LIMIT  15
+    `).all(prefix, q, q);
+  },
+
+  create(data) {
+    const trigger_prefix = (data.trigger_prefix || '@').trim();
+    const code = (data.code || '').trim().toLowerCase().replace(/\s+/g, '-');
+    const title = (data.title || '').trim();
+    const content = (data.content || '').trim();
+    const category = (data.category || 'general').trim();
+
+    if (!code) throw new Error('Trigger keyword code is required.');
+    if (!title) throw new Error('Title is required.');
+    if (!content) throw new Error('Content cannot be empty.');
+
+    const info = db.prepare(`
+      INSERT INTO smart_phrases (trigger_prefix, code, title, content, category)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(trigger_prefix, code, title, content, category);
+
+    return this.getById(info.lastInsertRowid);
+  },
+
+  update(id, data) {
+    const sp = this.getById(id);
+    if (!sp) throw new Error('Smart phrase not found.');
+
+    const trigger_prefix = (data.trigger_prefix !== undefined ? data.trigger_prefix : sp.trigger_prefix).trim();
+    const code = (data.code ? data.code.trim().toLowerCase().replace(/\s+/g, '-') : sp.code);
+    const title = (data.title !== undefined ? data.title : sp.title).trim();
+    const content = (data.content !== undefined ? data.content : sp.content).trim();
+    const category = (data.category !== undefined ? data.category : sp.category).trim();
+
+    if (!code) throw new Error('Trigger keyword code cannot be empty.');
+    if (!title) throw new Error('Title cannot be empty.');
+    if (!content) throw new Error('Content cannot be empty.');
+
+    db.prepare(`
+      UPDATE smart_phrases
+      SET    trigger_prefix = ?,
+             code           = ?,
+             title          = ?,
+             content        = ?,
+             category       = ?,
+             updated_at     = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+      WHERE  id = ?
+    `).run(trigger_prefix, code, title, content, category, id);
+
+    return this.getById(id);
+  },
+
+  delete(id) {
+    return db.prepare('DELETE FROM smart_phrases WHERE id = ?').run(id);
+  }
+};
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -461,6 +597,7 @@ module.exports = {
   appointments,
   notes,
   stats,
+  smartPhrases,
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {

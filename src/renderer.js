@@ -81,7 +81,7 @@ initTheme();
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'programs', 'invoicing', 'settings'];
+const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'invoicing', 'settings'];
 
 function switchView(target) {
   ALL_VIEWS.forEach(v => {
@@ -103,6 +103,11 @@ function switchView(target) {
   // Activate patients directory when navigating to it
   if (target === 'patients' && typeof loadPatientsDirectory === 'function') {
     loadPatientsDirectory();
+  }
+
+  // Activate smart phrases hub when navigating to it
+  if (target === 'smart-phrases' && typeof loadSmartPhrasesHub === 'function') {
+    loadSmartPhrasesHub();
   }
 }
 
@@ -540,9 +545,41 @@ function renderMarkdown(raw) {
   const out = [];
   let inUl = false;
   let inOl = false;
+  let inTable = false;
+  let isTableHeader = true;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    const trimmed = line.trim();
+
+    // Markdown Table row: | Col 1 | Col 2 |
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+
+      if (!inTable) {
+        out.push('<table><thead>');
+        inTable = true;
+        isTableHeader = true;
+      }
+
+      // Check if delimiter row like |:---|:---|
+      if (/^\|[\s\-:|]+\|$/.test(trimmed)) {
+        out.push('</thead><tbody>');
+        isTableHeader = false;
+        continue;
+      }
+
+      const cells = trimmed.split('|').slice(1, -1).map(c => c.trim());
+      const tag = isTableHeader ? 'th' : 'td';
+      out.push('<tr>' + cells.map(c => `<${tag}>${formatInline(c)}</${tag}>`).join('') + '</tr>');
+      continue;
+    }
+
+    if (inTable) {
+      out.push('</tbody></table>');
+      inTable = false;
+    }
 
     // Heading 3 or 2
     if (/^###\s+(.+)$/.test(line)) {
@@ -577,7 +614,7 @@ function renderMarkdown(raw) {
     if (inUl) { out.push('</ul>'); inUl = false; }
     if (inOl) { out.push('</ol>'); inOl = false; }
 
-    if (line.trim() === '') {
+    if (trimmed === '') {
       out.push('<br/>');
     } else {
       out.push(`<p>${formatInline(line)}</p>`);
@@ -586,6 +623,7 @@ function renderMarkdown(raw) {
 
   if (inUl) out.push('</ul>');
   if (inOl) out.push('</ol>');
+  if (inTable) out.push('</tbody></table>');
   return out.join('');
 }
 
@@ -1283,3 +1321,500 @@ async function loadStats() {
 }
 
 loadStats();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SMART PHRASES HUB & EXPANSION ENGINE (Phase 5)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let smartPhrasesCache = [];
+let selectedSmartPhraseId = null;
+let currentPrefixFilter = 'all';
+
+async function loadSmartPhrasesCache() {
+  try {
+    smartPhrasesCache = await window.api.smartPhrases.list();
+  } catch (err) {
+    console.error('[SmartPhrases] Failed to load cache:', err);
+  }
+}
+
+// Master-detail ledger population
+async function loadSmartPhrasesHub() {
+  await loadSmartPhrasesCache();
+  renderSmartPhrasesList();
+  wireSmartPhraseEditorEvents();
+}
+
+function renderSmartPhrasesList() {
+  const listEl = $('sp-list');
+  const countBadge = $('sp-count-badge');
+  const searchInput = $('sp-search-input');
+  if (!listEl) return;
+
+  const query = (searchInput?.value || '').trim().toLowerCase();
+  let phrases = smartPhrasesCache;
+
+  // Filter by prefix quick tab
+  if (currentPrefixFilter === '@') {
+    phrases = phrases.filter(sp => sp.trigger_prefix === '@');
+  } else if (currentPrefixFilter === '!') {
+    phrases = phrases.filter(sp => sp.trigger_prefix === '!');
+  } else if (currentPrefixFilter === 'custom') {
+    phrases = phrases.filter(sp => sp.trigger_prefix !== '@' && sp.trigger_prefix !== '!');
+  }
+
+  // Filter by search query
+  if (query) {
+    phrases = phrases.filter(sp => 
+      sp.full_trigger.toLowerCase().includes(query) ||
+      sp.title.toLowerCase().includes(query) ||
+      (sp.category && sp.category.toLowerCase().includes(query))
+    );
+  }
+
+  if (countBadge) countBadge.textContent = `${phrases.length} phrase${phrases.length === 1 ? '' : 's'}`;
+
+  if (!phrases.length) {
+    listEl.innerHTML = `
+      <div class="p-8 text-center text-xs text-slate-400 dark:text-slate-500">
+        No smart phrases match your filter.
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = phrases.map(sp => {
+    const isSelected = sp.id === selectedSmartPhraseId;
+    return `
+      <div class="p-3 cursor-pointer transition-colors border-l-2 ${isSelected ? 'sp-row-active border-l-indigo-600 dark:border-l-indigo-500' : 'border-l-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'} sp-ledger-item"
+           data-id="${sp.id}">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span class="sp-tag-badge">${escapeHtml(sp.full_trigger)}</span>
+          <span class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 dark:text-slate-500">${escapeHtml(sp.category || 'general')}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">${escapeHtml(sp.title)}</p>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">${escapeHtml((sp.content || '').replace(/[\n#|]/g, ' ').substring(0, 75))}…</p>
+      </div>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.sp-ledger-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const id = Number(item.dataset.id);
+      selectSmartPhrase(id);
+    });
+  });
+
+  // If no phrase selected yet and phrases exist, select the first one
+  if (!selectedSmartPhraseId && phrases.length > 0) {
+    selectSmartPhrase(phrases[0].id);
+  }
+}
+
+function selectSmartPhrase(id) {
+  selectedSmartPhraseId = id;
+  const sp = smartPhrasesCache.find(p => p.id === id);
+  if (!sp) return;
+
+  // Toggle active class on list
+  document.querySelectorAll('.sp-ledger-item').forEach(item => {
+    const isSel = Number(item.dataset.id) === id;
+    item.classList.toggle('sp-row-active', isSel);
+    item.classList.toggle('border-l-indigo-600', isSel);
+    item.classList.toggle('dark:border-l-indigo-500', isSel);
+  });
+
+  const emptyState = $('sp-empty-state');
+  const formBody   = $('sp-editor-form');
+  if (emptyState) emptyState.classList.add('hidden');
+  if (formBody) formBody.classList.remove('hidden');
+
+  // Populate editor
+  if ($('sp-title-input')) $('sp-title-input').value = sp.title || '';
+  if ($('sp-code-input')) $('sp-code-input').value = sp.code || '';
+  if ($('sp-content-input')) $('sp-content-input').value = sp.content || '';
+  if ($('sp-category-input')) $('sp-category-input').value = sp.category || 'general';
+
+  // Handle prefix select vs custom input
+  const select = $('sp-prefix-select');
+  const customInput = $('sp-prefix-input');
+  if (['@', '!', '#', '.'].includes(sp.trigger_prefix)) {
+    if (select) select.value = sp.trigger_prefix;
+    if (customInput) customInput.classList.add('hidden');
+  } else {
+    if (select) select.value = 'custom';
+    if (customInput) {
+      customInput.classList.remove('hidden');
+      customInput.value = sp.trigger_prefix || '';
+    }
+  }
+
+  updateTriggerBadgePreview();
+  setSmartPhrasePreviewMode(false);
+}
+
+function updateTriggerBadgePreview() {
+  const select = $('sp-prefix-select');
+  const customInput = $('sp-prefix-input');
+  const pfx = select && select.value === 'custom' ? (customInput?.value || '@') : (select?.value || '@');
+  const code = ($('sp-code-input')?.value || 'code').trim().toLowerCase().replace(/\s+/g, '-');
+  const full = `${pfx}${code}`;
+
+  const preview = $('sp-trigger-preview');
+  const fullLbl = $('sp-full-trigger-lbl');
+  if (preview) preview.textContent = full;
+  if (fullLbl) fullLbl.textContent = full;
+}
+
+function setSmartPhrasePreviewMode(isPreview) {
+  const input = $('sp-content-input');
+  const pane  = $('sp-preview-pane');
+  const btn   = $('sp-btn-preview-toggle');
+  if (!input || !pane) return;
+
+  if (isPreview) {
+    pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty template body.</p>';
+    pane.classList.remove('hidden');
+    input.classList.add('hidden');
+    if (btn) btn.textContent = 'Edit Markdown';
+  } else {
+    pane.classList.add('hidden');
+    input.classList.remove('hidden');
+    if (btn) btn.textContent = 'Live Preview';
+  }
+}
+
+let spEventsWired = false;
+function wireSmartPhraseEditorEvents() {
+  if (spEventsWired) return;
+  spEventsWired = true;
+
+  // Search filter
+  $('sp-search-input')?.addEventListener('input', debounce(renderSmartPhrasesList, 150));
+
+  // Quick prefix tabs
+  $('sp-prefix-tabs')?.querySelectorAll('.sp-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $('sp-prefix-tabs').querySelectorAll('.sp-tab-btn').forEach(b => {
+        b.className = 'sp-tab-btn px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800';
+      });
+      btn.className = 'sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400';
+      currentPrefixFilter = btn.dataset.filter;
+      renderSmartPhrasesList();
+    });
+  });
+
+  // Prefix select change
+  $('sp-prefix-select')?.addEventListener('change', (e) => {
+    const custom = $('sp-prefix-input');
+    if (e.target.value === 'custom') {
+      if (custom) { custom.classList.remove('hidden'); custom.focus(); }
+    } else {
+      if (custom) custom.classList.add('hidden');
+    }
+    updateTriggerBadgePreview();
+  });
+
+  $('sp-prefix-input')?.addEventListener('input', updateTriggerBadgePreview);
+  $('sp-code-input')?.addEventListener('input', updateTriggerBadgePreview);
+
+  // New Phrase button
+  $('sp-btn-new')?.addEventListener('click', () => {
+    selectedSmartPhraseId = null;
+    document.querySelectorAll('.sp-ledger-item').forEach(i => i.classList.remove('sp-row-active', 'border-l-indigo-600', 'dark:border-l-indigo-500'));
+    
+    $('sp-empty-state')?.classList.add('hidden');
+    $('sp-editor-form')?.classList.remove('hidden');
+
+    if ($('sp-title-input')) $('sp-title-input').value = '';
+    if ($('sp-code-input')) $('sp-code-input').value = '';
+    if ($('sp-content-input')) $('sp-content-input').value = '';
+    if ($('sp-category-input')) $('sp-category-input').value = 'general';
+    if ($('sp-prefix-select')) $('sp-prefix-select').value = '@';
+    if ($('sp-prefix-input')) $('sp-prefix-input').classList.add('hidden');
+
+    updateTriggerBadgePreview();
+    setSmartPhrasePreviewMode(false);
+    $('sp-title-input')?.focus();
+  });
+
+  // Table Inserters
+  $('sp-insert-rom')?.addEventListener('click', () => {
+    insertInSpEditor(`\n| Joint / Movement | Active ROM | Passive ROM | End-Feel | Pain (0-10) |\n|:---|:---|:---|:---|:---|\n| Flexion | | | Firm | |\n| Extension | | | Hard | |\n`);
+  });
+
+  $('sp-insert-neuro')?.addEventListener('click', () => {
+    insertInSpEditor(`\n| Level | Dermatome | Myotome (0-5) | Reflex |\n|:---|:---|:---|:---|\n| C5 / L4 | Normal | 5/5 | 2+ |\n| C6 / L5 | Normal | 5/5 | 2+ |\n| C7 / S1 | Normal | 5/5 | 2+ |\n`);
+  });
+
+  $('sp-insert-stability')?.addEventListener('click', () => {
+    insertInSpEditor(`\n| Ligament | Test | Laxity Grade | Endpoint |\n|:---|:---|:---|:---|\n| Structure 1 | Test A | Grade 0 | Firm |\n`);
+  });
+
+  // Live preview toggle
+  $('sp-btn-preview-toggle')?.addEventListener('click', () => {
+    const isCurrentlyHidden = $('sp-preview-pane')?.classList.contains('hidden');
+    setSmartPhrasePreviewMode(isCurrentlyHidden);
+  });
+
+  // Save Phrase
+  $('sp-btn-save')?.addEventListener('click', async () => {
+    const title = ($('sp-title-input')?.value || '').trim();
+    const select = $('sp-prefix-select');
+    const custom = $('sp-prefix-input');
+    const prefix = select && select.value === 'custom' ? (custom?.value || '@').trim() : (select?.value || '@');
+    const code = ($('sp-code-input')?.value || '').trim().toLowerCase().replace(/\s+/g, '-');
+    const content = ($('sp-content-input')?.value || '').trim();
+    const category = ($('sp-category-input')?.value || 'general').trim();
+
+    if (!title) { alert('Phrase title is required.'); $('sp-title-input')?.focus(); return; }
+    if (!code) { alert('Trigger keyword code is required.'); $('sp-code-input')?.focus(); return; }
+    if (!content) { alert('Phrase content cannot be empty.'); $('sp-content-input')?.focus(); return; }
+
+    try {
+      const payload = { title, trigger_prefix: prefix, code, content, category };
+      let saved;
+      if (selectedSmartPhraseId) {
+        saved = await window.api.smartPhrases.update(selectedSmartPhraseId, payload);
+      } else {
+        saved = await window.api.smartPhrases.create(payload);
+        selectedSmartPhraseId = saved.id;
+      }
+
+      await loadSmartPhrasesCache();
+      renderSmartPhrasesList();
+      selectSmartPhrase(saved.id);
+
+      const ind = $('sp-save-indicator');
+      if (ind) {
+        ind.classList.remove('hidden');
+        setTimeout(() => ind.classList.add('hidden'), 2500);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to save phrase.');
+    }
+  });
+
+  // Delete Phrase
+  $('sp-btn-delete')?.addEventListener('click', async () => {
+    if (!selectedSmartPhraseId) return;
+    const sp = smartPhrasesCache.find(p => p.id === selectedSmartPhraseId);
+    if (!confirm(`Are you sure you want to delete "${sp?.full_trigger || 'this phrase'}"?`)) return;
+
+    try {
+      await window.api.smartPhrases.delete(selectedSmartPhraseId);
+      selectedSmartPhraseId = null;
+      await loadSmartPhrasesCache();
+      renderSmartPhrasesList();
+      if (smartPhrasesCache.length > 0) {
+        selectSmartPhrase(smartPhrasesCache[0].id);
+      } else {
+        $('sp-empty-state')?.classList.remove('hidden');
+        $('sp-editor-form')?.classList.add('hidden');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to delete phrase.');
+    }
+  });
+}
+
+function insertInSpEditor(text) {
+  const el = $('sp-content-input');
+  if (!el) return;
+  setSmartPhrasePreviewMode(false);
+  const start = el.selectionStart || 0;
+  const end = el.selectionEnd || 0;
+  const val = el.value;
+  el.value = val.substring(0, start) + text + val.substring(end);
+  el.focus();
+  el.selectionStart = el.selectionEnd = start + text.length;
+}
+
+// ── Dynamic In-Editor Expansion Engine ───────────────────────────────────────
+
+let activeEditorTarget = null;
+let activeTriggerToken = null;
+let popoverCandidates = [];
+let popoverFocusIndex = 0;
+
+function initSmartPhraseExpansionEngine() {
+  const popover = $('sp-autocomplete-popover');
+  const popoverList = $('sp-popover-list');
+  if (!popover || !popoverList) return;
+
+  function closePopover() {
+    popover.classList.add('hidden');
+    popoverCandidates = [];
+    popoverFocusIndex = 0;
+    activeTriggerToken = null;
+    activeEditorTarget = null;
+  }
+
+  // Check if a character is a trigger prefix registered in the library
+  function isTriggerPrefix(char) {
+    if (!char) return false;
+    return smartPhrasesCache.some(sp => sp.trigger_prefix === char) || ['@', '!', '#', '.'].includes(char);
+  }
+
+  // Handle typing inside any note textarea
+  document.addEventListener('input', (e) => {
+    const target = e.target;
+    if (!target || target.tagName !== 'TEXTAREA') return;
+    if (target.id !== 'note-content-input' && !target.id.startsWith('note-edit-input-')) return;
+
+    activeEditorTarget = target;
+    const caretPos = target.selectionStart;
+    const val = target.value;
+
+    // Scan backwards from caretPos - 1 to find trigger prefix
+    let triggerIdx = -1;
+    for (let i = caretPos - 1; i >= 0; i--) {
+      const c = val[i];
+      if (c === ' ' || c === '\n') break; // stopped at word boundary
+      if (isTriggerPrefix(c)) {
+        if (i === 0 || val[i - 1] === ' ' || val[i - 1] === '\n') {
+          triggerIdx = i;
+          break;
+        }
+      }
+    }
+
+    if (triggerIdx === -1) {
+      closePopover();
+      return;
+    }
+
+    const token = val.substring(triggerIdx, caretPos); // e.g. "@c-sp" or "!od"
+    const prefix = token[0];
+    const query = token.slice(1).toLowerCase();
+
+    activeTriggerToken = {
+      prefix,
+      query,
+      start: triggerIdx,
+      end: caretPos
+    };
+
+    // Filter in-memory smart phrases cache with 0ms latency
+    popoverCandidates = smartPhrasesCache.filter(sp => {
+      if (sp.trigger_prefix !== prefix) return false;
+      if (!query) return true;
+      return sp.code.toLowerCase().includes(query) || sp.title.toLowerCase().includes(query);
+    }).slice(0, 10);
+
+    if (popoverCandidates.length === 0) {
+      closePopover();
+      return;
+    }
+
+    // Render candidate suggestions
+    popoverFocusIndex = 0;
+    renderPopoverList(popoverList);
+
+    // Position popover adjacent to cursor
+    positionPopover(target, popover);
+  });
+
+  function renderPopoverList(listEl) {
+    listEl.innerHTML = popoverCandidates.map((sp, idx) => `
+      <li class="px-3 py-2 cursor-pointer transition-colors flex items-center justify-between gap-3 ${idx === popoverFocusIndex ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'}"
+          data-index="${idx}">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">${escapeHtml(sp.full_trigger)}</span>
+            <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate font-sans">${escapeHtml(sp.title)}</span>
+          </div>
+        </div>
+        <span class="shrink-0 text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+          ${escapeHtml(sp.category || 'general')}
+        </span>
+      </li>
+    `).join('');
+
+    popover.classList.remove('hidden');
+
+    listEl.querySelectorAll('li').forEach(li => {
+      li.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+        const idx = Number(li.dataset.index);
+        applySmartPhrase(popoverCandidates[idx]);
+      });
+    });
+  }
+
+  function positionPopover(textarea, popoverEl) {
+    const rect = textarea.getBoundingClientRect();
+    const caretPos = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, caretPos);
+    const lineCount = (textBefore.match(/\n/g) || []).length;
+
+    const lineHeight = 20;
+    const approxTop = rect.top + Math.min(textarea.clientHeight - 60, (lineCount * lineHeight) + 26) - textarea.scrollTop;
+    const approxLeft = Math.min(window.innerWidth - 340, rect.left + 24);
+
+    popoverEl.style.top = `${Math.max(10, Math.min(window.innerHeight - 300, approxTop))}px`;
+    popoverEl.style.left = `${approxLeft}px`;
+  }
+
+  function applySmartPhrase(sp) {
+    if (!activeEditorTarget || !activeTriggerToken || !sp) return;
+    const target = activeEditorTarget;
+    const val = target.value;
+    const replacement = sp.content;
+
+    // Replace the typed trigger token with the full expanded content
+    const newVal = val.substring(0, activeTriggerToken.start) + replacement + val.substring(activeTriggerToken.end);
+    target.value = newVal;
+
+    // Position caret right after expansion
+    const newCaret = activeTriggerToken.start + replacement.length;
+    target.focus();
+    target.selectionStart = target.selectionEnd = newCaret;
+
+    closePopover();
+  }
+
+  // Keyboard navigation on active textarea
+  document.addEventListener('keydown', (e) => {
+    if (popover.classList.contains('hidden') || popoverCandidates.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      popoverFocusIndex = (popoverFocusIndex + 1) % popoverCandidates.length;
+      renderPopoverList(popoverList);
+      popoverList.children[popoverFocusIndex]?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      popoverFocusIndex = (popoverFocusIndex - 1 + popoverCandidates.length) % popoverCandidates.length;
+      renderPopoverList(popoverList);
+      popoverList.children[popoverFocusIndex]?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      applySmartPhrase(popoverCandidates[popoverFocusIndex]);
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closePopover();
+      return;
+    }
+  });
+
+  // Close on outside click
+  document.addEventListener('mousedown', (e) => {
+    if (!popover.contains(e.target) && e.target !== activeEditorTarget) {
+      closePopover();
+    }
+  });
+}
+
+// Initialise Smart Phrases Cache & Expansion Engine
+loadSmartPhrasesCache();
+initSmartPhraseExpansionEngine();

@@ -115,4 +115,16 @@ contextBridge.exposeInMainWorld('api', {
     deleteEvent: (id)               => ipcRenderer.invoke('diary:deleteEvent', id),
   },
 
+  // ── Domain: Smart Phrases (Phase 5) ───────────────────────────────────
+
+  smartPhrases: {
+    list:         (filter)          => ipcRenderer.invoke('smartPhrases:list', filter),
+    getById:      (id)              => ipcRenderer.invoke('smartPhrases:getById', id),
+    getByTrigger: (fullTrigger)     => ipcRenderer.invoke('smartPhrases:getByTrigger', fullTrigger),
+    search:       (prefix, query)   => ipcRenderer.invoke('smartPhrases:search', prefix, query),
+    create:       (data)            => ipcRenderer.invoke('smartPhrases:create', data),
+    update:       (id, data)        => ipcRenderer.invoke('smartPhrases:update', id, data),
+    delete:       (id)              => ipcRenderer.invoke('smartPhrases:delete', id),
+  },
+
 });
