@@ -650,41 +650,71 @@ function renderMarkdown(raw) {
   return result;
 }
 
+const STARTER_TABLE_HTML = `
+<div class="excel-table-wrap">
+  <table class="excel-table">
+    <thead>
+      <tr>
+        <th style="width: 50%;"><span class="th-text" contenteditable="true">Parameter / Item</span><div class="col-resizer"></div></th>
+        <th style="width: 50%;"><span class="th-text" contenteditable="true">Clinical Finding</span><div class="col-resizer"></div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" class="excel-input text-left" placeholder="Enter item / test..." /></td>
+        <td><input type="text" class="excel-input text-left" placeholder="Enter finding / value..." /></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
 // ── Excel-Style Interactive Table Calculations & Column Resizing ──────────
+
 function initExcelTables(container, optionalTextarea) {
   if (!container) return;
 
-  // 1. Column Resizers
-  container.querySelectorAll('.col-resizer').forEach(resizer => {
-    resizer.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const th = resizer.parentElement;
-      if (!th) return;
-      const startX = e.clientX;
-      const startWidth = th.offsetWidth;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+  const tables = container.classList && container.classList.contains('excel-table')
+    ? [container]
+    : Array.from(container.querySelectorAll('.excel-table'));
 
-      function onMouseMove(moveEvent) {
-        const newWidth = Math.max(35, startWidth + (moveEvent.clientX - startX));
-        th.style.width = `${newWidth}px`;
-      }
+  tables.forEach(table => {
+    // 1. Column Resizers
+    table.querySelectorAll('.col-resizer').forEach(resizer => {
+      if (resizer._resizerWired) return;
+      resizer._resizerWired = true;
 
-      function onMouseUp() {
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      }
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const th = resizer.parentElement;
+        if (!th) return;
+        const startX = e.clientX;
+        const startWidth = th.offsetWidth;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+        function onMouseMove(moveEvent) {
+          const newWidth = Math.max(35, startWidth + (moveEvent.clientX - startX));
+          th.style.width = `${newWidth}px`;
+        }
+
+        function onMouseUp() {
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
     });
-  });
 
-  // 2. Interactive in-cell calculations & auto-summed rows
-  container.querySelectorAll('.excel-table').forEach(table => {
+    // 2. Attach Interactive Row & Column Manipulation Controls
+    attachTableControls(table, container, optionalTextarea);
+
+    // 3. Interactive in-cell calculations & auto-summed rows
     function recalcTable() {
       const groupSums = {};
 
@@ -805,28 +835,249 @@ function initExcelTables(container, optionalTextarea) {
       });
     }
 
-    table.addEventListener('input', (e) => {
-      if (e.target && e.target.classList.contains('excel-input')) {
-        e.target.setAttribute('value', e.target.value);
-        recalcTable();
-        if (optionalTextarea) {
-          syncPreviewValuesToTextarea(container, optionalTextarea);
-        }
-      }
-    });
+    if (!table._eventsWired) {
+      table._eventsWired = true;
 
-    table.addEventListener('change', (e) => {
-      if (e.target && e.target.classList.contains('excel-input')) {
-        e.target.setAttribute('value', e.target.value);
-        recalcTable();
-        if (optionalTextarea) {
-          syncPreviewValuesToTextarea(container, optionalTextarea);
+      table.addEventListener('input', (e) => {
+        if (e.target && e.target.classList.contains('excel-input')) {
+          e.target.setAttribute('value', e.target.value);
+          recalcTable();
+          if (optionalTextarea) {
+            syncPreviewValuesToTextarea(container, optionalTextarea);
+          }
         }
-      }
-    });
+      });
+
+      table.addEventListener('change', (e) => {
+        if (e.target && e.target.classList.contains('excel-input')) {
+          e.target.setAttribute('value', e.target.value);
+          recalcTable();
+          if (optionalTextarea) {
+            syncPreviewValuesToTextarea(container, optionalTextarea);
+          }
+        }
+      });
+    }
 
     recalcTable();
   });
+}
+
+function attachTableControls(table, container, optionalTextarea) {
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+  if (!thead || !tbody) return;
+
+  // 1. Column Controls on TH
+  thead.querySelectorAll('tr').forEach(headerRow => {
+    const ths = headerRow.querySelectorAll('th');
+    ths.forEach((th, colIdx) => {
+      // Ensure resizer exists
+      if (!th.querySelector('.col-resizer')) {
+        const resizer = document.createElement('div');
+        resizer.className = 'col-resizer';
+        th.appendChild(resizer);
+      }
+
+      // Ensure th-text exists
+      if (!th.querySelector('.th-text')) {
+        const textNodes = Array.from(th.childNodes).filter(n => {
+          if (n.nodeType === 3) return true;
+          return !n.classList || (!n.classList.contains('col-resizer') && !n.classList.contains('col-actions'));
+        });
+        const span = document.createElement('span');
+        span.className = 'th-text';
+        span.contentEditable = 'true';
+        textNodes.forEach(n => span.appendChild(n));
+        th.prepend(span);
+      }
+
+      // Ensure col-actions exists
+      let colActions = th.querySelector('.col-actions');
+      if (!colActions) {
+        colActions = document.createElement('div');
+        colActions.className = 'col-actions';
+        colActions.innerHTML = `
+          <button type="button" class="btn-col-add" title="Add column to right">+</button>
+          <button type="button" class="btn-col-del" title="Delete column">✕</button>
+        `;
+        th.appendChild(colActions);
+      }
+
+      // Wire col-add
+      const btnAdd = colActions.querySelector('.btn-col-add');
+      if (btnAdd && !btnAdd._wired) {
+        btnAdd._wired = true;
+        btnAdd.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          addColumnToTable(table, colIdx, container, optionalTextarea);
+        });
+      }
+
+      // Wire col-del
+      const btnDel = colActions.querySelector('.btn-col-del');
+      if (btnDel && !btnDel._wired) {
+        btnDel._wired = true;
+        btnDel.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteColumnFromTable(table, colIdx, container, optionalTextarea);
+        });
+      }
+    });
+  });
+
+  // 2. Row Controls on Body TR
+  tbody.querySelectorAll('tr:not(.excel-total-row)').forEach(tr => {
+    const firstTd = tr.querySelector('td');
+    if (!firstTd) return;
+
+    let flank = firstTd.querySelector('.row-flank-actions');
+    if (!flank) {
+      flank = document.createElement('div');
+      flank.className = 'row-flank-actions';
+      flank.innerHTML = `
+        <button type="button" class="btn-row-add" title="Insert row below">+</button>
+        <button type="button" class="btn-row-del" title="Delete row">🗑️</button>
+      `;
+      firstTd.prepend(flank);
+    }
+
+    const btnAdd = flank.querySelector('.btn-row-add');
+    if (btnAdd && !btnAdd._wired) {
+      btnAdd._wired = true;
+      btnAdd.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addRowToTable(table, tr, container, optionalTextarea);
+      });
+    }
+
+    const btnDel = flank.querySelector('.btn-row-del');
+    if (btnDel && !btnDel._wired) {
+      btnDel._wired = true;
+      btnDel.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteRowFromTable(table, tr, container, optionalTextarea);
+      });
+    }
+  });
+}
+
+function addRowToTable(table, targetTr, container, optionalTextarea) {
+  const theadThs = table.querySelectorAll('thead th');
+  const colCount = theadThs.length || targetTr.querySelectorAll('td').length || 2;
+  const newTr = document.createElement('tr');
+
+  for (let i = 0; i < colCount; i++) {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'excel-input text-left';
+    input.placeholder = i === 0 ? 'New Item' : '—';
+    td.appendChild(input);
+    newTr.appendChild(td);
+  }
+
+  targetTr.after(newTr);
+  initExcelTables(table, optionalTextarea);
+
+  const firstInp = newTr.querySelector('input');
+  if (firstInp) firstInp.focus();
+
+  if (optionalTextarea) {
+    syncPreviewValuesToTextarea(container, optionalTextarea);
+  }
+}
+
+function deleteRowFromTable(table, targetTr, container, optionalTextarea) {
+  const tbody = table.querySelector('tbody');
+  const bodyRows = tbody.querySelectorAll('tr:not(.excel-total-row)');
+  if (bodyRows.length <= 1) {
+    targetTr.querySelectorAll('input').forEach(inp => {
+      inp.value = '';
+      inp.setAttribute('value', '');
+    });
+    return;
+  }
+
+  targetTr.remove();
+  initExcelTables(table, optionalTextarea);
+
+  if (optionalTextarea) {
+    syncPreviewValuesToTextarea(container, optionalTextarea);
+  }
+}
+
+function addColumnToTable(table, colIdx, container, optionalTextarea) {
+  const headerRow = table.querySelector('thead tr');
+  if (!headerRow) return;
+
+  const currentTh = headerRow.children[colIdx];
+  const newTh = document.createElement('th');
+  newTh.style.width = '140px';
+  newTh.innerHTML = `<span class="th-text" contenteditable="true">New Col</span><div class="col-resizer"></div>`;
+
+  if (currentTh) {
+    currentTh.after(newTh);
+  } else {
+    headerRow.appendChild(newTh);
+  }
+
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    if (tr.classList.contains('excel-total-row')) {
+      const firstTd = tr.querySelector('td');
+      if (firstTd && firstTd.hasAttribute('colspan')) {
+        const span = parseInt(firstTd.getAttribute('colspan')) || 1;
+        firstTd.setAttribute('colspan', String(span + 1));
+      }
+      return;
+    }
+    const currentTd = tr.children[colIdx];
+    const newTd = document.createElement('td');
+    newTd.innerHTML = `<input type="text" class="excel-input text-left" placeholder="—" />`;
+    if (currentTd) {
+      currentTd.after(newTd);
+    } else {
+      tr.appendChild(newTd);
+    }
+  });
+
+  initExcelTables(table, optionalTextarea);
+
+  if (optionalTextarea) {
+    syncPreviewValuesToTextarea(container, optionalTextarea);
+  }
+}
+
+function deleteColumnFromTable(table, colIdx, container, optionalTextarea) {
+  const headerRow = table.querySelector('thead tr');
+  if (!headerRow || headerRow.children.length <= 1) {
+    alert('Clinical tables must have at least one column.');
+    return;
+  }
+
+  headerRow.children[colIdx]?.remove();
+
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    if (tr.classList.contains('excel-total-row')) {
+      const firstTd = tr.querySelector('td');
+      if (firstTd && firstTd.hasAttribute('colspan')) {
+        const span = parseInt(firstTd.getAttribute('colspan')) || 2;
+        if (span > 1) firstTd.setAttribute('colspan', String(span - 1));
+      }
+      return;
+    }
+    tr.children[colIdx]?.remove();
+  });
+
+  initExcelTables(table, optionalTextarea);
+
+  if (optionalTextarea) {
+    syncPreviewValuesToTextarea(container, optionalTextarea);
+  }
 }
 
 function syncPreviewValuesToTextarea(previewPane, textarea) {
@@ -1125,6 +1376,7 @@ const SOAP_TEMPLATE_RICH = `<h3>Subjective</h3>
 </ul>`;
 
 $('btn-insert-soap')?.addEventListener('click', () => insertAtCursor(SOAP_TEMPLATE_RICH));
+$('btn-insert-table')?.addEventListener('click', () => insertAtCursor(STARTER_TABLE_HTML));
 $('btn-insert-bullet')?.addEventListener('click', () => insertAtCursor('\n• '));
 $('btn-insert-timestamp')?.addEventListener('click', () => {
   const now = new Date();
@@ -1818,7 +2070,7 @@ function updateTriggerBadgePreview() {
   const customInput = $('sp-prefix-input');
   const pfx = select && select.value === 'custom' ? (customInput?.value || '@') : (select?.value || '@');
   let rawCode = ($('sp-code-input')?.value || 'code').trim().replace(/\s+/g, '-');
-  const code = (pfx === '!' ? rawCode.toUpperCase() : rawCode);
+  const code = (pfx === '!' || pfx === '#' ? rawCode.toUpperCase() : rawCode);
   const full = `${pfx}${code}`;
 
   const preview = $('sp-trigger-preview');
@@ -1947,123 +2199,9 @@ function wireSmartPhraseEditorEvents() {
     $('sp-title-input')?.focus();
   });
 
-  // Quick Table Presets (Rich Excel Tables)
-  $('sp-insert-rom')?.addEventListener('click', () => {
-    insertInSpEditor(`\n<div class="excel-table-wrap">
-  <table class="excel-table">
-    <thead>
-      <tr>
-        <th style="width: 140px;">Joint &amp; Movement<div class="col-resizer"></div></th>
-        <th style="width: 100px;">Normative<div class="col-resizer"></div></th>
-        <th style="width: 110px;">Active ROM<div class="col-resizer"></div></th>
-        <th style="width: 110px;">Passive ROM<div class="col-resizer"></div></th>
-        <th style="width: 130px;">End-Feel<div class="col-resizer"></div></th>
-        <th>Pain / Restriction Notes<div class="col-resizer"></div></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="font-semibold">Flexion</td>
-        <td class="text-slate-400">Normal</td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input" placeholder="Firm / stretch" /></td>
-        <td><input type="text" class="excel-input text-left" placeholder="Pain-free" /></td>
-      </tr>
-      <tr>
-        <td class="font-semibold">Extension</td>
-        <td class="text-slate-400">Normal</td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input" placeholder="Firm / bone" /></td>
-        <td><input type="text" class="excel-input text-left" placeholder="Pain-free" /></td>
-      </tr>
-      <tr>
-        <td class="font-semibold">Lateral Flexion / Rotation</td>
-        <td class="text-slate-400">Normal</td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="°" /></td>
-        <td><input type="text" class="excel-input" placeholder="Tissue stretch" /></td>
-        <td><input type="text" class="excel-input text-left" placeholder="Symmetric" /></td>
-      </tr>
-    </tbody>
-  </table>
-</div>\n`);
-  });
-
-  $('sp-insert-neuro')?.addEventListener('click', () => {
-    insertInSpEditor(`\n<div class="excel-table-wrap">
-  <table class="excel-table">
-    <thead>
-      <tr>
-        <th style="width: 80px;">Level<div class="col-resizer"></div></th>
-        <th style="width: 150px;">Dermatome Sensory<div class="col-resizer"></div></th>
-        <th style="width: 150px;">Myotome Key Muscle<div class="col-resizer"></div></th>
-        <th style="width: 110px;">Power (0-5)<div class="col-resizer"></div></th>
-        <th style="width: 120px;">Reflex (0-4+)<div class="col-resizer"></div></th>
-        <th>Clinical Notes<div class="col-resizer"></div></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="font-bold text-center">L4 / C5</td>
-        <td>Medial foot / Lateral arm</td>
-        <td>Tibialis Anterior / Deltoid</td>
-        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
-        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
-      </tr>
-      <tr>
-        <td class="font-bold text-center">L5 / C6</td>
-        <td>Dorsum foot / Thumb</td>
-        <td>EHL / Wrist Extensors</td>
-        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
-        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
-      </tr>
-      <tr>
-        <td class="font-bold text-center">S1 / C7</td>
-        <td>Lateral foot / Middle finger</td>
-        <td>Gastrocs / Triceps</td>
-        <td><input type="text" class="excel-input text-center" placeholder="5/5" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="2+" /></td>
-        <td><input type="text" class="excel-input" placeholder="Intact" /></td>
-      </tr>
-    </tbody>
-  </table>
-</div>\n`);
-  });
-
-  $('sp-insert-stability')?.addEventListener('click', () => {
-    insertInSpEditor(`\n<div class="excel-table-wrap">
-  <table class="excel-table">
-    <thead>
-      <tr>
-        <th style="width: 160px;">Structure Tested<div class="col-resizer"></div></th>
-        <th style="width: 160px;">Test Performed<div class="col-resizer"></div></th>
-        <th style="width: 130px;">Laxity Grade<div class="col-resizer"></div></th>
-        <th style="width: 130px;">Endpoint Quality<div class="col-resizer"></div></th>
-        <th>Symptom Reproduction<div class="col-resizer"></div></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="font-semibold">ACL / Collateral</td>
-        <td>Lachman / Stress test</td>
-        <td><input type="text" class="excel-input text-center" placeholder="Grade 0" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="Crisp &amp; firm" /></td>
-        <td><input type="text" class="excel-input" placeholder="Pain-free" /></td>
-      </tr>
-      <tr>
-        <td class="font-semibold">Meniscus / Labrum</td>
-        <td>McMurray / Compression</td>
-        <td><input type="text" class="excel-input text-center" placeholder="Negative" /></td>
-        <td><input type="text" class="excel-input text-center" placeholder="Smooth" /></td>
-        <td><input type="text" class="excel-input" placeholder="No click" /></td>
-      </tr>
-    </tbody>
-  </table>
-</div>\n`);
+  // + Insert Table action
+  $('sp-insert-table')?.addEventListener('click', () => {
+    insertInSpEditor(STARTER_TABLE_HTML);
   });
 
   // Live preview toggle
@@ -2079,7 +2217,7 @@ function wireSmartPhraseEditorEvents() {
     const custom = $('sp-prefix-input');
     const prefix = select && select.value === 'custom' ? (custom?.value || '@').trim() : (select?.value || '@');
     let rawCode = ($('sp-code-input')?.value || '').trim().replace(/\s+/g, '-');
-    const code = (prefix === '!' ? rawCode.toUpperCase() : rawCode);
+    const code = (prefix === '!' || prefix === '#' ? rawCode.toUpperCase() : rawCode);
     
     const editor = $('sp-content-editor');
     const content = (editor ? editor.innerHTML : ($('sp-content-input')?.value || '')).trim();
@@ -2201,7 +2339,7 @@ function initSmartPhraseExpansionEngine() {
     if (!char) return false;
     return smartPhrasesCache.some(sp => sp.trigger_prefix === char) ||
            triggerCategoriesCache.some(c => c.prefix === char) ||
-           ['@', '!'].includes(char);
+           ['@', '!', '#'].includes(char);
   }
 
   // Handle typing inside any editor (contenteditable or textarea)

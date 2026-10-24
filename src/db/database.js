@@ -158,12 +158,13 @@ console.log(`[DB] SQLite database initialised at: ${DB_PATH}`);
 // ── Seed Trigger Categories ───────────────────────────────────────────────
 try {
   // Enforce cleanup of unwanted categories
-  db.prepare("DELETE FROM trigger_categories WHERE prefix IN ('.', '?', '#')").run();
+  db.prepare("DELETE FROM trigger_categories WHERE prefix IN ('.', '?')").run();
   db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix IN ('.', '?')").run();
 
   const insertCat = db.prepare('INSERT OR IGNORE INTO trigger_categories (prefix, label) VALUES (?, ?)');
   insertCat.run('@', 'Shortcuts');
   insertCat.run('!', 'MSK Measures');
+  insertCat.run('#', 'Clinical Assessments');
 } catch (catErr) {
   console.warn('[DB] Trigger categories seed warning:', catErr.message);
 }
@@ -171,14 +172,14 @@ try {
 // ── Seed & Upgrade Smart Phrases Library ──────────────────────────────────
 try {
   const { SEED_SMART_PHRASES } = require('./smart_phrases_seed');
-  // Check if legacy lowercase outcome measures or pre-4-column templates exist
-  const sample = db.prepare("SELECT content FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'DASH' LIMIT 1").get();
-  const needsReseed = !sample || !sample.content.includes('Section / Item Description');
+  // Check if #ROM-CERVICAL exists in DB and DASH has updated th-text
+  const sampleAssessment = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'ROM-CERVICAL' LIMIT 1").get();
+  const sampleTh = db.prepare("SELECT content FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'DASH' LIMIT 1").get();
+  const needsReseed = !sampleAssessment || (sampleTh && !sampleTh.content.includes('th-text'));
 
   if (needsReseed) {
-    console.log('[DB] Upgrading existing smart phrases to 4-column uppercase Excel-style tables...');
-    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '!'").run();
-    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '@' AND code IN ('rom-table', 'neuro-table', 'ligament-table', 'c-spine', 'l-spine', 'shoulder', 'knee', 'hip', 'ankle', 'treestump')").run();
+    console.log('[DB] Synchronizing # Clinical Assessments and updated MSK smart phrases...');
+    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix IN ('@', '!', '#')").run();
   }
 
   const countRow = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get();
@@ -193,7 +194,7 @@ try {
       }
     });
     seedTx(SEED_SMART_PHRASES);
-    console.log(`[DB] Synchronized ${SEED_SMART_PHRASES.length} MSK smart phrases into database.`);
+    console.log(`[DB] Synchronized ${SEED_SMART_PHRASES.length} MSK & Clinical Assessment smart phrases into database.`);
   }
 } catch (seedErr) {
   console.warn('[DB] Smart phrases seed warning:', seedErr.message);
@@ -566,7 +567,7 @@ const smartPhrases = {
   create(data) {
     const trigger_prefix = (data.trigger_prefix || '@').trim();
     let rawCode = (data.code || '').trim().replace(/\s+/g, '-');
-    const code = (trigger_prefix === '!' ? rawCode.toUpperCase() : rawCode);
+    const code = (trigger_prefix === '!' || trigger_prefix === '#' ? rawCode.toUpperCase() : rawCode);
     const title = (data.title || '').trim();
     const content = (data.content || '').trim();
     const category = (data.category || 'general').trim();
@@ -589,7 +590,7 @@ const smartPhrases = {
 
     const trigger_prefix = (data.trigger_prefix !== undefined ? data.trigger_prefix : sp.trigger_prefix).trim();
     let rawCode = (data.code !== undefined ? data.code.trim().replace(/\s+/g, '-') : sp.code);
-    const code = (trigger_prefix === '!' ? rawCode.toUpperCase() : rawCode);
+    const code = (trigger_prefix === '!' || trigger_prefix === '#' ? rawCode.toUpperCase() : rawCode);
     const title = (data.title !== undefined ? data.title : sp.title).trim();
     const content = (data.content !== undefined ? data.content : sp.content).trim();
     const category = (data.category !== undefined ? data.category : sp.category).trim();
@@ -637,8 +638,8 @@ const triggerCategories = {
     }
   },
   delete(prefix) {
-    if (prefix === '@' || prefix === '!') {
-      throw new Error('Default system prefixes (@ and !) cannot be deleted.');
+    if (prefix === '@' || prefix === '!' || prefix === '#') {
+      throw new Error('Default system prefixes (@, !, and #) cannot be deleted.');
     }
     return db.prepare('DELETE FROM trigger_categories WHERE prefix = ?').run(prefix);
   }

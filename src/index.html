@@ -650,9 +650,10 @@
                       Trigger Prefix Symbol <span class="text-red-500">*</span>
                     </label>
                     <div class="flex items-center gap-1.5">
-                      <select id="sp-prefix-select" class="form-input !py-1.5 text-xs font-mono w-28">
+                      <select id="sp-prefix-select" class="form-input !py-1.5 text-xs font-mono w-32">
                         <option value="@">@ (Shortcuts)</option>
                         <option value="!">! (MSK Measures)</option>
+                        <option value="#"># (Clinical Assessments)</option>
                         <option value="custom">Custom…</option>
                       </select>
                       <input id="sp-prefix-input" type="text" maxlength="2"
@@ -694,16 +695,13 @@
                     <p class="section-label">Expansion Content (Markdown &amp; Grids)</p>
                   </div>
 
-                  <!-- Quick Grid / Table Helpers -->
+                  <!-- Insert Table Action -->
                   <div class="flex items-center gap-1.5">
-                    <button id="sp-insert-rom" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
-                      + ROM Grid
-                    </button>
-                    <button id="sp-insert-neuro" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
-                      + Neuro Grid
-                    </button>
-                    <button id="sp-insert-stability" type="button" class="btn-ghost !py-1 !px-2 text-[11px] font-mono border border-slate-200 dark:border-slate-700">
-                      + Stability Grid
+                    <button id="sp-insert-table" type="button" class="btn-ghost !py-1 !px-2.5 text-[11px] font-semibold border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1.5" title="Insert 1x2 Excel Starter Table">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      + Insert Table
                     </button>
                   </div>
                 </div>
@@ -1540,6 +1538,16 @@
                            bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400
                            hover:bg-indigo-100 dark:hover:bg-indigo-500/25 transition-colors">
               📋 + SOAP Template
+            </button>
+            <button id="btn-insert-table" type="button"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-md
+                           border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400
+                           hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center gap-1"
+                    title="Insert 1x2 Excel Starter Table">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              + Insert Table
             </button>
             <button id="btn-insert-bullet" type="button" class="btn-icon h-7 w-7 text-xs font-bold" title="Insert Bullet (- )">•</button>
             <button id="btn-insert-timestamp" type="button" class="btn-icon h-7 w-7 text-[11px]" title="Insert Current Time">🕒</button>
