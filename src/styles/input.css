@@ -517,3 +517,26 @@ button > *,
 button * {
   pointer-events: none;
 }
+
+/* ── Strict View Isolation & Ghost Click Elimination ─────────────────────── */
+.view-pane-hidden,
+.view-pane-hidden *,
+.view-pane-hidden button,
+.view-pane-hidden [data-action],
+.view-pane-hidden [data-nav-view],
+.view-pane-hidden input,
+.view-pane-hidden select,
+[aria-hidden="true"].view-pane-hidden,
+[aria-hidden="true"].view-pane-hidden * {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.view-pane-active {
+  display: flex !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  position: relative !important;
+}
+

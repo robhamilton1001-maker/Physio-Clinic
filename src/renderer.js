@@ -92,8 +92,22 @@ function switchView(target) {
   ALL_VIEWS.forEach(v => {
     const el = $(`view-${v}`);
     if (!el) return;
-    el.classList.toggle('hidden', v !== target);
-    el.classList.toggle('flex',   v === target);
+    const isActive = (v === target);
+    if (isActive) {
+      el.classList.remove('hidden', 'view-pane-hidden');
+      el.classList.add('flex', 'view-pane-active');
+      el.style.setProperty('display', 'flex', 'important');
+      el.style.setProperty('pointer-events', 'auto', 'important');
+      el.style.setProperty('visibility', 'visible', 'important');
+      el.setAttribute('aria-hidden', 'false');
+    } else {
+      el.classList.add('hidden', 'view-pane-hidden');
+      el.classList.remove('flex', 'view-pane-active');
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('pointer-events', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.setAttribute('aria-hidden', 'true');
+    }
   });
   document.querySelectorAll('[data-view]').forEach(link => {
     link.className = (link.dataset.view === target || (target === 'programs' && link.dataset.view === 'pt-programs')) ? 'nav-item-active' : 'nav-item';
@@ -2890,14 +2904,30 @@ function switchExerciseLibraryTab(tab) {
   if (tab === 'protocols') {
     if (tabProtocols) tabProtocols.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all cursor-pointer';
     if (tabExercises) tabExercises.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer';
-    paneProtocols?.classList.remove('hidden');
-    paneExercises?.classList.add('hidden');
+    if (paneProtocols) {
+      paneProtocols.classList.remove('hidden', 'view-pane-hidden');
+      paneProtocols.style.setProperty('display', 'flex', 'important');
+      paneProtocols.style.setProperty('pointer-events', 'auto', 'important');
+    }
+    if (paneExercises) {
+      paneExercises.classList.add('hidden', 'view-pane-hidden');
+      paneExercises.style.setProperty('display', 'none', 'important');
+      paneExercises.style.setProperty('pointer-events', 'none', 'important');
+    }
     renderProtocolsGrid();
   } else {
     if (tabExercises) tabExercises.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all cursor-pointer';
     if (tabProtocols) tabProtocols.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer';
-    paneExercises?.classList.remove('hidden');
-    paneProtocols?.classList.add('hidden');
+    if (paneExercises) {
+      paneExercises.classList.remove('hidden', 'view-pane-hidden');
+      paneExercises.style.setProperty('display', 'flex', 'important');
+      paneExercises.style.setProperty('pointer-events', 'auto', 'important');
+    }
+    if (paneProtocols) {
+      paneProtocols.classList.add('hidden', 'view-pane-hidden');
+      paneProtocols.style.setProperty('display', 'none', 'important');
+      paneProtocols.style.setProperty('pointer-events', 'none', 'important');
+    }
     if (!exlibExercises || exlibExercises.length === 0) {
       loadExerciseLibraryHub();
     } else {
@@ -3311,6 +3341,11 @@ document.addEventListener('click', (e) => {
   const target = e.target?.closest?.('[data-action], [data-nav-view], [data-library-tab], #set-jump-exlib, #set-jump-smartphrases, #btn-new-protocol-template, #btn-close-proto-modal, #btn-cancel-proto-modal, #exlib-tab-protocols, #exlib-tab-exercises, #btn-close-edit-ex, #btn-cancel-edit-ex, #exlib-btn-new-exercise, #sp-insert-table, #btn-insert-table');
   if (!target) return;
 
+  // Immediate guard: If clicked target is inside an inactive/hidden view, discard it immediately
+  if (target.closest('.view-pane-hidden, .hidden, [aria-hidden="true"]')) {
+    return;
+  }
+
   // 1. Navigation routing
   const navView = target.dataset?.navView || (target.id === 'set-jump-exlib' ? 'exercise-library' : (target.id === 'set-jump-smartphrases' ? 'smart-phrases' : null));
   if (navView) {
@@ -3396,6 +3431,7 @@ function loadSettingsGeneralPreferences() {
   } catch (_) {}
 }
 
-// Initialise Exercise Library Hub and Settings View
+// Initialise Exercise Library Hub and Settings View, then enforce initial strict view isolation
 initExerciseLibraryHub();
 initSettingsView();
+switchView('dashboard');
