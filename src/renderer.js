@@ -2178,6 +2178,61 @@ function wireSmartPhraseEditorEvents() {
   $('sp-prefix-input')?.addEventListener('input', updateTriggerBadgePreview);
   $('sp-code-input')?.addEventListener('input', updateTriggerBadgePreview);
 
+  // Import from PDF button (Phase 5: 100% Offline Local Importer)
+  $('sp-btn-import-pdf')?.addEventListener('click', async () => {
+    const btn = $('sp-btn-import-pdf');
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'pointer-events-none');
+      }
+
+      const result = await window.api.smartPhrases.importPdfLocal();
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+
+      if (!result) return; // User canceled file dialog
+
+      if (!result.success) {
+        alert(result.error || 'Failed to parse PDF document.');
+        return;
+      }
+
+      selectedSmartPhraseId = null;
+      document.querySelectorAll('.sp-ledger-item').forEach(i => i.classList.remove('sp-row-active', 'border-l-indigo-600', 'dark:border-l-indigo-500'));
+      
+      $('sp-empty-state')?.classList.add('hidden');
+      $('sp-editor-form')?.classList.remove('hidden');
+
+      if ($('sp-title-input')) $('sp-title-input').value = result.title || '';
+      if ($('sp-code-input')) $('sp-code-input').value = (result.code || '').toUpperCase();
+      if ($('sp-prefix-select')) $('sp-prefix-select').value = result.trigger_prefix || '!';
+      if ($('sp-prefix-input')) $('sp-prefix-input').classList.add('hidden');
+      if ($('sp-category-input')) $('sp-category-input').value = result.category || 'outcome_measures';
+
+      if ($('sp-content-editor')) {
+        $('sp-content-editor').innerHTML = result.content || '';
+        initExcelTables($('sp-content-editor'), $('sp-content-input'));
+      }
+      if ($('sp-content-input')) {
+        $('sp-content-input').value = result.content || '';
+      }
+
+      updateTriggerBadgePreview();
+      setSmartPhrasePreviewMode(false);
+      $('sp-code-input')?.focus();
+    } catch (err) {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+      console.error('[sp-btn-import-pdf] Error importing PDF:', err);
+      alert('Error importing PDF: ' + (err.message || 'Unknown error'));
+    }
+  });
+
   // New Phrase button
   $('sp-btn-new')?.addEventListener('click', () => {
     selectedSmartPhraseId = null;

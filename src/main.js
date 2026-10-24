@@ -1,8 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
-// ── Database ────────────────────────────────────────────────────────────────
+// ── Database & Utilities ───────────────────────────────────────────────────
 const db = require('./db/database.js');
+const { parsePdfBuffer } = require('./pdfImporter.js');
 
 // ── Window ──────────────────────────────────────────────────────────────────
 let mainWindow = null;
@@ -200,6 +202,31 @@ ipcMain.handle('smartPhrases:update', (_e, id, data) => {
 ipcMain.handle('smartPhrases:delete', (_e, id) => {
   return db.smartPhrases.delete(Number(id));
 });
+
+// ── PDF Importer (Phase 5) ────────────────────────────────────────────────
+async function handlePdfImport() {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Clinical Assessment PDF',
+    buttonLabel: 'Import PDF',
+    filters: [
+      { name: 'PDF Documents (*.pdf)', extensions: ['pdf'] },
+      { name: 'All Files (*.*)', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  });
+
+  if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+    return null;
+  }
+
+  const filePath = result.filePaths[0];
+  const buffer = fs.readFileSync(filePath);
+  const parsed = await parsePdfBuffer(buffer, filePath);
+  return parsed;
+}
+
+ipcMain.handle('smartphrases:importPdfLocal', handlePdfImport);
+ipcMain.handle('smartPhrases:importPdfLocal', handlePdfImport);
 
 // ── Trigger Categories ────────────────────────────────────────────────────
 

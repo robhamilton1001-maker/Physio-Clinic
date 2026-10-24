@@ -8,12 +8,18 @@
     "build:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css",
     "watch:css": "tailwindcss -i ./src/styles/input.css -o ./src/styles/output.css --watch"
   },
-  "keywords": ["electron", "physiotherapy", "clinic", "local-first"],
+  "keywords": [
+    "electron",
+    "physiotherapy",
+    "clinic",
+    "local-first"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "better-sqlite3": "^13.0.3"
+    "better-sqlite3": "^13.0.3",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.6.1",
