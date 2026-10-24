@@ -26,11 +26,12 @@
 
   /* Universal button hitbox fix: ensure entire button area responds instantly to clicks */
   button {
-    pointer-events: auto;
+    pointer-events: auto !important;
     user-select: none;
   }
-  button > * {
-    pointer-events: none;
+  button > *,
+  button * {
+    pointer-events: none !important;
   }
 }
 
@@ -506,4 +507,13 @@
   .rich-editor ul {
     @apply list-disc list-inside space-y-1 mb-3 text-slate-800 dark:text-slate-200;
   }
+}
+
+/* Explicit guarantee: buttons receive pointer events, their child elements do not swallow clicks */
+button {
+  pointer-events: auto;
+}
+button > *,
+button * {
+  pointer-events: none;
 }

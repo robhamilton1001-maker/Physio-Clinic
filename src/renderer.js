@@ -125,10 +125,25 @@ function switchView(target) {
   }
 
   // Activate settings preferences when navigating to it (NEVER defaults to exercise library)
-  if (target === 'settings' && typeof loadSettingsGeneralPreferences === 'function') {
-    loadSettingsGeneralPreferences();
+  if (target === 'settings') {
+    if (typeof initSettingsView === 'function') initSettingsView();
+    if (typeof loadSettingsGeneralPreferences === 'function') {
+      loadSettingsGeneralPreferences();
+    }
   }
 }
+
+function navigateTo(target) {
+  const navItem = document.getElementById(`nav-${target}`) || document.querySelector(`[data-view="${target}"]`);
+  if (navItem) {
+    navItem.click();
+  } else {
+    switchView(target);
+  }
+}
+
+window.switchView = switchView;
+window.navigateTo = navigateTo;
 
 document.querySelectorAll('[data-view]').forEach(link => {
   link.addEventListener('click', e => { e.preventDefault(); switchView(link.dataset.view); });
@@ -3214,34 +3229,60 @@ async function handleExerciseFormSubmit(e) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initSettingsView() {
-  // Jump buttons to Hubs
-  $('set-jump-exlib')?.addEventListener('click', () => {
-    switchView('exercise-library');
-  });
+  // Jump buttons to Hubs: bind explicit click handlers triggering primary navigation router
+  const btnExLib = $('set-jump-exlib');
+  if (btnExLib) {
+    btnExLib.onclick = (e) => {
+      e.preventDefault();
+      navigateTo('exercise-library');
+    };
+  }
 
-  $('set-jump-smartphrases')?.addEventListener('click', () => {
-    switchView('smart-phrases');
-  });
+  const btnSmart = $('set-jump-smartphrases');
+  if (btnSmart) {
+    btnSmart.onclick = (e) => {
+      e.preventDefault();
+      navigateTo('smart-phrases');
+    };
+  }
 
   // Save clinic preferences
-  $('set-btn-save-prefs')?.addEventListener('click', () => {
-    const prefs = {
-      clinicName: $('set-clinic-name')?.value?.trim() || 'PhysioClinic Practice Suite',
-      practitioner: $('set-practitioner-name')?.value?.trim() || 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC',
-      phone: $('set-clinic-phone')?.value?.trim() || '',
-      hours: $('set-clinic-hours')?.value?.trim() || '08:00 – 18:00 (Mon–Fri)'
+  const btnSavePrefs = $('set-btn-save-prefs');
+  if (btnSavePrefs) {
+    btnSavePrefs.onclick = () => {
+      const prefs = {
+        clinicName: $('set-clinic-name')?.value?.trim() || 'PhysioClinic Practice Suite',
+        practitioner: $('set-practitioner-name')?.value?.trim() || 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC',
+        phone: $('set-clinic-phone')?.value?.trim() || '',
+        hours: $('set-clinic-hours')?.value?.trim() || '08:00 – 18:00 (Mon–Fri)'
+      };
+      try {
+        localStorage.setItem('clinic:preferences', JSON.stringify(prefs));
+        const origText = btnSavePrefs.textContent;
+        btnSavePrefs.textContent = 'Preferences Saved!';
+        setTimeout(() => { btnSavePrefs.textContent = origText; }, 2000);
+      } catch (_) {}
     };
-    try {
-      localStorage.setItem('clinic:preferences', JSON.stringify(prefs));
-      const btn = $('set-btn-save-prefs');
-      const origText = btn.textContent;
-      btn.textContent = 'Preferences Saved!';
-      setTimeout(() => { btn.textContent = origText; }, 2000);
-    } catch (_) {}
-  });
+  }
 
   loadSettingsGeneralPreferences();
 }
+
+// Global delegated click listener for Settings hub shortcuts to ensure 100% click reliability
+document.addEventListener('click', (e) => {
+  const btnExLib = e.target?.closest?.('#set-jump-exlib');
+  if (btnExLib) {
+    e.preventDefault();
+    navigateTo('exercise-library');
+    return;
+  }
+  const btnSmart = e.target?.closest?.('#set-jump-smartphrases');
+  if (btnSmart) {
+    e.preventDefault();
+    navigateTo('smart-phrases');
+    return;
+  }
+});
 
 function loadSettingsGeneralPreferences() {
   try {
