@@ -109,6 +109,11 @@ function switchView(target) {
   if (target === 'smart-phrases' && typeof loadSmartPhrasesHub === 'function') {
     loadSmartPhrasesHub();
   }
+
+  // Activate rehab builder when navigating to it (Phase 7)
+  if (target === 'programs' && window.RehabBuilder) {
+    requestAnimationFrame(() => window.RehabBuilder.activate());
+  }
 }
 
 document.querySelectorAll('[data-view]').forEach(link => {
@@ -1256,6 +1261,18 @@ if (btnProfileBookAppt) {
       closePatientProfile();
       switchView('diary');
       window.Diary.openEventDrawer({ patient_id: activePortfolioPatientId, patient_name: pName });
+    }
+  });
+}
+
+const btnProfileRehabProgram = $('btn-profile-rehab-program');
+if (btnProfileRehabProgram) {
+  btnProfileRehabProgram.addEventListener('click', () => {
+    const patId = activePortfolioPatientId;
+    closePatientProfile();
+    switchView('programs');
+    if (window.RehabBuilder) {
+      window.RehabBuilder.openForPatient(patId);
     }
   });
 }

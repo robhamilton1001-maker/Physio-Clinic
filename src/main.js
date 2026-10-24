@@ -242,6 +242,44 @@ ipcMain.handle('triggerCategories:delete', (_e, prefix) => {
   return db.triggerCategories.delete(prefix);
 });
 
+// ── Phase 7: Phased S&C and Rehab Builder ─────────────────────────────────
+
+// Exercises
+ipcMain.handle('rehab:listExercises', (_e, category, search) => {
+  return db.rehab.listExercises(category, search);
+});
+ipcMain.handle('rehab:createExercise', (_e, data) => {
+  return db.rehab.createExercise(data);
+});
+
+// Templates / Protocols
+ipcMain.handle('rehab:listTemplates', () => {
+  return db.rehab.listTemplates();
+});
+ipcMain.handle('rehab:getTemplate', (_e, id) => {
+  return db.rehab.getTemplateById(id);
+});
+ipcMain.handle('rehab:saveTemplate', (_e, data) => {
+  return db.rehab.saveTemplate(data);
+});
+ipcMain.handle('rehab:deleteTemplate', (_e, id) => {
+  return db.rehab.deleteTemplate(id);
+});
+
+// Patient Programs
+ipcMain.handle('rehab:listPrograms', (_e, patientId) => {
+  return db.rehab.listPrograms(patientId);
+});
+ipcMain.handle('rehab:getProgram', (_e, id) => {
+  return db.rehab.getProgramById(id);
+});
+ipcMain.handle('rehab:saveProgram', (_e, data) => {
+  return db.rehab.saveProgram(data);
+});
+ipcMain.handle('rehab:deleteProgram', (_e, id) => {
+  return db.rehab.deleteProgram(id);
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // APP LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════

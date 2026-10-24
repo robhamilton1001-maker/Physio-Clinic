@@ -124,6 +124,34 @@ db.transaction(() => {
       label           TEXT    NOT NULL,
       created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     );
+
+    -- Phase 7: Phased S&C and Rehab Builder --------------------------------
+    CREATE TABLE IF NOT EXISTS exercise_library (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      name            TEXT    NOT NULL,
+      category        TEXT    DEFAULT 'General',
+      default_sets    INTEGER DEFAULT 3,
+      default_reps    TEXT    DEFAULT '10',
+      thumbnail_path  TEXT,
+      cues            TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS pt_programs (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      patient_id      INTEGER REFERENCES patients(id) ON DELETE SET NULL,
+      title           TEXT    NOT NULL,
+      duration_weeks  INTEGER DEFAULT 4,
+      schedule_json   TEXT    NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS pt_templates (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      name            TEXT    NOT NULL,
+      category        TEXT    DEFAULT 'Rehab',
+      duration_weeks  INTEGER DEFAULT 4,
+      protocol_json   TEXT    NOT NULL
+    );
   `);
 
   // -- Phase 3 columns (safe migrations for existing databases) ------------
@@ -149,6 +177,9 @@ db.transaction(() => {
     CREATE INDEX IF NOT EXISTS idx_sp_prefix              ON smart_phrases(trigger_prefix);
     CREATE INDEX IF NOT EXISTS idx_sp_code                ON smart_phrases(code);
     CREATE INDEX IF NOT EXISTS idx_sp_full                ON smart_phrases(full_trigger);
+    CREATE INDEX IF NOT EXISTS idx_pt_programs_patient   ON pt_programs(patient_id);
+    CREATE INDEX IF NOT EXISTS idx_exercise_lib_cat      ON exercise_library(category);
+    CREATE INDEX IF NOT EXISTS idx_pt_templates_cat      ON pt_templates(category);
   `);
 
 })();
@@ -198,6 +229,43 @@ try {
   }
 } catch (seedErr) {
   console.warn('[DB] Smart phrases seed warning:', seedErr.message);
+}
+
+// ── Seed Exercise Library & Pre-Configured Protocols (Phase 7) ────────────
+try {
+  const { SEED_EXERCISES, SEED_TEMPLATES } = require('./rehab_seed');
+
+  const exCount = db.prepare('SELECT COUNT(*) AS count FROM exercise_library').get();
+  if (!exCount || exCount.count === 0) {
+    const insertEx = db.prepare(`
+      INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
+      VALUES (@name, @category, @default_sets, @default_reps, @thumbnail_path, @cues)
+    `);
+    const seedExTx = db.transaction((exercises) => {
+      for (const ex of exercises) {
+        insertEx.run(ex);
+      }
+    });
+    seedExTx(SEED_EXERCISES);
+    console.log(`[DB] Seeded ${SEED_EXERCISES.length} exercises into exercise_library.`);
+  }
+
+  const tmplCount = db.prepare('SELECT COUNT(*) AS count FROM pt_templates').get();
+  if (!tmplCount || tmplCount.count === 0) {
+    const insertTmpl = db.prepare(`
+      INSERT INTO pt_templates (name, category, duration_weeks, protocol_json)
+      VALUES (@name, @category, @duration_weeks, @protocol_json)
+    `);
+    const seedTmplTx = db.transaction((templates) => {
+      for (const tmpl of templates) {
+        insertTmpl.run(tmpl);
+      }
+    });
+    seedTmplTx(SEED_TEMPLATES);
+    console.log(`[DB] Seeded ${SEED_TEMPLATES.length} pre-configured protocols into pt_templates.`);
+  }
+} catch (rehabSeedErr) {
+  console.warn('[DB] Rehab seed warning:', rehabSeedErr.message);
 }
 
 // ── Prepared statements ───────────────────────────────────────────────────
@@ -645,6 +713,153 @@ const triggerCategories = {
   }
 };
 
+// ── Domain: Phased S&C and Rehab Builder (Phase 7) ────────────────────────
+const rehab = {
+  // Exercise Library
+  listExercises(category, search) {
+    let sql = 'SELECT * FROM exercise_library';
+    const params = [];
+    const where = [];
+
+    if (category && category !== 'All') {
+      where.push('category = ?');
+      params.push(category);
+    }
+    if (search && search.trim()) {
+      where.push('(name LIKE ? OR cues LIKE ? OR category LIKE ?)');
+      const q = `%${search.trim()}%`;
+      params.push(q, q, q);
+    }
+    if (where.length > 0) {
+      sql += ' WHERE ' + where.join(' AND ');
+    }
+    sql += ' ORDER BY category ASC, name ASC';
+    return db.prepare(sql).all(...params);
+  },
+
+  getExerciseById(id) {
+    return db.prepare('SELECT * FROM exercise_library WHERE id = ?').get(Number(id));
+  },
+
+  createExercise(data) {
+    const info = db.prepare(`
+      INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
+      VALUES (@name, @category, @default_sets, @default_reps, @thumbnail_path, @cues)
+    `).run({
+      name: data.name,
+      category: data.category || 'General',
+      default_sets: data.default_sets || 3,
+      default_reps: data.default_reps || '10',
+      thumbnail_path: data.thumbnail_path || null,
+      cues: data.cues || ''
+    });
+    return db.prepare('SELECT * FROM exercise_library WHERE id = ?').get(info.lastInsertRowid);
+  },
+
+  // Protocols / Templates
+  listTemplates() {
+    return db.prepare('SELECT id, name, category, duration_weeks, protocol_json FROM pt_templates ORDER BY name ASC').all();
+  },
+
+  getTemplateById(id) {
+    return db.prepare('SELECT * FROM pt_templates WHERE id = ?').get(Number(id));
+  },
+
+  saveTemplate(data) {
+    const protocolJson = typeof data.protocol_json === 'string' ? data.protocol_json : JSON.stringify(data.protocol_json);
+    if (data.id) {
+      db.prepare(`
+        UPDATE pt_templates
+        SET name = @name, category = @category, duration_weeks = @duration_weeks, protocol_json = @protocol_json
+        WHERE id = @id
+      `).run({
+        id: Number(data.id),
+        name: data.name,
+        category: data.category || 'Rehab',
+        duration_weeks: data.duration_weeks || 4,
+        protocol_json: protocolJson
+      });
+      return db.prepare('SELECT * FROM pt_templates WHERE id = ?').get(Number(data.id));
+    } else {
+      const info = db.prepare(`
+        INSERT INTO pt_templates (name, category, duration_weeks, protocol_json)
+        VALUES (@name, @category, @duration_weeks, @protocol_json)
+      `).run({
+        name: data.name,
+        category: data.category || 'Rehab',
+        duration_weeks: data.duration_weeks || 4,
+        protocol_json: protocolJson
+      });
+      return db.prepare('SELECT * FROM pt_templates WHERE id = ?').get(info.lastInsertRowid);
+    }
+  },
+
+  deleteTemplate(id) {
+    return db.prepare('DELETE FROM pt_templates WHERE id = ?').run(Number(id));
+  },
+
+  // Patient Programs
+  listPrograms(patientId) {
+    if (patientId) {
+      return db.prepare(`
+        SELECT p.*, pat.first_name, pat.last_name
+        FROM pt_programs p
+        LEFT JOIN patients pat ON p.patient_id = pat.id
+        WHERE p.patient_id = ?
+        ORDER BY p.created_at DESC
+      `).all(Number(patientId));
+    }
+    return db.prepare(`
+      SELECT p.*, pat.first_name, pat.last_name
+      FROM pt_programs p
+      LEFT JOIN patients pat ON p.patient_id = pat.id
+      ORDER BY p.created_at DESC
+    `).all();
+  },
+
+  getProgramById(id) {
+    return db.prepare(`
+      SELECT p.*, pat.first_name, pat.last_name
+      FROM pt_programs p
+      LEFT JOIN patients pat ON p.patient_id = pat.id
+      WHERE p.id = ?
+    `).get(Number(id));
+  },
+
+  saveProgram(data) {
+    const schedJson = typeof data.schedule_json === 'string' ? data.schedule_json : JSON.stringify(data.schedule_json);
+    if (data.id) {
+      db.prepare(`
+        UPDATE pt_programs
+        SET patient_id = @patient_id, title = @title, duration_weeks = @duration_weeks, schedule_json = @schedule_json
+        WHERE id = @id
+      `).run({
+        id: Number(data.id),
+        patient_id: data.patient_id ? Number(data.patient_id) : null,
+        title: data.title,
+        duration_weeks: data.duration_weeks || 4,
+        schedule_json: schedJson
+      });
+      return this.getProgramById(Number(data.id));
+    } else {
+      const info = db.prepare(`
+        INSERT INTO pt_programs (patient_id, title, duration_weeks, schedule_json)
+        VALUES (@patient_id, @title, @duration_weeks, @schedule_json)
+      `).run({
+        patient_id: data.patient_id ? Number(data.patient_id) : null,
+        title: data.title,
+        duration_weeks: data.duration_weeks || 4,
+        schedule_json: schedJson
+      });
+      return this.getProgramById(info.lastInsertRowid);
+    }
+  },
+
+  deleteProgram(id) {
+    return db.prepare('DELETE FROM pt_programs WHERE id = ?').run(Number(id));
+  }
+};
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -659,6 +874,7 @@ module.exports = {
   stats,
   smartPhrases,
   triggerCategories,
+  rehab,
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {

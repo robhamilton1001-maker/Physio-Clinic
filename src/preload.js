@@ -135,4 +135,18 @@ contextBridge.exposeInMainWorld('api', {
     delete: (prefix)        => ipcRenderer.invoke('triggerCategories:delete', prefix),
   },
 
+  // ── Domain: Phased S&C and Rehab Builder (Phase 7) ──────────────────────
+  rehab: {
+    listExercises:  (category, search) => ipcRenderer.invoke('rehab:listExercises', category, search),
+    createExercise: (data)             => ipcRenderer.invoke('rehab:createExercise', data),
+    listTemplates:  ()                 => ipcRenderer.invoke('rehab:listTemplates'),
+    getTemplate:    (id)               => ipcRenderer.invoke('rehab:getTemplate', id),
+    saveTemplate:   (data)             => ipcRenderer.invoke('rehab:saveTemplate', data),
+    deleteTemplate: (id)               => ipcRenderer.invoke('rehab:deleteTemplate', id),
+    listPrograms:   (patientId)        => ipcRenderer.invoke('rehab:listPrograms', patientId),
+    getProgram:     (id)               => ipcRenderer.invoke('rehab:getProgram', id),
+    saveProgram:    (data)             => ipcRenderer.invoke('rehab:saveProgram', data),
+    deleteProgram:  (id)               => ipcRenderer.invoke('rehab:deleteProgram', id),
+  },
+
 });
