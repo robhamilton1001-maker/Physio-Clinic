@@ -236,7 +236,7 @@ try {
   const { SEED_EXERCISES, SEED_TEMPLATES } = require('./rehab_seed');
 
   const exCount = db.prepare('SELECT COUNT(*) AS count FROM exercise_library').get();
-  if (!exCount || exCount.count < 100) {
+  if (!exCount || exCount.count < 250) {
     db.prepare('DELETE FROM exercise_library').run();
     const insertEx = db.prepare(`
       INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)

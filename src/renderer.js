@@ -88,6 +88,7 @@ initTheme();
 const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'exercise-library', 'invoicing', 'settings'];
 
 function switchView(target) {
+  if (target === 'pt-programs') target = 'programs';
   ALL_VIEWS.forEach(v => {
     const el = $(`view-${v}`);
     if (!el) return;
@@ -95,7 +96,7 @@ function switchView(target) {
     el.classList.toggle('flex',   v === target);
   });
   document.querySelectorAll('[data-view]').forEach(link => {
-    link.className = link.dataset.view === target ? 'nav-item-active' : 'nav-item';
+    link.className = (link.dataset.view === target || (target === 'programs' && link.dataset.view === 'pt-programs')) ? 'nav-item-active' : 'nav-item';
   });
 
   // Activate diary when navigating to it
@@ -134,6 +135,7 @@ function switchView(target) {
 }
 
 function navigateTo(target) {
+  if (target === 'pt-programs') target = 'programs';
   const navItem = document.getElementById(`nav-${target}`) || document.querySelector(`[data-view="${target}"]`);
   if (navItem) {
     navItem.click();
@@ -2195,14 +2197,20 @@ function wireSmartPhraseEditorEvents() {
   function openCatModal() {
     if ($('new-cat-prefix-input')) $('new-cat-prefix-input').value = '';
     if ($('new-cat-label-input')) $('new-cat-label-input').value = '';
-    catBackdrop?.classList.remove('opacity-0', 'pointer-events-none');
-    catModal?.classList.remove('opacity-0', 'pointer-events-none');
+    catBackdrop?.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    catBackdrop?.classList.add('pointer-events-auto');
+    catModal?.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    catModal?.classList.add('flex', 'pointer-events-auto');
+    document.body.classList.add('modal-open');
     $('new-cat-prefix-input')?.focus();
   }
 
   function closeCatModal() {
-    catBackdrop?.classList.add('opacity-0', 'pointer-events-none');
-    catModal?.classList.add('opacity-0', 'pointer-events-none');
+    catBackdrop?.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    catBackdrop?.classList.remove('pointer-events-auto');
+    catModal?.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    catModal?.classList.remove('flex', 'pointer-events-auto');
+    document.body.classList.remove('modal-open');
   }
 
   $('sp-btn-add-category')?.addEventListener('click', openCatModal);
@@ -2872,31 +2880,39 @@ let exlibExercises = [];
 let exlibProtocols = [];
 let activeExLibTab = 'protocols';
 
-function initExerciseLibraryHub() {
+function switchExerciseLibraryTab(tab) {
+  activeExLibTab = tab;
   const tabProtocols = $('exlib-tab-protocols');
   const tabExercises = $('exlib-tab-exercises');
   const paneProtocols = $('exlib-pane-protocols');
   const paneExercises = $('exlib-pane-exercises');
 
-  if (tabProtocols && tabExercises) {
-    tabProtocols.addEventListener('click', () => {
-      activeExLibTab = 'protocols';
-      tabProtocols.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
-      tabExercises.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
-      paneProtocols?.classList.remove('hidden');
-      paneExercises?.classList.add('hidden');
-      renderProtocolsGrid();
-    });
-
-    tabExercises.addEventListener('click', () => {
-      activeExLibTab = 'exercises';
-      tabExercises.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all';
-      tabProtocols.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all';
-      paneExercises?.classList.remove('hidden');
-      paneProtocols?.classList.add('hidden');
+  if (tab === 'protocols') {
+    if (tabProtocols) tabProtocols.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all cursor-pointer';
+    if (tabExercises) tabExercises.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer';
+    paneProtocols?.classList.remove('hidden');
+    paneExercises?.classList.add('hidden');
+    renderProtocolsGrid();
+  } else {
+    if (tabExercises) tabExercises.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all cursor-pointer';
+    if (tabProtocols) tabProtocols.className = 'px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer';
+    paneExercises?.classList.remove('hidden');
+    paneProtocols?.classList.add('hidden');
+    if (!exlibExercises || exlibExercises.length === 0) {
+      loadExerciseLibraryHub();
+    } else {
       renderExercisesTable();
-    });
+    }
   }
+}
+window.switchExerciseLibraryTab = switchExerciseLibraryTab;
+
+function initExerciseLibraryHub() {
+  const tabProtocols = $('exlib-tab-protocols');
+  const tabExercises = $('exlib-tab-exercises');
+
+  tabProtocols?.addEventListener('click', () => switchExerciseLibraryTab('protocols'));
+  tabExercises?.addEventListener('click', () => switchExerciseLibraryTab('exercises'));
 
   // Filter & Search listeners for Exercises tab
   $('exlib-search')?.addEventListener('input', debounce(renderExercisesTable, 150));
@@ -3048,24 +3064,34 @@ function openNewProtocolModal() {
   if (!modal) return;
   $('edit-proto-id').value = '';
   $('edit-proto-name').value = '';
-  $('edit-proto-cat').value = 'Knee & Quadriceps';
+  $('edit-proto-cat').value = 'Knee & Quad';
   $('edit-proto-duration').value = '4';
-  modal.classList.remove('opacity-0', 'pointer-events-none');
-  $('edit-proto-name')?.focus();
+  modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  modal.classList.add('flex', 'pointer-events-auto');
+  document.body.classList.add('modal-open');
+  setTimeout(() => $('edit-proto-name')?.focus(), 50);
 }
 
 function closeNewProtocolModal() {
   const modal = $('modal-edit-protocol-template');
-  if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+  if (modal) {
+    modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    modal.classList.remove('flex', 'pointer-events-auto');
+  }
+  document.body.classList.remove('modal-open');
 }
 
 async function handleProtocolTemplateSubmit(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const name = $('edit-proto-name')?.value?.trim();
-  const category = $('edit-proto-cat')?.value;
+  const category = $('edit-proto-cat')?.value || 'Knee & Quad';
   const duration_weeks = parseInt($('edit-proto-duration')?.value, 10) || 4;
 
-  if (!name) return;
+  if (!name) {
+    alert('Please enter a protocol name.');
+    $('edit-proto-name')?.focus();
+    return;
+  }
 
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const weeks = [];
@@ -3094,7 +3120,7 @@ async function handleProtocolTemplateSubmit(e) {
   try {
     const saved = await window.api.rehab.saveTemplate(payload);
     closeNewProtocolModal();
-    switchView('programs');
+    navigateTo('programs');
     if (window.RehabBuilder) {
       window.RehabBuilder.loadProgramData(saved);
     }
@@ -3113,7 +3139,11 @@ function renderExercisesTable() {
   const catVal = $('exlib-cat')?.value || 'All';
 
   const filtered = exlibExercises.filter(ex => {
-    if (catVal !== 'All' && ex.category !== catVal) return false;
+    if (catVal !== 'All') {
+      const normCat = (ex.category || '').toLowerCase().replace(/quadriceps/g, 'quad').replace(/hamstrings/g, 'hamstring');
+      const normVal = catVal.toLowerCase().replace(/quadriceps/g, 'quad').replace(/hamstrings/g, 'hamstring');
+      if (normCat !== normVal && !normCat.includes(normVal) && !normVal.includes(normCat)) return false;
+    }
     if (searchVal) {
       return (ex.name && ex.name.toLowerCase().includes(searchVal)) ||
              (ex.cues && ex.cues.toLowerCase().includes(searchVal)) ||
@@ -3153,8 +3183,8 @@ function renderExercisesTable() {
       <td class="py-2.5 px-4 font-mono text-center">${escapeHtml(ex.default_reps || '10')}</td>
       <td class="py-2.5 px-4 max-w-xs truncate text-slate-500 dark:text-slate-400">${escapeHtml(ex.cues || '—')}</td>
       <td class="py-2.5 px-4 text-right space-x-1 whitespace-nowrap">
-        <button type="button" class="btn-ex-edit btn-ghost !py-1 !px-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
-        <button type="button" class="btn-ex-del btn-ghost !py-1 !px-2 text-xs text-rose-500 hover:underline">Delete</button>
+        <button type="button" data-action="edit-exercise" data-id="${ex.id}" class="btn-ex-edit btn-ghost !py-1 !px-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">Edit</button>
+        <button type="button" data-action="delete-exercise" data-id="${ex.id}" class="btn-ex-del btn-ghost !py-1 !px-2 text-xs text-rose-500 hover:underline cursor-pointer">Delete</button>
       </td>
     `;
 
@@ -3181,7 +3211,7 @@ function openEditExerciseModal(exercise = null) {
 
   $('edit-ex-id').value = exercise ? exercise.id : '';
   $('edit-ex-name').value = exercise ? exercise.name : '';
-  $('edit-ex-cat').value = exercise ? (exercise.category || 'Knee & Quadriceps') : 'Knee & Quadriceps';
+  $('edit-ex-cat').value = exercise ? (exercise.category || 'Knee & Quad') : 'Knee & Quad';
   $('edit-ex-sets').value = exercise ? (exercise.default_sets || 3) : 3;
   $('edit-ex-reps').value = exercise ? (exercise.default_reps || '10-12') : '10-12';
   $('edit-ex-cues').value = exercise ? (exercise.cues || '') : '';
@@ -3190,13 +3220,19 @@ function openEditExerciseModal(exercise = null) {
     title.textContent = exercise ? 'Edit Exercise Movement' : 'Add New Exercise Movement';
   }
 
-  modal.classList.remove('opacity-0', 'pointer-events-none');
-  $('edit-ex-name')?.focus();
+  modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  modal.classList.add('flex', 'pointer-events-auto');
+  document.body.classList.add('modal-open');
+  setTimeout(() => $('edit-ex-name')?.focus(), 50);
 }
 
 function closeEditExerciseModal() {
   const modal = $('modal-edit-exercise');
-  if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+  if (modal) {
+    modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    modal.classList.remove('flex', 'pointer-events-auto');
+  }
+  document.body.classList.remove('modal-open');
 }
 
 async function handleExerciseFormSubmit(e) {
@@ -3268,18 +3304,81 @@ function initSettingsView() {
   loadSettingsGeneralPreferences();
 }
 
-// Global delegated click listener for Settings hub shortcuts to ensure 100% click reliability
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL EVENT DELEGATION LISTENER (ROUTER, TABS, MODALS, HITBOXES)
+// ═══════════════════════════════════════════════════════════════════════════
 document.addEventListener('click', (e) => {
-  const btnExLib = e.target?.closest?.('#set-jump-exlib');
-  if (btnExLib) {
+  const target = e.target?.closest?.('[data-action], [data-nav-view], [data-library-tab], #set-jump-exlib, #set-jump-smartphrases, #btn-new-protocol-template, #btn-close-proto-modal, #btn-cancel-proto-modal, #exlib-tab-protocols, #exlib-tab-exercises, #btn-close-edit-ex, #btn-cancel-edit-ex, #exlib-btn-new-exercise, #sp-insert-table, #btn-insert-table');
+  if (!target) return;
+
+  // 1. Navigation routing
+  const navView = target.dataset?.navView || (target.id === 'set-jump-exlib' ? 'exercise-library' : (target.id === 'set-jump-smartphrases' ? 'smart-phrases' : null));
+  if (navView) {
     e.preventDefault();
-    navigateTo('exercise-library');
+    navigateTo(navView);
     return;
   }
-  const btnSmart = e.target?.closest?.('#set-jump-smartphrases');
-  if (btnSmart) {
+
+  // 2. Library tab switching
+  const libTab = target.dataset?.libraryTab || (target.id === 'exlib-tab-protocols' ? 'protocols' : (target.id === 'exlib-tab-exercises' ? 'exercises' : null));
+  if (libTab) {
     e.preventDefault();
-    navigateTo('smart-phrases');
+    switchExerciseLibraryTab(libTab);
+    return;
+  }
+
+  // 3. Protocol Template modal triggers
+  const action = target.dataset?.action;
+  if (action === 'new-protocol-template' || target.id === 'btn-new-protocol-template') {
+    e.preventDefault();
+    openNewProtocolModal();
+    return;
+  }
+  if (action === 'close-protocol-modal' || target.id === 'btn-close-proto-modal' || target.id === 'btn-cancel-proto-modal') {
+    e.preventDefault();
+    closeNewProtocolModal();
+    return;
+  }
+
+  // 4. Exercise modal triggers
+  if (action === 'new-exercise' || target.id === 'exlib-btn-new-exercise') {
+    e.preventDefault();
+    openEditExerciseModal(null);
+    return;
+  }
+  if (action === 'close-exercise-modal' || target.id === 'btn-close-edit-ex' || target.id === 'btn-cancel-edit-ex') {
+    e.preventDefault();
+    closeEditExerciseModal();
+    return;
+  }
+  if (action === 'edit-exercise') {
+    e.preventDefault();
+    const id = target.dataset?.id;
+    const ex = exlibExercises.find(x => String(x.id) === String(id));
+    if (ex) openEditExerciseModal(ex);
+    return;
+  }
+  if (action === 'delete-exercise') {
+    e.preventDefault();
+    const id = target.dataset?.id;
+    const ex = exlibExercises.find(x => String(x.id) === String(id));
+    if (ex && confirm(`Delete "${ex.name}" from the exercise database?`)) {
+      window.api.rehab.deleteExercise(ex.id)
+        .then(() => loadExerciseLibraryHub())
+        .catch(err => alert('Failed to delete exercise: ' + err.message));
+    }
+    return;
+  }
+
+  // 5. Table insertion actions
+  if (target.id === 'sp-insert-table') {
+    e.preventDefault();
+    if (typeof insertInSpEditor === 'function') insertInSpEditor(STARTER_TABLE_HTML);
+    return;
+  }
+  if (target.id === 'btn-insert-table') {
+    e.preventDefault();
+    if (typeof insertAtCursor === 'function') insertAtCursor(STARTER_TABLE_HTML);
     return;
   }
 });

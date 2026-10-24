@@ -857,7 +857,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-shift-day');
     if (!modal) return;
 
-    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    modal.classList.add('flex', 'pointer-events-auto');
+    document.body.classList.add('modal-open');
 
     const sourceLabel = document.getElementById('shift-source-label');
     if (sourceLabel) {
@@ -885,7 +887,11 @@ window.RehabBuilder = (() => {
 
   function closeShiftDayModal() {
     const modal = document.getElementById('modal-shift-day');
-    if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+    if (modal) {
+      modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+      modal.classList.remove('flex', 'pointer-events-auto');
+    }
+    document.body.classList.remove('modal-open');
   }
 
   function applyShiftDay() {
@@ -945,7 +951,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-quick-replace');
     if (!modal) return;
 
-    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    modal.classList.add('flex', 'pointer-events-auto');
+    document.body.classList.add('modal-open');
 
     const searchInput = document.getElementById('modal-replace-search');
     if (searchInput) {
@@ -959,7 +967,11 @@ window.RehabBuilder = (() => {
   function closeQuickReplaceModal() {
     replaceTarget = null;
     const modal = document.getElementById('modal-quick-replace');
-    if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+    if (modal) {
+      modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+      modal.classList.remove('flex', 'pointer-events-auto');
+    }
+    document.body.classList.remove('modal-open');
   }
 
   function renderQuickReplaceList(query) {
@@ -1018,7 +1030,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-save-template');
     if (!modal) return;
 
-    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    modal.classList.add('flex', 'pointer-events-auto');
+    document.body.classList.add('modal-open');
     const nameInput = document.getElementById('modal-template-name-input');
     if (nameInput) {
       nameInput.value = program.title || 'Custom Rehab Protocol';
@@ -1031,7 +1045,11 @@ window.RehabBuilder = (() => {
 
   function closeSaveTemplateModal() {
     const modal = document.getElementById('modal-save-template');
-    if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+    if (modal) {
+      modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+      modal.classList.remove('flex', 'pointer-events-auto');
+    }
+    document.body.classList.remove('modal-open');
   }
 
   // ── PDF Export Action ───────────────────────────────────────────────────────
@@ -1346,12 +1364,17 @@ window.RehabBuilder = (() => {
   function loadProgramData(progData) {
     if (!progData) return;
     try {
+      if (!inited) {
+        wireEvents();
+        inited = true;
+      }
       program.id = progData.id || null;
       program.patient_id = progData.patient_id || null;
-      program.title = progData.title || 'Rehabilitation Routine';
+      program.title = progData.title || progData.name || 'Rehabilitation Routine';
       program.duration_weeks = progData.duration_weeks || 4;
 
-      const sched = typeof progData.schedule_json === 'string' ? JSON.parse(progData.schedule_json) : progData.schedule_json;
+      const rawSched = progData.schedule_json || progData.protocol_json;
+      const sched = typeof rawSched === 'string' ? JSON.parse(rawSched) : rawSched;
       program.weeks = sched?.weeks || createBlankWeeks(program.duration_weeks);
 
       activeWeek = 1;
@@ -1361,9 +1384,22 @@ window.RehabBuilder = (() => {
         window.switchView('programs');
       }
 
-      renderTier1Header();
-      renderTier2Timeline();
-      renderTier3Cards();
+      if (!allExercises || allExercises.length === 0) {
+        window.api.rehab.listExercises().then(list => {
+          allExercises = list || [];
+          renderTier1Header();
+          renderTier2Timeline();
+          renderTier3Cards();
+        }).catch(() => {
+          renderTier1Header();
+          renderTier2Timeline();
+          renderTier3Cards();
+        });
+      } else {
+        renderTier1Header();
+        renderTier2Timeline();
+        renderTier3Cards();
+      }
     } catch (err) {
       console.error('[RehabBuilder] loadProgramData error:', err);
     }

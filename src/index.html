@@ -958,11 +958,11 @@
         <!-- Tabs -->
         <div class="flex items-center gap-2">
           <nav class="flex space-x-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
-            <button id="exlib-tab-protocols" type="button" class="px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all">
+            <button id="exlib-tab-protocols" data-action="switch-library-tab" data-library-tab="protocols" type="button" class="px-3.5 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm transition-all cursor-pointer">
               Multi-Week Protocols
             </button>
-            <button id="exlib-tab-exercises" type="button" class="px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all">
-              Individual Exercises (170+)
+            <button id="exlib-tab-exercises" data-action="switch-library-tab" data-library-tab="exercises" type="button" class="px-3.5 py-1.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer">
+              Individual Exercises (250+)
             </button>
           </nav>
         </div>
@@ -975,11 +975,11 @@
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Periodized Multi-Week Protocols</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Author and manage phased rehabilitation protocols from scratch.</p>
           </div>
-          <button id="btn-new-protocol-template" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <button id="btn-new-protocol-template" data-action="new-protocol-template" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span>New Protocol Template</span>
+            <span class="pointer-events-none">New Protocol Template</span>
           </button>
         </div>
 
@@ -997,30 +997,30 @@
             <div class="relative flex-1 max-w-md">
               <input id="exlib-search" type="search"
                      class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                     placeholder="Search 170+ exercises by name or cues..." />
-              <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                     placeholder="Search 250+ exercises by name or cues..." />
+              <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
             </div>
             <select id="exlib-cat" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none">
-              <option value="All">All Categories (170+)</option>
-              <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
-              <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
+              <option value="All">All Categories (250+)</option>
+              <option value="Knee & Quad">Knee &amp; Quad</option>
+              <option value="Hamstring & Posterior Chain">Hamstring &amp; Posterior Chain</option>
               <option value="Glute & Hip">Glute &amp; Hip</option>
               <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
               <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
               <option value="Chest & Triceps">Chest &amp; Triceps</option>
               <option value="Back & Biceps">Back &amp; Biceps</option>
               <option value="Spine & Core">Spine &amp; Core</option>
-              <option value="Custom Rehab">Custom Rehab</option>
+              <option value="General Rehab">General Rehab</option>
             </select>
-            <span id="exlib-count-badge" class="text-xs text-slate-500 font-medium">170 exercises</span>
+            <span id="exlib-count-badge" class="text-xs text-slate-500 font-medium">260+ exercises</span>
           </div>
-          <button id="exlib-btn-new-exercise" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm">
-            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <button id="exlib-btn-new-exercise" data-action="new-exercise" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            <span>New Exercise</span>
+            <span class="pointer-events-none">New Exercise</span>
           </button>
         </div>
 
@@ -1073,13 +1073,13 @@
         </div>
         <div class="flex items-center gap-2">
           <!-- Clean sub-navigation pills to jump to hubs -->
-          <button id="set-jump-exlib" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
+          <button id="set-jump-exlib" data-action="navigate" data-nav-view="exercise-library" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
             <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
             </svg>
             <span class="pointer-events-none">Exercise Library Hub →</span>
           </button>
-          <button id="set-jump-smartphrases" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
+          <button id="set-jump-smartphrases" data-action="navigate" data-nav-view="smart-phrases" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
             <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
             </svg>
@@ -1479,11 +1479,11 @@
        [3B] NEW TRIGGER CATEGORY MODAL — z-60
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="cat-modal-backdrop"
-       class="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-[2px] opacity-0 pointer-events-none transition-opacity duration-200">
+       class="hidden fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-[2px] opacity-0 pointer-events-none transition-opacity duration-200">
   </div>
   <div id="modal-new-category"
-       class="fixed inset-0 z-60 flex items-center justify-center p-4 pointer-events-none opacity-0 transition-opacity duration-200">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 pointer-events-auto">
+       class="hidden fixed inset-0 z-60 flex items-center justify-center p-4 pointer-events-none opacity-0 transition-opacity duration-200">
+    <div class="relative z-[61] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
         <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Add Trigger Category</h3>
         <button id="modal-new-category-close" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none">&times;</button>
@@ -2053,11 +2053,10 @@
 
   <!-- ── MODAL: Save as Protocol Template (Phase 7) ────────────────────────── -->
   <div id="modal-save-template"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4
-              bg-slate-950/75 backdrop-blur-sm
-              opacity-0 pointer-events-none transition-opacity duration-200"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        aria-modal="true" role="dialog">
-    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div class="relative z-[51] w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2">
           <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
@@ -2097,11 +2096,10 @@
 
   <!-- ── MODAL: Quick Replace Exercise (Phase 7) ───────────────────────────── -->
   <div id="modal-quick-replace"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4
-              bg-slate-950/75 backdrop-blur-sm
-              opacity-0 pointer-events-none transition-opacity duration-200"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        aria-modal="true" role="dialog">
-    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 max-h-[85vh] flex flex-col">
+    <div class="relative z-[51] w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 max-h-[85vh] flex flex-col pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2">
           <span class="text-indigo-500 text-lg">⇄</span>
@@ -2112,7 +2110,7 @@
 
       <div class="relative">
         <input id="modal-replace-search" type="search" class="form-input !py-1.5 !text-xs pl-8" placeholder="Search replacement exercise..." />
-        <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <svg class="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
       </div>
@@ -2125,11 +2123,10 @@
 
   <!-- ── MODAL: Move / Copy Day Routine ──────────────────────────────────── -->
   <div id="modal-shift-day"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4
-              bg-slate-950/75 backdrop-blur-sm
-              opacity-0 pointer-events-none transition-opacity duration-200"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        role="dialog" aria-modal="true">
-    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div class="relative z-[51] w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2">
           <span class="text-indigo-500 text-lg">⇄</span>
@@ -2190,15 +2187,15 @@
   </div>
 
   <!-- ── MODAL: Create / Edit Exercise (Settings Tab) ───────────────────────── -->
+  <!-- ── MODAL: Create / Edit Exercise (Settings Tab) ───────────────────────── -->
   <div id="modal-edit-exercise"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4
-              bg-slate-950/75 backdrop-blur-sm
-              opacity-0 pointer-events-none transition-opacity duration-200"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        role="dialog" aria-modal="true">
-    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div class="relative z-[51] w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h2 id="modal-edit-ex-title" class="text-sm font-semibold text-slate-900 dark:text-slate-100">Add New Exercise</h2>
-        <button id="btn-close-edit-ex" type="button" class="btn-icon">✕</button>
+        <button id="btn-close-edit-ex" data-action="close-exercise-modal" type="button" class="btn-icon cursor-pointer">✕</button>
       </div>
       <form id="form-edit-exercise" class="space-y-3.5">
         <input type="hidden" id="edit-ex-id" value="" />
@@ -2212,15 +2209,15 @@
           <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
           <select id="edit-ex-cat" required
                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
-            <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
+            <option value="Knee & Quad">Knee &amp; Quad</option>
+            <option value="Hamstring & Posterior Chain">Hamstring &amp; Posterior Chain</option>
             <option value="Glute & Hip">Glute &amp; Hip</option>
             <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
             <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
             <option value="Chest & Triceps">Chest &amp; Triceps</option>
             <option value="Back & Biceps">Back &amp; Biceps</option>
             <option value="Spine & Core">Spine &amp; Core</option>
-            <option value="Custom Rehab">Custom Rehab</option>
+            <option value="General Rehab">General Rehab</option>
           </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
@@ -2243,8 +2240,8 @@
                     placeholder="Technique cues, positioning, tempo, breathing..."></textarea>
         </div>
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button type="button" id="btn-cancel-edit-ex" class="btn-ghost text-xs">Cancel</button>
-          <button type="submit" class="btn-primary text-xs py-2 px-4">Save Exercise</button>
+          <button type="button" id="btn-cancel-edit-ex" data-action="close-exercise-modal" class="btn-ghost text-xs cursor-pointer">Cancel</button>
+          <button type="submit" class="btn-primary text-xs py-2 px-4 cursor-pointer">Save Exercise</button>
         </div>
       </form>
     </div>
@@ -2252,15 +2249,14 @@
 
   <!-- ── MODAL: Create / Edit Protocol Template ────────────────────────────── -->
   <div id="modal-edit-protocol-template"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4
-              bg-slate-950/75 backdrop-blur-sm
-              opacity-0 pointer-events-none transition-opacity duration-200"
+       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+              bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        role="dialog" aria-modal="true">
-    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div class="relative z-[51] w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h2 id="modal-proto-title" class="text-sm font-semibold text-slate-900 dark:text-slate-100">New Protocol Template</h2>
-        <button id="btn-close-proto-modal" type="button" class="btn-icon">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <button id="btn-close-proto-modal" data-action="close-protocol-modal" type="button" class="btn-icon cursor-pointer">
+          <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -2277,8 +2273,8 @@
           <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Clinical Category *</label>
           <select id="edit-proto-cat" required
                   class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="Knee & Quadriceps">Knee &amp; Quadriceps</option>
-            <option value="Hamstrings & Posterior Chain">Hamstrings &amp; Posterior Chain</option>
+            <option value="Knee & Quad">Knee &amp; Quad</option>
+            <option value="Hamstring & Posterior Chain">Hamstring &amp; Posterior Chain</option>
             <option value="Glute & Hip">Glute &amp; Hip</option>
             <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
             <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
@@ -2300,8 +2296,8 @@
           </select>
         </div>
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button type="button" id="btn-cancel-proto-modal" class="btn-ghost text-xs">Cancel</button>
-          <button type="submit" class="btn-primary text-xs py-2 px-4">Create &amp; Open in Builder</button>
+          <button type="button" id="btn-cancel-proto-modal" data-action="close-protocol-modal" class="btn-ghost text-xs cursor-pointer">Cancel</button>
+          <button type="submit" id="btn-submit-proto-modal" class="btn-primary text-xs py-2 px-4 cursor-pointer">Create &amp; Open in Builder</button>
         </div>
       </form>
     </div>
