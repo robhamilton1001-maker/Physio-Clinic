@@ -82,6 +82,25 @@ db.transaction(() => {
     );
   `);
 
+  // -- Phase 4: Medico-Legal Notes & Addendums ---------------------------------
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      patient_id  INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      content     TEXT    NOT NULL,
+      created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      is_locked   INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS addendums (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      note_id     INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+      content     TEXT    NOT NULL,
+      timestamp   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+  `);
+
   // -- Phase 3 columns (safe migrations for existing databases) ------------
   [
     `ALTER TABLE appointments ADD COLUMN event_type   TEXT    DEFAULT 'clinical_fup'`,
@@ -99,6 +118,9 @@ db.transaction(() => {
     CREATE INDEX IF NOT EXISTS idx_patients_email         ON patients(email);
     CREATE INDEX IF NOT EXISTS idx_patients_phone         ON patients(phone);
     CREATE INDEX IF NOT EXISTS idx_appointments_end       ON appointments(end_time);
+    CREATE INDEX IF NOT EXISTS idx_p4_notes_patient       ON notes(patient_id);
+    CREATE INDEX IF NOT EXISTS idx_p4_notes_created       ON notes(created_at);
+    CREATE INDEX IF NOT EXISTS idx_p4_addendums_note      ON addendums(note_id);
   `);
 
 })();
@@ -218,7 +240,7 @@ const stmts = {
     SELECT COUNT(*) AS n FROM appointments
     WHERE  date(scheduled_at) = ? AND status != 'cancelled'
   `),
-  countNotes: db.prepare(`SELECT COUNT(*) AS n FROM clinical_notes`),
+  countNotes: db.prepare(`SELECT ((SELECT COUNT(*) FROM notes) + (SELECT COUNT(*) FROM clinical_notes)) AS n`),
 };
 
 // ── Domain modules ──────────────────────────────────────────────────────────
@@ -258,14 +280,27 @@ const patients = {
   },
 
   /**
-   * Fetch a patient's full profile: patient row + appointments + clinical notes.
+   * Fetch a patient's full profile: patient row + appointments + clinical notes + upcoming appt.
    * Returns null if not found or soft-deleted.
    */
   getById(id) {
     const patient = stmts.patientById.get(id);
     if (!patient) return null;
     patient.appointments   = stmts.appointmentsByPatient.all(id);
-    patient.clinical_notes = stmts.notesByPatient.all(id);
+    
+    // Phase 4: Next scheduled appointment (future, non-cancelled)
+    patient.next_appointment = db.prepare(`
+      SELECT * FROM appointments
+      WHERE  patient_id = ?
+        AND  scheduled_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        AND  status != 'cancelled'
+      ORDER  BY scheduled_at ASC
+      LIMIT  1
+    `).get(id) || null;
+
+    // Phase 4: Clinical notes feed with addendums and 24h locking status
+    patient.notes = notes.listByPatient(id);
+    patient.clinical_notes = patient.notes; // backward-compat
     return patient;
   },
 
@@ -282,10 +317,126 @@ const appointments = {
 };
 
 const notes = {
-  create(data) { return stmts.noteCreate.run(data); },
-  getById(id)  { return stmts.noteById.get(id); },
-  update(id, data) { return stmts.noteUpdate.run({ ...data, id }); },
-  listByPatient(patientId) { return stmts.notesByPatient.all(patientId); },
+  /**
+   * List all notes for a patient, sorted newest to oldest.
+   * Evaluates 24-hour medico-legal locking and attaches unalterable addendums.
+   */
+  listByPatient(patientId) {
+    const rows = db.prepare(`
+      SELECT * FROM notes
+      WHERE  patient_id = ?
+      ORDER  BY created_at DESC
+    `).all(patientId);
+
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+    const addendumsStmt = db.prepare(`
+      SELECT * FROM addendums
+      WHERE  note_id = ?
+      ORDER  BY timestamp ASC
+    `);
+
+    const sealStmt = db.prepare(`
+      UPDATE notes SET is_locked = 1 WHERE id = ? AND is_locked = 0
+    `);
+
+    return rows.map(note => {
+      const createdMs = new Date(note.created_at).getTime();
+      const ageMs = now - createdMs;
+      const isPast24h = ageMs >= TWENTY_FOUR_HOURS_MS;
+      const isLocked = note.is_locked === 1 || isPast24h;
+
+      if (isPast24h && note.is_locked === 0) {
+        sealStmt.run(note.id);
+        note.is_locked = 1;
+      } else {
+        note.is_locked = isLocked ? 1 : 0;
+      }
+
+      const msRemaining = Math.max(0, TWENTY_FOUR_HOURS_MS - ageMs);
+      note.hours_remaining = isLocked ? 0 : Math.round((msRemaining / (1000 * 60 * 60)) * 10) / 10;
+      note.minutes_remaining = isLocked ? 0 : Math.floor(msRemaining / (1000 * 60));
+      note.addendums = addendumsStmt.all(note.id);
+      return note;
+    });
+  },
+
+  getById(id) {
+    const note = db.prepare(`SELECT * FROM notes WHERE id = ?`).get(id);
+    if (!note) return null;
+
+    const now = Date.now();
+    const ageMs = now - new Date(note.created_at).getTime();
+    const isPast24h = ageMs >= 24 * 60 * 60 * 1000;
+    note.is_locked = (note.is_locked === 1 || isPast24h) ? 1 : 0;
+
+    note.addendums = db.prepare(`
+      SELECT * FROM addendums WHERE note_id = ? ORDER BY timestamp ASC
+    `).all(id);
+    return note;
+  },
+
+  create(data) {
+    const patient_id = Number(data.patient_id);
+    const content = (data.content || '').trim();
+    if (!patient_id) throw new Error('patient_id is required.');
+    if (!content) throw new Error('Note content cannot be empty.');
+
+    const info = db.prepare(`
+      INSERT INTO notes (patient_id, content, created_at, updated_at, is_locked)
+      VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 0)
+    `).run(patient_id, content);
+
+    return this.getById(info.lastInsertRowid);
+  },
+
+  /**
+   * In-place update within 24 hours.
+   * Medico-legal audit compliance: strictly rejected if created_at >= 24 hours.
+   */
+  update(id, data) {
+    const note = db.prepare(`SELECT * FROM notes WHERE id = ?`).get(id);
+    if (!note) throw new Error('Note not found.');
+
+    const ageMs = Date.now() - new Date(note.created_at).getTime();
+    if (note.is_locked === 1 || ageMs >= 24 * 60 * 60 * 1000) {
+      db.prepare(`UPDATE notes SET is_locked = 1 WHERE id = ?`).run(id);
+      throw new Error('Medico-legal lock: Notes older than 24 hours are permanently sealed. Direct editing is disabled. Please add an addendum.');
+    }
+
+    const content = (data.content || '').trim();
+    if (!content) throw new Error('Note content cannot be empty.');
+
+    db.prepare(`
+      UPDATE notes
+      SET    content = ?,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+      WHERE  id = ?
+    `).run(content, id);
+
+    return this.getById(id);
+  },
+
+  /**
+   * Append-only addendum to a note with unalterable timestamp.
+   */
+  addAddendum(noteId, content) {
+    const nId = Number(noteId);
+    const text = (content || '').trim();
+    if (!nId) throw new Error('note_id is required.');
+    if (!text) throw new Error('Addendum text cannot be empty.');
+
+    const note = db.prepare(`SELECT id FROM notes WHERE id = ?`).get(nId);
+    if (!note) throw new Error('Note not found.');
+
+    const info = db.prepare(`
+      INSERT INTO addendums (note_id, content, timestamp)
+      VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    `).run(nId, text);
+
+    return db.prepare(`SELECT * FROM addendums WHERE id = ?`).get(info.lastInsertRowid);
+  },
 };
 
 const stats = {

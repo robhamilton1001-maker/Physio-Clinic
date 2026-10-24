@@ -83,10 +83,12 @@ contextBridge.exposeInMainWorld('api', {
     listByPatient: (patientId) => ipcRenderer.invoke('notes:listByPatient', patientId),
     /** Get a single note by ID. */
     get:    (id)       => ipcRenderer.invoke('notes:get', id),
-    /** Save a new SOAP note. */
+    /** Save a new SOAP / clinical note. */
     create: (data)     => ipcRenderer.invoke('notes:create', data),
-    /** Update an existing note. */
+    /** Update an existing note within 24 hours. */
     update: (id, data) => ipcRenderer.invoke('notes:update', id, data),
+    /** Append an immutable medico-legal addendum to a note. */
+    addAddendum: (noteId, content) => ipcRenderer.invoke('notes:addAddendum', noteId, content),
   },
 
   // ── Stats ──────────────────────────────────────────────────────────────

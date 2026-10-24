@@ -137,6 +137,10 @@ ipcMain.handle('notes:update', (_e, id, data) => {
   return db.notes.update(Number(id), data);
 });
 
+ipcMain.handle('notes:addAddendum', (_e, noteId, content) => {
+  return db.notes.addAddendum(Number(noteId), content);
+});
+
 // ── Stats ─────────────────────────────────────────────────────────────────
 
 ipcMain.handle('stats:dashboard', (_e, todayISO) => {

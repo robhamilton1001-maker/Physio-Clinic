@@ -99,6 +99,11 @@ function switchView(target) {
     // diary.js is loaded after renderer.js; use rAF to ensure DOM is ready
     requestAnimationFrame(() => window.Diary.activate());
   }
+
+  // Activate patients directory when navigating to it
+  if (target === 'patients' && typeof loadPatientsDirectory === 'function') {
+    loadPatientsDirectory();
+  }
 }
 
 document.querySelectorAll('[data-view]').forEach(link => {
@@ -493,35 +498,158 @@ if (npForm) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PATIENT PROFILE VIEW
+// PATIENTS DIRECTORY VIEW & PATIENT PORTFOLIO HUB (Phase 4)
 // ═══════════════════════════════════════════════════════════════════════════
+
+let activePortfolioPatientId = null;
+
+function computeAge(dobStr) {
+  if (!dobStr) return '—';
+  const b = new Date(dobStr);
+  if (isNaN(b.getTime())) return '—';
+  const today = new Date();
+  let age = today.getFullYear() - b.getFullYear();
+  const m = today.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+  return age >= 0 ? `${age} yrs old` : '—';
+}
+
+function formatAddendumTimestamp(isoStr) {
+  const d = isoStr ? new Date(isoStr) : new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `[Addendum added: ${yyyy}-${mm}-${dd} ${hh}:${min}]`;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderMarkdown(raw) {
+  if (!raw) return '';
+  const escaped = escapeHtml(raw);
+  const lines = escaped.split('\n');
+  const out = [];
+  let inUl = false;
+  let inOl = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Heading 3 or 2
+    if (/^###\s+(.+)$/.test(line)) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      out.push(`<h3>${formatInline(line.replace(/^###\s+/, ''))}</h3>`);
+      continue;
+    }
+    if (/^##\s+(.+)$/.test(line)) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      out.push(`<h3>${formatInline(line.replace(/^##\s+/, ''))}</h3>`);
+      continue;
+    }
+
+    // Unordered bullet list
+    if (/^\s*[-*]\s+(.+)$/.test(line)) {
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      if (!inUl) { out.push('<ul>'); inUl = true; }
+      out.push(`<li>${formatInline(line.replace(/^\s*[-*]\s+/, ''))}</li>`);
+      continue;
+    }
+
+    // Ordered list
+    if (/^\s*\d+\.\s+(.+)$/.test(line)) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (!inOl) { out.push('<ol>'); inOl = true; }
+      out.push(`<li>${formatInline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`);
+      continue;
+    }
+
+    if (inUl) { out.push('</ul>'); inUl = false; }
+    if (inOl) { out.push('</ol>'); inOl = false; }
+
+    if (line.trim() === '') {
+      out.push('<br/>');
+    } else {
+      out.push(`<p>${formatInline(line)}</p>`);
+    }
+  }
+
+  if (inUl) out.push('</ul>');
+  if (inOl) out.push('</ol>');
+  return out.join('');
+}
+
+function formatInline(str) {
+  let s = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\[(\d{1,2}:\d{2}(?:\s*[AaPp][Mm])?)\]/g, '<span class="font-mono text-xs px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold">$1</span>');
+  return s;
+}
+
+const SOAP_TEMPLATE = `### Subjective
+- Presenting complaint & mechanism of injury: 
+- Pain level (0-10) & symptom behavior: 
+- Aggravating & easing factors: 
+- Functional impact: 
+
+### Objective
+- Observation / posture: 
+- Active Range of Motion (AROM): 
+- Palpation & neurodynamic tests: 
+- Orthopedic special tests: 
+
+### Assessment
+- Primary clinical impression / pathology: 
+- Impairment list & clinical prognosis: 
+
+### Plan
+- In-clinic manual therapy & modalities: 
+- Home Exercise Program (HEP) prescribed: 
+- Patient education & red flag precautions: 
+- Follow-up frequency: `;
 
 const patientProfile = $('patient-profile');
 const profileBack    = $('profile-back');
 
 async function openPatientProfile(id, preloaded = null) {
   if (!patientProfile) return;
+  activePortfolioPatientId = Number(id);
 
-  // Show immediately with skeleton state
+  // Show overlay
   patientProfile.classList.remove('opacity-0', 'pointer-events-none');
   patientProfile.classList.add('opacity-100', 'pointer-events-auto');
 
-  // Populate from preloaded data or fetch
-  const patient = preloaded && preloaded.appointments
+  // Fetch full patient data
+  const patient = preloaded && preloaded.notes
     ? preloaded
     : await window.api.patients.getById(id);
 
   if (!patient) {
-    patientProfile.classList.add('opacity-0', 'pointer-events-none');
-    patientProfile.classList.remove('opacity-100', 'pointer-events-auto');
-    console.error('[Profile] Patient not found:', id);
+    closePatientProfile();
     return;
   }
 
-  // Header
-  const profileName = $('profile-name');
-  const profileMeta = $('profile-meta');
-  if (profileName) profileName.textContent = `${patient.first_name} ${patient.last_name}`;
+  // Header and Avatar
+  const profileName   = $('profile-name');
+  const profileMeta   = $('profile-meta');
+  const profileAvatar = $('profile-avatar');
+  const fullName = `${patient.first_name} ${patient.last_name}`;
+  if (profileName) profileName.textContent = fullName;
+  if (profileAvatar) {
+    const initials = `${patient.first_name?.[0] || ''}${patient.last_name?.[0] || ''}`.toUpperCase();
+    profileAvatar.textContent = initials || 'PT';
+  }
   if (profileMeta) {
     const parts = [];
     if (patient.dob) parts.push(`DOB: ${fmtDate(patient.dob)}`);
@@ -530,64 +658,452 @@ async function openPatientProfile(id, preloaded = null) {
     profileMeta.textContent = parts.join(' · ') || '—';
   }
 
-  // Contact card
-  const setText = (id, val) => { const el = $(id); if (el) el.textContent = val || '—'; };
-  setText('profile-phone',     patient.phone);
-  setText('profile-email',     patient.email);
-  setText('profile-dob',       patient.dob ? fmtDate(patient.dob) : null);
-  setText('profile-emergency', patient.emergency_contact);
+  // Demographics Card
+  const setText = (elId, val) => { const el = $(elId); if (el) el.textContent = val || '—'; };
+  setText('profile-age',       computeAge(patient.dob));
+  setText('profile-dob',       patient.dob ? fmtDate(patient.dob) : '—');
+  setText('profile-phone',     patient.phone || '—');
+  setText('profile-email',     patient.email || '—');
+  setText('profile-emergency', patient.emergency_contact || 'None specified');
   setText('profile-since',     fmtDate(patient.created_at));
 
-  // Appointments
-  const appts      = patient.appointments || [];
-  const apptCount  = $('profile-appt-count');
-  const apptsList  = $('profile-appts');
-  if (apptCount) apptCount.textContent = appts.length;
-  if (apptsList) {
-    apptsList.innerHTML = appts.length ? appts.map(a => `
-      <div class="flex items-center justify-between px-5 py-3 gap-4">
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">${a.type}</p>
-          <p class="text-xs text-slate-400 dark:text-slate-600 mt-0.5">${fmtDateTime(a.scheduled_at)}</p>
-        </div>
-        <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-1
-                     text-[10px] font-semibold uppercase tracking-wide
-                     ${a.status === 'completed' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : a.status === 'cancelled' ? 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400'
-                      : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'}">
-          ${a.status}
-        </span>
-      </div>
-    `).join('') : `<p class="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-600">No appointments on record.</p>`;
+  // Next Scheduled Appointment Card
+  const nextAppt = patient.next_appointment;
+  const nextBadge = $('profile-next-appt-badge');
+  const nextDetails = $('profile-next-appt-details');
+  const nextBtn = $('btn-next-appt-action');
+
+  if (nextAppt) {
+    if (nextBadge) nextBadge.classList.remove('hidden');
+    if (nextDetails) {
+      nextDetails.innerHTML = `
+        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(nextAppt.type || 'Appointment')}</p>
+        <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">${fmtDateTime(nextAppt.scheduled_at)} (${nextAppt.duration_min || 30} mins)</p>
+        ${nextAppt.notes ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">${escapeHtml(nextAppt.notes)}</p>` : ''}
+      `;
+    }
+    if (nextBtn) {
+      nextBtn.textContent = 'View in Diary Grid →';
+      nextBtn.onclick = () => {
+        closePatientProfile();
+        switchView('diary');
+      };
+    }
+  } else {
+    if (nextBadge) nextBadge.classList.add('hidden');
+    if (nextDetails) {
+      nextDetails.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-600">No upcoming appointments on record.</p>`;
+    }
+    if (nextBtn) {
+      nextBtn.textContent = '+ Schedule Next Appointment';
+      nextBtn.onclick = () => {
+        if (window.Diary) {
+          closePatientProfile();
+          switchView('diary');
+          window.Diary.openEventDrawer({ patient_id: patient.id, patient_name: fullName });
+        }
+      };
+    }
   }
 
-  // Clinical notes
-  const notes      = patient.clinical_notes || [];
-  const notesCount = $('profile-notes-count');
-  const notesList  = $('profile-notes');
-  if (notesCount) notesCount.textContent = notes.length;
-  if (notesList) {
-    notesList.innerHTML = notes.length ? notes.map(n => `
-      <div class="px-5 py-4">
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-500 mb-2">
-          ${fmtDate(n.created_at)}
-        </p>
-        ${n.subjective  ? `<p class="text-sm text-slate-700 dark:text-slate-300 mb-1"><span class="font-semibold">S:</span> ${n.subjective}</p>` : ''}
-        ${n.objective   ? `<p class="text-sm text-slate-700 dark:text-slate-300 mb-1"><span class="font-semibold">O:</span> ${n.objective}</p>` : ''}
-        ${n.assessment  ? `<p class="text-sm text-slate-700 dark:text-slate-300 mb-1"><span class="font-semibold">A:</span> ${n.assessment}</p>` : ''}
-        ${n.plan        ? `<p class="text-sm text-slate-700 dark:text-slate-300"><span class="font-semibold">P:</span> ${n.plan}</p>` : ''}
-      </div>
-    `).join('') : `<p class="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-600">No clinical notes on record.</p>`;
-  }
+  // Clear note input and set preview mode off
+  const noteInput = $('note-content-input');
+  if (noteInput) noteInput.value = '';
+  setNotePreviewMode(false);
+
+  // Render clinical notes feed
+  await refreshPatientNotesFeed(patient.id);
 }
 
 function closePatientProfile() {
   if (!patientProfile) return;
   patientProfile.classList.add('opacity-0', 'pointer-events-none');
   patientProfile.classList.remove('opacity-100', 'pointer-events-auto');
+  activePortfolioPatientId = null;
 }
 
 if (profileBack) profileBack.addEventListener('click', closePatientProfile);
+
+// Quick action buttons in portfolio header
+const btnQuickNewNote = $('btn-quick-new-note');
+if (btnQuickNewNote) {
+  btnQuickNewNote.addEventListener('click', () => {
+    const editor = $('clinical-note-editor-section');
+    if (editor) editor.scrollIntoView({ behavior: 'smooth' });
+    const input = $('note-content-input');
+    if (input) input.focus();
+  });
+}
+
+const btnProfileBookAppt = $('btn-profile-book-appt');
+if (btnProfileBookAppt) {
+  btnProfileBookAppt.addEventListener('click', () => {
+    if (activePortfolioPatientId && window.Diary) {
+      const pName = $('profile-name')?.textContent || '';
+      closePatientProfile();
+      switchView('diary');
+      window.Diary.openEventDrawer({ patient_id: activePortfolioPatientId, patient_name: pName });
+    }
+  });
+}
+
+// ── Distraction-free Note Editor Controls ───────────────────────────────────
+
+function setNotePreviewMode(isPreview) {
+  const input = $('note-content-input');
+  const pane  = $('note-preview-pane');
+  const tabW  = $('btn-tab-write');
+  const tabP  = $('btn-tab-preview');
+  if (!input || !pane) return;
+
+  if (isPreview) {
+    pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty note.</p>';
+    pane.classList.remove('hidden');
+    input.classList.add('hidden');
+    if (tabP) tabP.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+    if (tabW) tabW.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
+  } else {
+    pane.classList.add('hidden');
+    input.classList.remove('hidden');
+    if (tabW) tabW.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+    if (tabP) tabP.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
+  }
+}
+
+const tabWrite   = $('btn-tab-write');
+const tabPreview = $('btn-tab-preview');
+if (tabWrite)   tabWrite.addEventListener('click', () => setNotePreviewMode(false));
+if (tabPreview) tabPreview.addEventListener('click', () => setNotePreviewMode(true));
+
+// Insert Helper at cursor
+function insertAtCursor(text) {
+  const el = $('note-content-input');
+  if (!el) return;
+  setNotePreviewMode(false);
+  const start = el.selectionStart || 0;
+  const end = el.selectionEnd || 0;
+  const val = el.value;
+  el.value = val.substring(0, start) + text + val.substring(end);
+  el.focus();
+  el.selectionStart = el.selectionEnd = start + text.length;
+}
+
+$('btn-insert-soap')?.addEventListener('click', () => insertAtCursor(SOAP_TEMPLATE));
+$('btn-insert-bullet')?.addEventListener('click', () => insertAtCursor('\n- '));
+$('btn-insert-timestamp')?.addEventListener('click', () => {
+  const now = new Date();
+  const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}] `;
+  insertAtCursor(timeStr);
+});
+$('btn-insert-bold')?.addEventListener('click', () => insertAtCursor('**bold text**'));
+$('btn-insert-h3')?.addEventListener('click', () => insertAtCursor('\n### Section Title\n'));
+$('btn-clear-note')?.addEventListener('click', () => {
+  const el = $('note-content-input');
+  if (el) el.value = '';
+  setNotePreviewMode(false);
+});
+
+// Save / Sign Note
+const btnSaveNote = $('btn-save-note');
+if (btnSaveNote) {
+  btnSaveNote.addEventListener('click', async () => {
+    if (!activePortfolioPatientId) return;
+    const input = $('note-content-input');
+    const content = (input?.value || '').trim();
+    if (!content) {
+      alert('Please enter clinical note content before signing.');
+      input?.focus();
+      return;
+    }
+
+    const spinner = $('note-spinner');
+    if (spinner) spinner.classList.remove('hidden');
+    btnSaveNote.disabled = true;
+
+    try {
+      await window.api.notes.create({
+        patient_id: activePortfolioPatientId,
+        content: content,
+      });
+
+      if (input) input.value = '';
+      setNotePreviewMode(false);
+
+      const statusEl = $('note-editor-status');
+      if (statusEl) {
+        statusEl.textContent = 'Note signed & legally recorded ✓';
+        statusEl.classList.remove('hidden');
+        setTimeout(() => statusEl.classList.add('hidden'), 4000);
+      }
+
+      await refreshPatientNotesFeed(activePortfolioPatientId);
+      loadStats();
+    } catch (err) {
+      alert(err.message || 'Failed to save note.');
+    } finally {
+      if (spinner) spinner.classList.add('hidden');
+      btnSaveNote.disabled = false;
+    }
+  });
+}
+
+// ── Refresh and Render Chronological Notes Feed ─────────────────────────────
+
+async function refreshPatientNotesFeed(patientId) {
+  const feed = $('profile-notes-feed');
+  const countBadge = $('profile-notes-count');
+  if (!feed) return;
+
+  const notes = await window.api.notes.listByPatient(patientId);
+  if (countBadge) countBadge.textContent = notes.length;
+
+  if (!notes || notes.length === 0) {
+    feed.innerHTML = `
+      <div class="card p-8 text-center text-sm text-slate-400 dark:text-slate-600">
+        No clinical notes on record. Use the editor above to sign your first consultation note.
+      </div>
+    `;
+    return;
+  }
+
+  feed.innerHTML = notes.map(note => {
+    const isLocked = note.is_locked === 1;
+    const addendums = note.addendums || [];
+    const dateFormatted = fmtDateTime(note.created_at);
+    const updatedFormatted = note.updated_at !== note.created_at ? fmtDateTime(note.updated_at) : null;
+
+    return `
+      <article class="card p-5 space-y-3.5 border-l-4 ${isLocked ? 'border-l-slate-400 dark:border-l-slate-600' : 'border-l-emerald-500'}"
+               id="note-card-${note.id}">
+        <!-- Note Header -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs font-semibold text-slate-900 dark:text-slate-100">${dateFormatted}</span>
+            ${updatedFormatted ? `<span class="text-[10px] text-slate-400 dark:text-slate-500">(Edited: ${updatedFormatted})</span>` : ''}
+          </div>
+
+          <!-- Status badge & Actions -->
+          <div class="flex items-center gap-2">
+            ${isLocked ? `
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 select-none">
+                <svg class="h-2.5 w-2.5 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+                </svg>
+                Locked · Medico-Legal Sealed
+              </span>
+              <button class="btn-toggle-addendum text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline ml-2"
+                      data-note-id="${note.id}">
+                + Add Addendum
+              </button>
+            ` : `
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 select-none">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Editable (${note.hours_remaining > 0 ? `${note.hours_remaining}h remaining` : 'Ending soon'})
+              </span>
+              <button class="btn-edit-note text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 ml-2"
+                      data-note-id="${note.id}">
+                ✎ Edit Note
+              </button>
+            `}
+          </div>
+        </div>
+
+        <!-- Note Content (View Mode) -->
+        <div id="note-view-${note.id}" class="note-prose">
+          ${renderMarkdown(note.content)}
+        </div>
+
+        <!-- In-Place Edit Mode (< 24 hours only) -->
+        <div id="note-edit-wrap-${note.id}" class="hidden space-y-2.5 pt-1">
+          <textarea id="note-edit-input-${note.id}" rows="6"
+                    class="w-full p-3 rounded-lg text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(note.content)}</textarea>
+          <div class="flex items-center justify-end gap-2">
+            <button class="btn-cancel-edit btn-ghost text-xs py-1 px-3" data-note-id="${note.id}">Cancel</button>
+            <button class="btn-save-edit btn-primary text-xs py-1 px-3" data-note-id="${note.id}">Save Edit</button>
+          </div>
+        </div>
+
+        <!-- Addendums Section -->
+        <div class="space-y-2 pt-1">
+          ${addendums.map(add => `
+            <div class="addendum-card">
+              <div class="flex items-center justify-between text-[11px] font-mono font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                <span>${formatAddendumTimestamp(add.timestamp)}</span>
+                <span class="text-[9px] uppercase tracking-wider text-amber-600/70 dark:text-amber-500/70 font-sans font-bold">Immutable Addendum</span>
+              </div>
+              <p class="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">${escapeHtml(add.content)}</p>
+            </div>
+          `).join('')}
+
+          <!-- Add Addendum Form (Expandable) -->
+          <div id="addendum-form-${note.id}" class="hidden mt-3 p-3.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+            <p class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              New Medico-Legal Addendum (Append-Only)
+            </p>
+            <textarea id="addendum-input-${note.id}" rows="3"
+                      class="w-full p-2.5 rounded-md text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Addendum text (clarification, late-arriving pathology result, or consultation note)…"></textarea>
+            <div class="flex items-center justify-end gap-2">
+              <button class="btn-cancel-addendum btn-ghost text-xs py-1 px-2.5" data-note-id="${note.id}">Cancel</button>
+              <button class="btn-submit-addendum btn-primary text-xs py-1 px-3" data-note-id="${note.id}">Sign &amp; Append Addendum</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  // Wire event handlers for the rendered notes
+  wireNoteInteractions(patientId);
+}
+
+function wireNoteInteractions(patientId) {
+  // 1. Edit note in-place
+  document.querySelectorAll('.btn-edit-note').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.noteId;
+      const viewEl = $(`note-view-${id}`);
+      const editWrap = $(`note-edit-wrap-${id}`);
+      if (viewEl && editWrap) {
+        viewEl.classList.add('hidden');
+        editWrap.classList.remove('hidden');
+      }
+    });
+  });
+
+  // Cancel edit
+  document.querySelectorAll('.btn-cancel-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.noteId;
+      const viewEl = $(`note-view-${id}`);
+      const editWrap = $(`note-edit-wrap-${id}`);
+      if (viewEl && editWrap) {
+        viewEl.classList.remove('hidden');
+        editWrap.classList.add('hidden');
+      }
+    });
+  });
+
+  // Save edit
+  document.querySelectorAll('.btn-save-edit').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.noteId;
+      const input = $(`note-edit-input-${id}`);
+      const content = (input?.value || '').trim();
+      if (!content) {
+        alert('Note content cannot be empty.');
+        return;
+      }
+      btn.disabled = true;
+      try {
+        await window.api.notes.update(id, { content });
+        await refreshPatientNotesFeed(patientId);
+      } catch (err) {
+        alert(err.message || 'Failed to update note.');
+        btn.disabled = false;
+      }
+    });
+  });
+
+  // 2. Toggle addendum form
+  document.querySelectorAll('.btn-toggle-addendum').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.noteId;
+      const form = $(`addendum-form-${id}`);
+      if (form) {
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+          $(`addendum-input-${id}`)?.focus();
+        }
+      }
+    });
+  });
+
+  // Cancel addendum
+  document.querySelectorAll('.btn-cancel-addendum').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.noteId;
+      $(`addendum-form-${id}`)?.classList.add('hidden');
+    });
+  });
+
+  // Submit addendum
+  document.querySelectorAll('.btn-submit-addendum').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.noteId;
+      const input = $(`addendum-input-${id}`);
+      const text = (input?.value || '').trim();
+      if (!text) {
+        alert('Please enter addendum text before appending.');
+        input?.focus();
+        return;
+      }
+      btn.disabled = true;
+      try {
+        await window.api.notes.addAddendum(id, text);
+        await refreshPatientNotesFeed(patientId);
+      } catch (err) {
+        alert(err.message || 'Failed to append addendum.');
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+// ── Patients Directory View (when clicking "Patients" in sidebar) ───────────
+
+async function loadPatientsDirectory() {
+  const tbody = $('patients-table-body');
+  const countPill = $('patients-view-count');
+  const filterInput = $('patients-filter-input');
+  if (!tbody) return;
+
+  const query = filterInput ? filterInput.value.trim() : '';
+  const patients = query
+    ? await window.api.patients.search(query)
+    : await window.api.patients.list();
+
+  if (countPill) countPill.textContent = `${patients.length} patient${patients.length === 1 ? '' : 's'}`;
+
+  if (!patients || patients.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-600">
+          ${query ? 'No matching patients found.' : 'No patients registered yet. Click "+ New Patient" to add one.'}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = patients.map(p => {
+    const age = computeAge(p.dob);
+    return `
+      <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer patient-dir-row" data-id="${p.id}">
+        <td class="px-5 py-3 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</td>
+        <td class="px-5 py-3 text-slate-600 dark:text-slate-400">${age} ${p.dob ? `<span class="text-xs text-slate-400 dark:text-slate-500">(${fmtDate(p.dob)})</span>` : ''}</td>
+        <td class="px-5 py-3 text-slate-600 dark:text-slate-400 font-mono text-xs">${escapeHtml(p.phone || p.email || '—')}</td>
+        <td class="px-5 py-3 text-slate-500 dark:text-slate-400 text-xs">${escapeHtml(p.emergency_contact || '—')}</td>
+        <td class="px-5 py-3 text-right">
+          <button class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+            Open Portfolio →
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.patient-dir-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.id;
+      openPatientProfile(id);
+    });
+  });
+}
+
+// Wire Patients view search filter and "+ New Patient"
+$('patients-filter-input')?.addEventListener('input', debounce(loadPatientsDirectory, 200));
+$('btn-patients-view-new')?.addEventListener('click', openNewPatientModal);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DAILY SCHEDULE
