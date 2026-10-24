@@ -155,26 +155,15 @@ db.transaction(() => {
 
 console.log(`[DB] SQLite database initialised at: ${DB_PATH}`);
 
-// ── Seed Trigger Categories if table is empty ─────────────────────────────
+// ── Seed Trigger Categories ───────────────────────────────────────────────
 try {
-  const catCount = db.prepare('SELECT COUNT(*) AS count FROM trigger_categories').get();
-  if (!catCount || catCount.count === 0) {
-    const insertCat = db.prepare('INSERT OR IGNORE INTO trigger_categories (prefix, label) VALUES (?, ?)');
-    const defaultCategories = [
-      { prefix: '@', label: 'Shortcuts' },
-      { prefix: '!', label: 'MSK Measures' },
-      { prefix: '#', label: 'Rehab Protocols' },
-      { prefix: '.', label: 'Billing & Admin' },
-      { prefix: '?', label: 'Red Flag Screens' },
-    ];
-    const catTx = db.transaction((cats) => {
-      for (const c of cats) {
-        insertCat.run(c.prefix, c.label);
-      }
-    });
-    catTx(defaultCategories);
-    console.log('[DB] Seeded default trigger categories into database.');
-  }
+  // Enforce cleanup of unwanted categories
+  db.prepare("DELETE FROM trigger_categories WHERE prefix IN ('.', '?', '#')").run();
+  db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix IN ('.', '?')").run();
+
+  const insertCat = db.prepare('INSERT OR IGNORE INTO trigger_categories (prefix, label) VALUES (?, ?)');
+  insertCat.run('@', 'Shortcuts');
+  insertCat.run('!', 'MSK Measures');
 } catch (catErr) {
   console.warn('[DB] Trigger categories seed warning:', catErr.message);
 }
@@ -182,16 +171,18 @@ try {
 // ── Seed & Upgrade Smart Phrases Library ──────────────────────────────────
 try {
   const { SEED_SMART_PHRASES } = require('./smart_phrases_seed');
-  // Check if legacy lowercase outcome measures or old templates exist
-  const legacySeed = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'odi' LIMIT 1").get();
-  if (legacySeed) {
-    console.log('[DB] Upgrading existing smart phrases to uppercase Excel-style tables...');
+  // Check if legacy lowercase outcome measures or pre-4-column templates exist
+  const sample = db.prepare("SELECT content FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'DASH' LIMIT 1").get();
+  const needsReseed = !sample || !sample.content.includes('Section / Item Description');
+
+  if (needsReseed) {
+    console.log('[DB] Upgrading existing smart phrases to 4-column uppercase Excel-style tables...');
     db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '!'").run();
-    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '@' AND code IN ('rom-table', 'neuro-table', 'ligament-table', 'c-spine', 'l-spine', 'shoulder', 'knee', 'hip', 'ankle')").run();
+    db.prepare("DELETE FROM smart_phrases WHERE trigger_prefix = '@' AND code IN ('rom-table', 'neuro-table', 'ligament-table', 'c-spine', 'l-spine', 'shoulder', 'knee', 'hip', 'ankle', 'treestump')").run();
   }
 
   const countRow = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get();
-  if (!countRow || countRow.count === 0 || legacySeed) {
+  if (!countRow || countRow.count === 0 || needsReseed) {
     const insertSP = db.prepare(`
       INSERT OR REPLACE INTO smart_phrases (trigger_prefix, code, title, content, category)
       VALUES (@trigger_prefix, @code, @title, @content, @category)

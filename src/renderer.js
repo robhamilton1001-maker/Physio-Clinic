@@ -717,6 +717,52 @@ function initExcelTables(container, optionalTextarea) {
         target.textContent = `${pct}%`;
       });
 
+      // Update [data-inv-percent-target]
+      table.querySelectorAll('[data-inv-percent-target]').forEach(target => {
+        const g = target.dataset.invPercentTarget;
+        const max = parseFloat(target.dataset.max) || 100;
+        let sum = groupSums[g] !== undefined ? groupSums[g] : (tableGroup === g ? Array.from(table.querySelectorAll('.excel-input[data-group]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0) : 0);
+        const pct = Math.min(100, Math.max(0, Math.round(100 - ((sum / max) * 100))));
+        target.textContent = `${pct}% Impairment`;
+      });
+
+      // Update [data-avg-target]
+      table.querySelectorAll('[data-avg-target]').forEach(target => {
+        const g = target.dataset.avgTarget;
+        const inputs = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`));
+        const sum = inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const avg = inputs.length ? (sum / inputs.length) : 0;
+        target.textContent = avg.toFixed(1);
+      });
+
+      // Update [data-inv-avg-target]
+      table.querySelectorAll('[data-inv-avg-target]').forEach(target => {
+        const g = target.dataset.invAvgTarget;
+        const inputs = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`));
+        const sum = inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const avg = inputs.length ? (sum / inputs.length) : 0;
+        const imp = Math.max(0, Math.min(100, 100 - avg));
+        target.textContent = `${imp.toFixed(1)}%`;
+      });
+
+      // Update [data-visa-impair-target]
+      table.querySelectorAll('[data-visa-impair-target]').forEach(target => {
+        const g = target.dataset.visaImpairTarget;
+        const sum = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`)).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const imp = Math.max(0, Math.min(100, 100 - sum));
+        target.textContent = `${imp}% Impairment`;
+      });
+
+      // Update [data-dash-formula-target]
+      table.querySelectorAll('[data-dash-formula-target]').forEach(target => {
+        const g = target.dataset.dashFormulaTarget;
+        const inputs = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`));
+        const sum = inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 1), 0);
+        const n = inputs.length || 11;
+        const score = Math.max(0, Math.min(100, ((sum / n) - 1) * 25));
+        target.textContent = `${score.toFixed(1)}%`;
+      });
+
       // Update [data-severity-target] (ODI & NDI)
       table.querySelectorAll('[data-severity-target]').forEach(sevTarget => {
         const type = sevTarget.dataset.severityTarget;
@@ -744,16 +790,6 @@ function initExcelTables(container, optionalTextarea) {
         }
       });
 
-      // Update [data-dash-formula-target]
-      table.querySelectorAll('[data-dash-formula-target]').forEach(target => {
-        const g = target.dataset.dashFormulaTarget;
-        const inputs = Array.from(table.querySelectorAll(`.excel-input[data-group="${g}"]`));
-        const sum = inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 1), 0);
-        const n = inputs.length || 11;
-        const score = Math.max(0, Math.min(100, ((sum / n) - 1) * 25));
-        target.textContent = `${score.toFixed(1)}%`;
-      });
-
       // Update [data-cutoff-target]
       table.querySelectorAll('[data-cutoff-target]').forEach(pill => {
         const g = pill.dataset.cutoffTarget;
@@ -771,6 +807,17 @@ function initExcelTables(container, optionalTextarea) {
 
     table.addEventListener('input', (e) => {
       if (e.target && e.target.classList.contains('excel-input')) {
+        e.target.setAttribute('value', e.target.value);
+        recalcTable();
+        if (optionalTextarea) {
+          syncPreviewValuesToTextarea(container, optionalTextarea);
+        }
+      }
+    });
+
+    table.addEventListener('change', (e) => {
+      if (e.target && e.target.classList.contains('excel-input')) {
+        e.target.setAttribute('value', e.target.value);
         recalcTable();
         if (optionalTextarea) {
           syncPreviewValuesToTextarea(container, optionalTextarea);
@@ -965,22 +1012,31 @@ if (btnProfileBookAppt) {
 // ── Distraction-free Note Editor Controls ───────────────────────────────────
 
 function setNotePreviewMode(isPreview) {
-  const input = $('note-content-input');
-  const pane  = $('note-preview-pane');
-  const tabW  = $('btn-tab-write');
-  const tabP  = $('btn-tab-preview');
-  if (!input || !pane) return;
+  const editor = $('note-content-editor');
+  const input  = $('note-content-input');
+  const pane   = $('note-preview-pane');
+  const tabW   = $('btn-tab-write');
+  const tabP   = $('btn-tab-preview');
+  if (!pane) return;
 
   if (isPreview) {
-    pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty note.</p>';
-    initExcelTables(pane, input);
+    const content = editor ? editor.innerHTML : (input ? input.value : '');
+    pane.innerHTML = content.trim() ? (/<[a-z][\s\S]*>/i.test(content) ? content : renderMarkdown(content)) : '<p class="text-xs italic text-slate-400">Empty note.</p>';
+    initExcelTables(pane);
     pane.classList.remove('hidden');
-    input.classList.add('hidden');
+    if (editor) editor.classList.add('hidden');
+    if (input) input.classList.add('hidden');
     if (tabP) tabP.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
     if (tabW) tabW.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
   } else {
     pane.classList.add('hidden');
-    input.classList.remove('hidden');
+    if (editor) {
+      editor.classList.remove('hidden');
+      editor.focus();
+    } else if (input) {
+      input.classList.remove('hidden');
+      input.focus();
+    }
     if (tabW) tabW.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
     if (tabP) tabP.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
   }
@@ -992,28 +1048,94 @@ if (tabWrite)   tabWrite.addEventListener('click', () => setNotePreviewMode(fals
 if (tabPreview) tabPreview.addEventListener('click', () => setNotePreviewMode(true));
 
 // Insert Helper at cursor
-function insertAtCursor(text) {
+function insertAtCursor(snippet) {
+  setNotePreviewMode(false);
+  const editor = $('note-content-editor');
+  if (editor) {
+    editor.focus();
+    const sel = window.getSelection();
+    let range;
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      range = sel.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    range.deleteContents();
+    if (/<[a-z][\s\S]*>/i.test(snippet)) {
+      const frag = range.createContextualFragment(snippet);
+      const last = frag.lastChild;
+      range.insertNode(frag);
+      if (last) {
+        range.setStartAfter(last);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      const textNode = document.createTextNode(snippet);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    initExcelTables(editor);
+    return;
+  }
+
   const el = $('note-content-input');
   if (!el) return;
-  setNotePreviewMode(false);
   const start = el.selectionStart || 0;
   const end = el.selectionEnd || 0;
   const val = el.value;
-  el.value = val.substring(0, start) + text + val.substring(end);
+  el.value = val.substring(0, start) + snippet + val.substring(end);
   el.focus();
-  el.selectionStart = el.selectionEnd = start + text.length;
+  el.selectionStart = el.selectionEnd = start + snippet.length;
 }
 
-$('btn-insert-soap')?.addEventListener('click', () => insertAtCursor(SOAP_TEMPLATE));
-$('btn-insert-bullet')?.addEventListener('click', () => insertAtCursor('\n- '));
+const SOAP_TEMPLATE_RICH = `<h3>Subjective</h3>
+<ul>
+  <li><strong>Presenting complaint &amp; mechanism:</strong> </li>
+  <li><strong>Pain score (0-10) &amp; irritability:</strong> </li>
+  <li><strong>Aggravating / easing factors:</strong> </li>
+  <li><strong>Functional goals:</strong> </li>
+</ul>
+<h3>Objective</h3>
+<ul>
+  <li><strong>Posture &amp; movement observation:</strong> </li>
+  <li><strong>Active ROM &amp; movement quality:</strong> </li>
+  <li><strong>Passive ROM &amp; joint end-feel:</strong> </li>
+  <li><strong>Neurological / special tests:</strong> </li>
+</ul>
+<h3>Assessment</h3>
+<ul>
+  <li><strong>Clinical diagnostic impression:</strong> </li>
+  <li><strong>Contributing impairment factors:</strong> </li>
+  <li><strong>Rehabilitation prognosis:</strong> </li>
+</ul>
+<h3>Plan</h3>
+<ul>
+  <li><strong>Today's manual / exercise intervention:</strong> </li>
+  <li><strong>Home exercise prescription (HEP):</strong> </li>
+  <li><strong>Follow-up scheduling:</strong> </li>
+</ul>`;
+
+$('btn-insert-soap')?.addEventListener('click', () => insertAtCursor(SOAP_TEMPLATE_RICH));
+$('btn-insert-bullet')?.addEventListener('click', () => insertAtCursor('\n• '));
 $('btn-insert-timestamp')?.addEventListener('click', () => {
   const now = new Date();
   const timeStr = `[${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}] `;
   insertAtCursor(timeStr);
 });
 $('btn-insert-bold')?.addEventListener('click', () => insertAtCursor('**bold text**'));
-$('btn-insert-h3')?.addEventListener('click', () => insertAtCursor('\n### Section Title\n'));
+$('btn-insert-h3')?.addEventListener('click', () => insertAtCursor('<h3>Section Title</h3>'));
 $('btn-clear-note')?.addEventListener('click', () => {
+  const editor = $('note-content-editor');
+  if (editor) editor.innerHTML = '';
   const el = $('note-content-input');
   if (el) el.value = '';
   setNotePreviewMode(false);
@@ -1024,11 +1146,14 @@ const btnSaveNote = $('btn-save-note');
 if (btnSaveNote) {
   btnSaveNote.addEventListener('click', async () => {
     if (!activePortfolioPatientId) return;
+    const editor = $('note-content-editor');
     const input = $('note-content-input');
-    const content = (input?.value || '').trim();
-    if (!content) {
+    const rawContent = (editor ? editor.innerHTML : (input?.value || '')).trim();
+    const cleanContent = rawContent.replace(/^(?:<br>|<div><br><\/div>|\s)+$/gi, '');
+    if (!cleanContent) {
       alert('Please enter clinical note content before signing.');
-      input?.focus();
+      if (editor) editor.focus();
+      else input?.focus();
       return;
     }
 
@@ -1039,9 +1164,10 @@ if (btnSaveNote) {
     try {
       await window.api.notes.create({
         patient_id: activePortfolioPatientId,
-        content: content,
+        content: cleanContent,
       });
 
+      if (editor) editor.innerHTML = '';
       if (input) input.value = '';
       setNotePreviewMode(false);
 
@@ -1126,13 +1252,13 @@ async function refreshPatientNotesFeed(patientId) {
 
         <!-- Note Content (View Mode) -->
         <div id="note-view-${note.id}" class="note-prose">
-          ${renderMarkdown(note.content)}
+          ${/<[a-z][\s\S]*>/i.test(note.content) ? note.content : renderMarkdown(note.content)}
         </div>
 
         <!-- In-Place Edit Mode (< 24 hours only) -->
         <div id="note-edit-wrap-${note.id}" class="hidden space-y-2.5 pt-1">
-          <textarea id="note-edit-input-${note.id}" rows="6"
-                    class="w-full p-3 rounded-lg text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(note.content)}</textarea>
+          <div id="note-edit-editor-${note.id}" contenteditable="true"
+               class="rich-editor w-full p-3 rounded-lg text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">${note.content}</div>
           <div class="flex items-center justify-end gap-2">
             <button class="btn-cancel-edit btn-ghost text-xs py-1 px-3" data-note-id="${note.id}">Cancel</button>
             <button class="btn-save-edit btn-primary text-xs py-1 px-3" data-note-id="${note.id}">Save Edit</button>
@@ -1169,7 +1295,7 @@ async function refreshPatientNotesFeed(patientId) {
     `;
   }).join('');
 
-  initExcelTables(feedEl);
+  initExcelTables(feed);
 
   // Wire event handlers for the rendered notes
   wireNoteInteractions(patientId);
@@ -1182,9 +1308,11 @@ function wireNoteInteractions(patientId) {
       const id = btn.dataset.noteId;
       const viewEl = $(`note-view-${id}`);
       const editWrap = $(`note-edit-wrap-${id}`);
+      const editEd = $(`note-edit-editor-${id}`);
       if (viewEl && editWrap) {
         viewEl.classList.add('hidden');
         editWrap.classList.remove('hidden');
+        if (editEd) initExcelTables(editEd);
       }
     });
   });
@@ -1206,8 +1334,9 @@ function wireNoteInteractions(patientId) {
   document.querySelectorAll('.btn-save-edit').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.noteId;
+      const editEd = $(`note-edit-editor-${id}`);
       const input = $(`note-edit-input-${id}`);
-      const content = (input?.value || '').trim();
+      const content = (editEd ? editEd.innerHTML : (input?.value || '')).trim();
       if (!content) {
         alert('Note content cannot be empty.');
         return;
@@ -1656,6 +1785,12 @@ function selectSmartPhrase(id) {
   // Populate editor
   if ($('sp-title-input')) $('sp-title-input').value = sp.title || '';
   if ($('sp-code-input')) $('sp-code-input').value = sp.code || '';
+  
+  const spEditor = $('sp-content-editor');
+  if (spEditor) {
+    spEditor.innerHTML = sp.content || '';
+    initExcelTables(spEditor);
+  }
   if ($('sp-content-input')) $('sp-content-input').value = sp.content || '';
   if ($('sp-category-input')) $('sp-category-input').value = sp.category || 'general';
 
@@ -1693,20 +1828,29 @@ function updateTriggerBadgePreview() {
 }
 
 function setSmartPhrasePreviewMode(isPreview) {
-  const input = $('sp-content-input');
-  const pane  = $('sp-preview-pane');
-  const btn   = $('sp-btn-preview-toggle');
-  if (!input || !pane) return;
+  const editor = $('sp-content-editor');
+  const input  = $('sp-content-input');
+  const pane   = $('sp-preview-pane');
+  const btn    = $('sp-btn-preview-toggle');
+  if (!pane) return;
 
   if (isPreview) {
-    pane.innerHTML = renderMarkdown(input.value) || '<p class="text-xs italic text-slate-400">Empty template body.</p>';
-    initExcelTables(pane, input);
+    const content = editor ? editor.innerHTML : (input ? input.value : '');
+    pane.innerHTML = content.trim() ? (/<[a-z][\s\S]*>/i.test(content) ? content : renderMarkdown(content)) : '<p class="text-xs italic text-slate-400">Empty template body.</p>';
+    initExcelTables(pane);
     pane.classList.remove('hidden');
-    input.classList.add('hidden');
-    if (btn) btn.textContent = 'Edit Markdown';
+    if (editor) editor.classList.add('hidden');
+    if (input) input.classList.add('hidden');
+    if (btn) btn.textContent = 'Edit Content';
   } else {
     pane.classList.add('hidden');
-    input.classList.remove('hidden');
+    if (editor) {
+      editor.classList.remove('hidden');
+      editor.focus();
+    } else if (input) {
+      input.classList.remove('hidden');
+      input.focus();
+    }
     if (btn) btn.textContent = 'Live Preview';
   }
 }
@@ -1792,6 +1936,7 @@ function wireSmartPhraseEditorEvents() {
 
     if ($('sp-title-input')) $('sp-title-input').value = '';
     if ($('sp-code-input')) $('sp-code-input').value = '';
+    if ($('sp-content-editor')) $('sp-content-editor').innerHTML = '';
     if ($('sp-content-input')) $('sp-content-input').value = '';
     if ($('sp-category-input')) $('sp-category-input').value = 'general';
     if ($('sp-prefix-select')) $('sp-prefix-select').value = '@';
@@ -1935,12 +2080,14 @@ function wireSmartPhraseEditorEvents() {
     const prefix = select && select.value === 'custom' ? (custom?.value || '@').trim() : (select?.value || '@');
     let rawCode = ($('sp-code-input')?.value || '').trim().replace(/\s+/g, '-');
     const code = (prefix === '!' ? rawCode.toUpperCase() : rawCode);
-    const content = ($('sp-content-input')?.value || '').trim();
+    
+    const editor = $('sp-content-editor');
+    const content = (editor ? editor.innerHTML : ($('sp-content-input')?.value || '')).trim();
     const category = ($('sp-category-input')?.value || 'general').trim();
 
     if (!title) { alert('Phrase title is required.'); $('sp-title-input')?.focus(); return; }
     if (!code) { alert('Trigger keyword code is required.'); $('sp-code-input')?.focus(); return; }
-    if (!content) { alert('Phrase content cannot be empty.'); $('sp-content-input')?.focus(); return; }
+    if (!content) { alert('Phrase content cannot be empty.'); (editor || $('sp-content-input'))?.focus(); return; }
 
     try {
       const payload = { title, trigger_prefix: prefix, code, content, category };
@@ -1989,16 +2136,44 @@ function wireSmartPhraseEditorEvents() {
   });
 }
 
-function insertInSpEditor(text) {
+function insertInSpEditor(snippet) {
+  setSmartPhrasePreviewMode(false);
+  const editor = $('sp-content-editor');
+  if (editor) {
+    editor.focus();
+    const sel = window.getSelection();
+    let range;
+    if (sel && sel.rangeCount > 0 && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      range = sel.getRangeAt(0);
+    } else {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    range.deleteContents();
+    const frag = range.createContextualFragment(snippet);
+    const last = frag.lastChild;
+    range.insertNode(frag);
+    if (last) {
+      range.setStartAfter(last);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    initExcelTables(editor);
+    return;
+  }
+
   const el = $('sp-content-input');
   if (!el) return;
-  setSmartPhrasePreviewMode(false);
   const start = el.selectionStart || 0;
   const end = el.selectionEnd || 0;
   const val = el.value;
-  el.value = val.substring(0, start) + text + val.substring(end);
+  el.value = val.substring(0, start) + snippet + val.substring(end);
   el.focus();
-  el.selectionStart = el.selectionEnd = start + text.length;
+  el.selectionStart = el.selectionEnd = start + snippet.length;
 }
 
 // ── Dynamic In-Editor Expansion Engine ───────────────────────────────────────
@@ -2024,49 +2199,106 @@ function initSmartPhraseExpansionEngine() {
   // Check if a character is a trigger prefix registered in the library
   function isTriggerPrefix(char) {
     if (!char) return false;
-    return smartPhrasesCache.some(sp => sp.trigger_prefix === char) || ['@', '!', '#', '.'].includes(char);
+    return smartPhrasesCache.some(sp => sp.trigger_prefix === char) ||
+           triggerCategoriesCache.some(c => c.prefix === char) ||
+           ['@', '!'].includes(char);
   }
 
-  // Handle typing inside any note textarea
+  // Handle typing inside any editor (contenteditable or textarea)
   document.addEventListener('input', (e) => {
     const target = e.target;
-    if (!target || target.tagName !== 'TEXTAREA') return;
-    if (target.id !== 'note-content-input' && !target.id.startsWith('note-edit-input-')) return;
+    if (!target) return;
 
-    activeEditorTarget = target;
-    const caretPos = target.selectionStart;
-    const val = target.value;
+    // A: Contenteditable editor (note-content-editor, sp-content-editor, or note-edit-editor-*)
+    if (target.isContentEditable || target.id === 'note-content-editor' || target.id === 'sp-content-editor' || (target.id && target.id.startsWith('note-edit-editor-'))) {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const node = range.startContainer;
+      if (node.nodeType !== Node.TEXT_NODE) {
+        closePopover();
+        return;
+      }
 
-    // Scan backwards from caretPos - 1 to find trigger prefix
-    let triggerIdx = -1;
-    for (let i = caretPos - 1; i >= 0; i--) {
-      const c = val[i];
-      if (c === ' ' || c === '\n') break; // stopped at word boundary
-      if (isTriggerPrefix(c)) {
-        if (i === 0 || val[i - 1] === ' ' || val[i - 1] === '\n') {
-          triggerIdx = i;
-          break;
+      const text = node.textContent;
+      const caretPos = range.startOffset;
+
+      let triggerIdx = -1;
+      for (let i = caretPos - 1; i >= 0; i--) {
+        const c = text[i];
+        if (c === ' ' || c === '\u00A0' || c === '\n') break;
+        if (isTriggerPrefix(c)) {
+          if (i === 0 || text[i - 1] === ' ' || text[i - 1] === '\u00A0' || text[i - 1] === '\n') {
+            triggerIdx = i;
+            break;
+          }
         }
       }
-    }
 
-    if (triggerIdx === -1) {
-      closePopover();
+      if (triggerIdx === -1) {
+        closePopover();
+        return;
+      }
+
+      const token = text.substring(triggerIdx, caretPos);
+      const prefix = token[0];
+      const query = token.slice(1).toLowerCase();
+
+      activeEditorTarget = target;
+      activeTriggerToken = {
+        isContentEditable: true,
+        textNode: node,
+        startOffset: triggerIdx,
+        endOffset: caretPos,
+        prefix,
+        query,
+      };
+
+      filterAndShowPopover(prefix, query, target);
       return;
     }
 
-    const token = val.substring(triggerIdx, caretPos); // e.g. "@c-sp" or "!od"
-    const prefix = token[0];
-    const query = token.slice(1).toLowerCase();
+    // B: Textarea fallback
+    if (target.tagName === 'TEXTAREA' && (target.id === 'note-content-input' || (target.id && target.id.startsWith('note-edit-input-')))) {
+      activeEditorTarget = target;
+      const caretPos = target.selectionStart;
+      const val = target.value;
 
-    activeTriggerToken = {
-      prefix,
-      query,
-      start: triggerIdx,
-      end: caretPos
-    };
+      let triggerIdx = -1;
+      for (let i = caretPos - 1; i >= 0; i--) {
+        const c = val[i];
+        if (c === ' ' || c === '\n') break;
+        if (isTriggerPrefix(c)) {
+          if (i === 0 || val[i - 1] === ' ' || val[i - 1] === '\n') {
+            triggerIdx = i;
+            break;
+          }
+        }
+      }
 
-    // Filter in-memory smart phrases cache with 0ms latency
+      if (triggerIdx === -1) {
+        closePopover();
+        return;
+      }
+
+      const token = val.substring(triggerIdx, caretPos);
+      const prefix = token[0];
+      const query = token.slice(1).toLowerCase();
+
+      activeTriggerToken = {
+        isContentEditable: false,
+        prefix,
+        query,
+        start: triggerIdx,
+        end: caretPos
+      };
+
+      filterAndShowPopover(prefix, query, target);
+      return;
+    }
+  });
+
+  function filterAndShowPopover(prefix, query, target) {
     popoverCandidates = smartPhrasesCache.filter(sp => {
       if (sp.trigger_prefix !== prefix) return false;
       if (!query) return true;
@@ -2078,13 +2310,10 @@ function initSmartPhraseExpansionEngine() {
       return;
     }
 
-    // Render candidate suggestions
     popoverFocusIndex = 0;
     renderPopoverList(popoverList);
-
-    // Position popover adjacent to cursor
     positionPopover(target, popover);
-  });
+  }
 
   function renderPopoverList(listEl) {
     listEl.innerHTML = popoverCandidates.map((sp, idx) => `
@@ -2113,14 +2342,25 @@ function initSmartPhraseExpansionEngine() {
     });
   }
 
-  function positionPopover(textarea, popoverEl) {
-    const rect = textarea.getBoundingClientRect();
-    const caretPos = textarea.selectionStart;
-    const textBefore = textarea.value.substring(0, caretPos);
-    const lineCount = (textBefore.match(/\n/g) || []).length;
+  function positionPopover(target, popoverEl) {
+    if (activeTriggerToken?.isContentEditable) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        const approxTop = Math.min(window.innerHeight - 300, Math.max(10, rect.bottom + 6));
+        const approxLeft = Math.min(window.innerWidth - 340, Math.max(10, rect.left));
+        popoverEl.style.top = `${approxTop}px`;
+        popoverEl.style.left = `${approxLeft}px`;
+        return;
+      }
+    }
 
+    const rect = target.getBoundingClientRect();
+    const caretPos = target.selectionStart || 0;
+    const textBefore = (target.value || '').substring(0, caretPos);
+    const lineCount = (textBefore.match(/\n/g) || []).length;
     const lineHeight = 20;
-    const approxTop = rect.top + Math.min(textarea.clientHeight - 60, (lineCount * lineHeight) + 26) - textarea.scrollTop;
+    const approxTop = rect.top + Math.min(target.clientHeight - 60, (lineCount * lineHeight) + 26) - target.scrollTop;
     const approxLeft = Math.min(window.innerWidth - 340, rect.left + 24);
 
     popoverEl.style.top = `${Math.max(10, Math.min(window.innerHeight - 300, approxTop))}px`;
@@ -2129,23 +2369,45 @@ function initSmartPhraseExpansionEngine() {
 
   function applySmartPhrase(sp) {
     if (!activeEditorTarget || !activeTriggerToken || !sp) return;
+
+    if (activeTriggerToken.isContentEditable) {
+      const { textNode, startOffset, endOffset } = activeTriggerToken;
+      const range = document.createRange();
+      range.setStart(textNode, startOffset);
+      range.setEnd(textNode, endOffset);
+      range.deleteContents();
+
+      const frag = range.createContextualFragment(sp.content);
+      const lastNode = frag.lastChild;
+      range.insertNode(frag);
+
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      const nextRange = document.createRange();
+      if (lastNode) {
+        nextRange.setStartAfter(lastNode);
+        nextRange.collapse(true);
+      }
+      sel.addRange(nextRange);
+
+      initExcelTables(activeEditorTarget);
+      closePopover();
+      return;
+    }
+
+    // Textarea fallback
     const target = activeEditorTarget;
     const val = target.value;
     const replacement = sp.content;
-
-    // Replace the typed trigger token with the full expanded content
     const newVal = val.substring(0, activeTriggerToken.start) + replacement + val.substring(activeTriggerToken.end);
     target.value = newVal;
-
-    // Position caret right after expansion
     const newCaret = activeTriggerToken.start + replacement.length;
     target.focus();
     target.selectionStart = target.selectionEnd = newCaret;
-
     closePopover();
   }
 
-  // Keyboard navigation on active textarea
+  // Keyboard navigation on active editor
   document.addEventListener('keydown', (e) => {
     if (popover.classList.contains('hidden') || popoverCandidates.length === 0) return;
 

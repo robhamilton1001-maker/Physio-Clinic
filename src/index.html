@@ -650,11 +650,9 @@
                       Trigger Prefix Symbol <span class="text-red-500">*</span>
                     </label>
                     <div class="flex items-center gap-1.5">
-                      <select id="sp-prefix-select" class="form-input !py-1.5 text-xs font-mono w-24">
-                        <option value="@">@ (Clinician)</option>
-                        <option value="!">! (MSK Measure)</option>
-                        <option value="#"># (Hashtag)</option>
-                        <option value=".">. (Dot command)</option>
+                      <select id="sp-prefix-select" class="form-input !py-1.5 text-xs font-mono w-28">
+                        <option value="@">@ (Shortcuts)</option>
+                        <option value="!">! (MSK Measures)</option>
                         <option value="custom">Custom…</option>
                       </select>
                       <input id="sp-prefix-input" type="text" maxlength="2"
@@ -710,16 +708,17 @@
                   </div>
                 </div>
 
-                <!-- Textarea -->
-                <textarea id="sp-content-input" rows="18"
-                          class="w-full p-4 rounded-xl text-xs font-mono leading-relaxed
-                                 bg-slate-50 dark:bg-slate-900/60
-                                 border border-slate-200 dark:border-slate-700/80
-                                 text-slate-900 dark:text-slate-100
-                                 placeholder:text-slate-400 dark:placeholder:text-slate-600
-                                 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                                 resize-y"
-                          placeholder="Enter markdown template body, questions, scoring rubrics, or Markdown tables…"></textarea>
+                <!-- Live Interactive DOM / Contenteditable Editor -->
+                <div id="sp-content-editor"
+                     contenteditable="true"
+                     class="rich-editor w-full min-h-[380px] max-h-[600px] overflow-y-auto p-4 rounded-xl text-xs leading-relaxed
+                            bg-white dark:bg-slate-900/80
+                            border border-slate-200 dark:border-slate-700/80
+                            text-slate-900 dark:text-slate-100
+                            focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+                            transition-all"
+                     data-placeholder="Enter template body, clinical questions, or click '+ ROM / Neuro / Stability Grid' above…"></div>
+                <textarea id="sp-content-input" class="hidden"></textarea>
 
                 <!-- Formatted Live Preview Pane -->
                 <div id="sp-preview-pane"
@@ -1560,15 +1559,16 @@
 
         <!-- Note writing field -->
         <div class="relative">
-          <textarea id="note-content-input"
-                    class="w-full h-56 p-4 rounded-xl text-sm font-sans leading-relaxed
-                           bg-slate-50 dark:bg-slate-800/60
-                           border border-slate-200 dark:border-slate-700/70
-                           text-slate-900 dark:text-slate-100
-                           placeholder:text-slate-400 dark:placeholder:text-slate-600
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400
-                           resize-y transition-all"
-                    placeholder="Enter clinical examination notes, patient history, assessment, or click '+ SOAP Template' above…"></textarea>
+          <div id="note-content-editor"
+               contenteditable="true"
+               class="rich-editor w-full min-h-[220px] max-h-[500px] overflow-y-auto p-4 rounded-xl text-sm font-sans leading-relaxed
+                      bg-white dark:bg-slate-900/80
+                      border border-slate-200 dark:border-slate-700/70
+                      text-slate-900 dark:text-slate-100
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400
+                      transition-all"
+               data-placeholder="Enter clinical examination notes, patient history, assessment, or click '+ SOAP Template' above…"></div>
+          <textarea id="note-content-input" class="hidden"></textarea>
 
           <!-- Live Preview Pane -->
           <div id="note-preview-pane"
