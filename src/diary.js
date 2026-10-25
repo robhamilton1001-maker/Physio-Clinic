@@ -604,10 +604,13 @@ window.Diary = (() => {
   }
 
   function setDrawerMode(mode) {
-    $('ev-clinical-section')?.classList.toggle('hidden',    mode !== 'clinical');
-    $('ev-nonclinical-section')?.classList.toggle('hidden', mode !== 'nonclinical');
-    $('ev-mode-clinical')?.classList.toggle('ev-mode-active',    mode === 'clinical');
-    $('ev-mode-nonclinical')?.classList.toggle('ev-mode-active', mode !== 'clinical');
+    const isClin = mode === 'clinical';
+    $('ev-patient-wrap')?.classList.toggle('hidden', !isClin);
+    $('ev-clinical-types')?.classList.toggle('hidden', !isClin);
+    $('ev-title-wrap')?.classList.toggle('hidden', isClin);
+    $('ev-nonclinical-types')?.classList.toggle('hidden', isClin);
+    $('ev-mode-clinical')?.classList.toggle('ev-mode-active', isClin);
+    $('ev-mode-nonclinical')?.classList.toggle('ev-mode-active', !isClin);
   }
 
   function highlightPreset(allSel, activeSel) {

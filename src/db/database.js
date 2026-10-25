@@ -547,6 +547,15 @@ const appointments = {
   listByPatient(patientId) { return stmts.appointmentsByPatient.all(patientId); },
 };
 
+function parseUtcDate(dateStr) {
+  if (!dateStr) return new Date();
+  if (typeof dateStr === 'string') {
+    if (dateStr.endsWith('Z') || dateStr.includes('+')) return new Date(dateStr);
+    return new Date(dateStr.replace(' ', 'T') + 'Z');
+  }
+  return new Date(dateStr);
+}
+
 const notes = {
   /**
    * List all notes for a patient, sorted newest to oldest.
@@ -573,7 +582,7 @@ const notes = {
     `);
 
     return rows.map(note => {
-      const createdMs = new Date(note.created_at).getTime();
+      const createdMs = parseUtcDate(note.created_at).getTime();
       const ageMs = now - createdMs;
       const isPast24h = ageMs >= TWENTY_FOUR_HOURS_MS;
       const isLocked = note.is_locked === 1 || isPast24h;
@@ -598,7 +607,7 @@ const notes = {
     if (!note) return null;
 
     const now = Date.now();
-    const ageMs = now - new Date(note.created_at).getTime();
+    const ageMs = now - parseUtcDate(note.created_at).getTime();
     const isPast24h = ageMs >= 24 * 60 * 60 * 1000;
     note.is_locked = (note.is_locked === 1 || isPast24h) ? 1 : 0;
 
@@ -630,7 +639,7 @@ const notes = {
     const note = db.prepare(`SELECT * FROM notes WHERE id = ?`).get(id);
     if (!note) throw new Error('Note not found.');
 
-    const ageMs = Date.now() - new Date(note.created_at).getTime();
+    const ageMs = Date.now() - parseUtcDate(note.created_at).getTime();
     if (note.is_locked === 1 || ageMs >= 24 * 60 * 60 * 1000) {
       db.prepare(`UPDATE notes SET is_locked = 1 WHERE id = ?`).run(id);
       throw new Error('Medico-legal lock: Notes older than 24 hours are permanently sealed. Direct editing is disabled. Please add an addendum.');

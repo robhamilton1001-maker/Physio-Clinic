@@ -1121,7 +1121,7 @@
         <!-- ── Filter & Search Toolbar ── -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <!-- Status filter tabs -->
-          <div class="inline-flex items-center p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xs text-xs">
+          <div class="inline-flex items-center p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm text-xs">
             <button type="button" class="inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400" data-status="All">
               All
             </button>
@@ -1142,7 +1142,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
             <input id="inv-search-input" type="text" placeholder="Search invoice #, patient, notes..."
-                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 shadow-xs" />
+                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 shadow-sm" />
           </div>
         </div>
 
@@ -1852,9 +1852,14 @@
 
       <!-- Clinical patient search -->
       <div id="ev-patient-wrap" class="space-y-1.5">
-        <label class="block text-xs font-medium text-slate-600 dark:text-slate-400">
-          Patient <span class="text-red-500">*</span>
-        </label>
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            Patient <span class="text-red-500">*</span>
+          </label>
+          <button id="ev-new-patient-link" type="button" class="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer select-none">
+            + New Patient
+          </button>
+        </div>
         <div class="relative">
           <input id="ev-patient-search" type="text" autocomplete="off"
                  class="form-input text-xs"
@@ -1890,15 +1895,15 @@
       <div id="ev-clinical-types" class="space-y-1.5">
         <label class="block text-xs font-medium text-slate-600 dark:text-slate-400">Appointment Type</label>
         <div class="grid grid-cols-3 gap-2">
-          <button type="button" data-preset="clinical_np"
+          <button type="button" data-appt-type="clinical_np" data-preset="clinical_np"
                   class="ev-preset-btn text-xs py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400">
             Initial (60m)
           </button>
-          <button type="button" data-preset="clinical_fup"
+          <button type="button" data-appt-type="clinical_fup" data-preset="clinical_fup"
                   class="ev-preset-btn text-xs py-2 px-2.5 rounded-lg border border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 font-semibold">
             Follow-up (30m)
           </button>
-          <button type="button" data-preset="clinical_rev"
+          <button type="button" data-appt-type="clinical_review" data-preset="clinical_review"
                   class="ev-preset-btn text-xs py-2 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-indigo-400">
             Review (45m)
           </button>
@@ -1909,11 +1914,11 @@
       <div id="ev-nonclinical-types" class="hidden space-y-1.5">
         <label class="block text-xs font-medium text-slate-600 dark:text-slate-400">Category</label>
         <div class="grid grid-cols-3 gap-2">
-          <button type="button" data-preset="lunch" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Lunch</button>
-          <button type="button" data-preset="admin" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Admin</button>
-          <button type="button" data-preset="meeting" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Meeting</button>
-          <button type="button" data-preset="leave" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Leave</button>
-          <button type="button" data-preset="reminder" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Reminder</button>
+          <button type="button" data-nc-type="lunch" data-preset="lunch" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Lunch</button>
+          <button type="button" data-nc-type="admin" data-preset="admin" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Admin</button>
+          <button type="button" data-nc-type="meeting" data-preset="meeting" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Meeting</button>
+          <button type="button" data-nc-type="leave" data-preset="leave" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Leave</button>
+          <button type="button" data-nc-type="reminder" data-preset="reminder" class="ev-preset-btn text-xs py-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700">Reminder</button>
         </div>
       </div>
 
