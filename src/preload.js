@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('api', {
 
     /** Soft-delete a patient (sets deleted_at timestamp). */
     delete: (id) => ipcRenderer.invoke('patients:delete', id),
+
+    /** Phase 8: Get complete discharge packet data (patient, notes, programs) */
+    getDischargeData: (id) => ipcRenderer.invoke('patients:getDischargeData', id),
   },
 
   // ── Domain: Appointments ──────────────────────────────────────────────
@@ -150,6 +153,29 @@ contextBridge.exposeInMainWorld('api', {
     saveProgram:    (data)             => ipcRenderer.invoke('rehab:saveProgram', data),
     deleteProgram:  (id)               => ipcRenderer.invoke('rehab:deleteProgram', id),
     exportPdf:      (htmlContent, defaultFilename) => ipcRenderer.invoke('rehab:exportPdf', { htmlContent, defaultFilename }),
+  },
+
+  // ── Domain: Clinic Settings & Configuration (Phase 8) ───────────────────
+  settings: {
+    getAll: ()         => ipcRenderer.invoke('settings:getAll'),
+    get:    (key)      => ipcRenderer.invoke('settings:get', key),
+    set:    (key, val) => ipcRenderer.invoke('settings:set', key, val),
+    save:   (data)     => ipcRenderer.invoke('settings:save', data),
+  },
+
+  // ── Domain: Invoicing & Billing (Phase 8) ───────────────────────────────
+  invoices: {
+    list:     (filter)   => ipcRenderer.invoke('invoices:list', filter),
+    getById:  (id)       => ipcRenderer.invoke('invoices:getById', id),
+    create:   (data)     => ipcRenderer.invoke('invoices:create', data),
+    update:   (id, data) => ipcRenderer.invoke('invoices:update', id, data),
+    delete:   (id)       => ipcRenderer.invoke('invoices:delete', id),
+    getStats: ()         => ipcRenderer.invoke('invoices:getStats'),
+  },
+
+  // ── Domain: Universal 100% Offline Local PDF Engine (Phase 8) ────────────
+  pdf: {
+    generate: (opts)     => ipcRenderer.invoke('pdf:generate', opts),
   },
 
 });

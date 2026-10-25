@@ -286,6 +286,23 @@
            flex items-center justify-center;
   }
 
+  .diary-lunch-block {
+    @apply absolute left-0 right-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(245, 158, 11, 0.04),
+      rgba(245, 158, 11, 0.04) 10px,
+      rgba(245, 158, 11, 0.08) 10px,
+      rgba(245, 158, 11, 0.08) 20px
+    );
+    border-top: 1px dashed rgba(245, 158, 11, 0.3);
+    border-bottom: 1px dashed rgba(245, 158, 11, 0.3);
+  }
+
+  .diary-lunch-label {
+    @apply text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wider bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded shadow-sm border border-amber-200/50 dark:border-amber-500/20 select-none backdrop-blur-sm;
+  }
+
   .diary-view-btn {
     @apply px-3 py-1.5 text-xs font-medium
            text-slate-500 dark:text-slate-400

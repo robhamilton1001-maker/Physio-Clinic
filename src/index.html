@@ -1045,31 +1045,148 @@
       </div>
     </div>
 
-<div id="view-invoicing" class="view-container relative hidden flex-col h-full items-center justify-center overflow-hidden">
-      <div class="text-center space-y-2.5 animate-fade-in">
-        <svg class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700"
-             fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342
-                   1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375
-                   c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0
-                   .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125
-                   v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0
-                   00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125
-                   V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3
-                   0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-        </svg>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-500">Invoicing — Coming Soon</p>
-        <p class="text-xs text-slate-400 dark:text-slate-600">Local invoicing, billing, and receipt generation.</p>
+    <!-- ── VIEW: INVOICING & BILLING LEDGER (Phase 8) ────────────────────── -->
+    <div id="view-invoicing" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      
+      <!-- Top Action Bar -->
+      <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div>
+          <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Invoicing &amp; Billing Ledger</h1>
+          <p class="text-xs text-slate-400 dark:text-slate-500">Track patient accounts, create itemized claims, and export tax receipts (100% offline).</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button id="btn-create-invoice" type="button" class="btn-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer select-none">
+            <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span class="pointer-events-none">New Invoice</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Main Content -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6 max-w-7xl w-full mx-auto">
+
+        <!-- ── KPI Financial Metrics ── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Total Invoiced -->
+          <div class="card p-4 space-y-1">
+            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+              <span>Total Billed</span>
+              <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+              </svg>
+            </div>
+            <div id="inv-stat-total" class="text-xl font-bold text-slate-900 dark:text-slate-100">$0.00</div>
+            <div id="inv-stat-count" class="text-[11px] text-slate-400">0 invoices recorded</div>
+          </div>
+
+          <!-- Total Paid -->
+          <div class="card p-4 space-y-1 border-l-4 border-l-emerald-500">
+            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+              <span>Paid / Collected</span>
+              <svg class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div id="inv-stat-paid" class="text-xl font-bold text-emerald-600 dark:text-emerald-400">$0.00</div>
+            <div class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">Funds settled</div>
+          </div>
+
+          <!-- Outstanding Pending -->
+          <div class="card p-4 space-y-1 border-l-4 border-l-amber-500">
+            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+              <span>Pending</span>
+              <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div id="inv-stat-pending" class="text-xl font-bold text-amber-600 dark:text-amber-400">$0.00</div>
+            <div class="text-[11px] text-amber-600/80 dark:text-amber-400/80">Awaiting payment</div>
+          </div>
+
+          <!-- Overdue -->
+          <div class="card p-4 space-y-1 border-l-4 border-l-rose-500">
+            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+              <span>Overdue</span>
+              <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div id="inv-stat-overdue" class="text-xl font-bold text-rose-600 dark:text-rose-400">$0.00</div>
+            <div class="text-[11px] text-rose-600/80 dark:text-rose-400/80">Follow-up required</div>
+          </div>
+        </div>
+
+        <!-- ── Filter & Search Toolbar ── -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <!-- Status filter tabs -->
+          <div class="inline-flex items-center p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xs text-xs">
+            <button type="button" class="inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400" data-status="All">
+              All
+            </button>
+            <button type="button" class="inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200" data-status="Paid">
+              Paid
+            </button>
+            <button type="button" class="inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200" data-status="Pending">
+              Pending
+            </button>
+            <button type="button" class="inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200" data-status="Overdue">
+              Overdue
+            </button>
+          </div>
+
+          <!-- Search input -->
+          <div class="relative w-full sm:w-72">
+            <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input id="inv-search-input" type="text" placeholder="Search invoice #, patient, notes..."
+                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 shadow-xs" />
+          </div>
+        </div>
+
+        <!-- ── Invoices Ledger Table ── -->
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th class="py-3 px-4">Invoice #</th>
+                  <th class="py-3 px-4">Patient</th>
+                  <th class="py-3 px-4">Issue Date</th>
+                  <th class="py-3 px-4">Due Date</th>
+                  <th class="py-3 px-4">Services / Items</th>
+                  <th class="py-3 px-4 text-right">Total</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inv-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                <!-- Injected via renderer.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div id="inv-empty-state" class="hidden p-12 text-center space-y-2">
+            <svg class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">No invoices found</p>
+            <p class="text-[11px] text-slate-400">Create your first invoice or adjust the filter criteria.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
-            <!-- ── PRACTICE SETTINGS & CLINIC PREFERENCES (DEFAULT VIEW) ──────────── -->
+    <!-- ── PRACTICE SETTINGS & CLINIC PREFERENCES (Phase 8 Upgraded) ──────────── -->
     <div id="view-settings" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div>
           <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings &amp; Preferences</h1>
-          <p class="text-xs text-slate-400 dark:text-slate-500">Clinic information, practitioner credentials, theme configuration, and shortcuts.</p>
+          <p class="text-xs text-slate-400 dark:text-slate-500">Configure clinic hours, schedule bounds, practitioner credentials, and billing defaults.</p>
         </div>
         <div class="flex items-center gap-2">
           <!-- Clean sub-navigation pills to jump to hubs -->
@@ -1088,45 +1205,212 @@
         </div>
       </header>
 
-      <!-- Settings Content (Always defaults to General & Clinic Preferences) -->
+      <!-- Settings Content -->
       <div class="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl">
-        <!-- Clinic & Practitioner Info -->
+        
+        <!-- 1. Clinic Demographics & Letterhead -->
         <div class="card p-5 space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
-              <p class="text-xs text-slate-400 dark:text-slate-500">Appears on patient take-home PDFs, clinical SOAP exports, and formal documentation.</p>
-            </div>
+          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Appears on official tax receipts, discharge summaries, and exercise handouts.</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Name</label>
               <input id="set-clinic-name" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="PhysioClinic Practice Suite" />
+                     value="Antigravity Sports &amp; Orthopaedic Physiotherapy" />
             </div>
             <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lead Practitioner &amp; Credentials</label>
-              <input id="set-practitioner-name" type="text"
-                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="Lead Musculoskeletal Physiotherapist, MCSP, HCPC" />
-            </div>
-            <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Contact Phone</label>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Phone</label>
               <input id="set-clinic-phone" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="+44 (0) 20 7946 0912" />
+                     placeholder="+61 (02) 9876 5432" />
             </div>
             <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Practice Working Hours</label>
-              <input id="set-clinic-hours" type="text"
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Email</label>
+              <input id="set-clinic-email" type="email"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="08:00 – 18:00 (Mon–Fri)" />
+                     placeholder="reception@antigravityphysio.com.au" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">ABN / Practice Tax ID</label>
+              <input id="set-clinic-abn" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     placeholder="ABN 88 123 456 789" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Address &amp; Suite</label>
+              <input id="set-clinic-address" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     placeholder="Suite 402, 100 Medical Centre Way, Sydney NSW 2000" />
             </div>
           </div>
         </div>
 
-        <!-- Medico-Legal Audit Compliance Notice -->
+        <!-- 2. Practitioner Profile & Numbers -->
+        <div class="card p-5 space-y-4">
+          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practitioner Profile &amp; Registration</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and Medicare compliance.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Practitioner Full Name &amp; Suffix</label>
+              <input id="set-practitioner-name" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     value="Dr. Sarah Jenkins, PT, DPT, OCS" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Professional Clinical Title</label>
+              <input id="set-practitioner-title" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     value="Senior Orthopaedic Physiotherapist" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Health Provider Number</label>
+              <input id="set-provider-number" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     placeholder="PRV-8829103A" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Professional Registration # (AHPRA / HCPC)</label>
+              <input id="set-reg-number" type="text"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+                     placeholder="AHPRA-PHY00019283" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Practice Working Hours & Calendar Schedule -->
+        <div class="card p-5 space-y-4">
+          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Hours &amp; Calendar Schedule</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Updating these bounds dynamically recalculates diary working hours and timeline grid lines.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Work Start Time</label>
+              <input id="set-work-start" type="time"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="08:30" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Work End Time</label>
+              <input id="set-work-end" type="time"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="17:30" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Default Slot Duration</label>
+              <select id="set-slot-duration"
+                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+                <option value="15">15 Minutes</option>
+                <option value="30" selected>30 Minutes (Standard)</option>
+                <option value="45">45 Minutes</option>
+                <option value="60">60 Minutes (Comprehensive)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Days of Week -->
+          <div class="pt-2 text-xs space-y-2">
+            <label class="block font-medium text-slate-700 dark:text-slate-300">Active Practice Days</label>
+            <div class="flex flex-wrap items-center gap-3" id="set-active-days-container">
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Mon" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Mon</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Tue" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Tue</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Wed" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Wed</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Thu" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Thu</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Fri" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Fri</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Sat" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Sat</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" name="active-day" value="Sun" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <span>Sun</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Recurring Non-Clinical Lunch Break -->
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+            <div class="flex items-center gap-2">
+              <input id="set-lunch-enabled" type="checkbox" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+              <label for="set-lunch-enabled" class="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
+                Enable Recurring Non-Clinical Lunch Break Band
+              </label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pl-5">
+              <div>
+                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lunch Break Start Time</label>
+                <input id="set-lunch-start" type="time"
+                       class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                       value="12:30" />
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lunch Break Duration</label>
+                <select id="set-lunch-duration"
+                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="30">30 Minutes</option>
+                  <option value="45">45 Minutes</option>
+                  <option value="60" selected>60 Minutes (1 Hour)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Financial & Invoicing Defaults -->
+        <div class="card p-5 space-y-4">
+          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Financial &amp; Billing Defaults</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Standard fee presets auto-populate when creating new patient invoices.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Consult Fee ($)</label>
+              <input id="set-fee-initial" type="number" min="0" step="5"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="140.00" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Follow-up Fee ($)</label>
+              <input id="set-fee-followup" type="number" min="0" step="5"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="95.00" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Tax / GST Rate (%)</label>
+              <input id="set-tax-rate" type="number" min="0" max="100" step="0.5"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="10.0" />
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Currency Symbol</label>
+              <input id="set-currency-symbol" type="text" maxlength="3"
+                     class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+                     value="$" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Medico-Legal Audit Compliance Notice -->
         <div class="card p-5 space-y-3 border-l-4 border-l-indigo-500">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
@@ -1135,12 +1419,18 @@
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">24-Hour Note Locking Engine</h2>
           </div>
           <p class="text-xs text-slate-500 leading-relaxed">
-            Clinical entries older than 24 hours are permanently sealed to prevent retrospective alterations. Amendments past 24 hours are appended as cryptographically timestamped addendums. All clinical notes and audit logs reside strictly in local SQLite (<code class="font-mono text-indigo-600 dark:text-indigo-400">clinic_data.db</code>).
+            Clinical entries older than 24 hours are permanently sealed to prevent retrospective alterations. Amendments past 24 hours are appended as cryptographically timestamped addendums. All clinical notes, patient ledger entries, and audit logs reside strictly in local SQLite (<code class="font-mono text-indigo-600 dark:text-indigo-400">clinic_data.db</code>).
           </p>
         </div>
 
-        <div class="flex items-center justify-end">
-          <button id="set-btn-save-prefs" type="button" class="btn-primary text-xs py-2 px-4 shadow-sm">
+        <div class="flex items-center justify-between pt-2">
+          <div id="set-save-feedback" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hidden flex items-center gap-1.5">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Practice preferences saved &amp; calendar schedule synchronized.</span>
+          </div>
+          <button id="set-btn-save-prefs" type="button" class="btn-primary text-xs py-2 px-5 shadow-sm ml-auto cursor-pointer select-none">
             Save Clinic Preferences
           </button>
         </div>
@@ -1788,6 +2078,12 @@
 
       <!-- Quick Actions -->
       <div class="flex items-center gap-3">
+        <button id="btn-profile-discharge-pdf" type="button" class="btn-ghost text-xs py-2 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
+          <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+          <span class="pointer-events-none">Discharge Summary (PDF)</span>
+        </button>
         <button id="btn-profile-rehab-program" type="button" class="btn-ghost text-xs py-2 px-3 border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 flex items-center gap-1.5 transition-colors">
           <svg class="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
@@ -2301,6 +2597,126 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- ── DRAWER: Create / Edit Invoice (Phase 8) ────────────────────────── -->
+  <div id="drawer-invoice-backdrop"
+       class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200"
+       style="display: none !important; pointer-events: none !important;"></div>
+
+  <div id="drawer-invoice"
+       class="hidden fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transition-transform duration-300"
+       style="display: none !important; pointer-events: none !important;">
+    
+    <header class="flex-none px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Create Patient Invoice</h2>
+        <p class="text-xs text-slate-400 dark:text-slate-500">Itemized billing statement &amp; tax receipt generator.</p>
+      </div>
+      <button id="btn-close-invoice-drawer" type="button" class="btn-icon cursor-pointer">
+        <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <form id="form-new-invoice" class="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+      
+      <!-- Patient Selector & Auto-populate -->
+      <div class="space-y-1.5">
+        <label class="block font-semibold text-slate-700 dark:text-slate-300">Patient *</label>
+        <select id="inv-form-patient" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+          <option value="">Select a patient...</option>
+        </select>
+      </div>
+
+      <!-- Dates & Payment Method -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Issue Date *</label>
+          <input id="inv-form-issue-date" type="date" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Due Date *</label>
+          <input id="inv-form-due-date" type="date" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Payment Status</label>
+          <select id="inv-form-status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="Pending" selected>Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Payment Method</label>
+        <select id="inv-form-payment-method" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+          <option value="Credit/Debit Card">Credit/Debit Card</option>
+          <option value="Private Health Insurance / HICAPS">Private Health Insurance / HICAPS</option>
+          <option value="Electronic Funds Transfer">Electronic Funds Transfer</option>
+          <option value="Cash">Cash</option>
+          <option value="Third-Party / Workers Comp">Third-Party / Workers Comp</option>
+        </select>
+      </div>
+
+      <!-- Quick fee presets -->
+      <div class="flex items-center gap-2 pt-1">
+        <span class="text-[11px] text-slate-400">Quick add:</span>
+        <button id="btn-quick-add-initial" type="button" class="btn-ghost text-[11px] py-1 px-2 border border-slate-300 dark:border-slate-700 hover:text-indigo-500">
+          + Initial Consult ($<span id="label-fee-initial">140.00</span>)
+        </button>
+        <button id="btn-quick-add-followup" type="button" class="btn-ghost text-[11px] py-1 px-2 border border-slate-300 dark:border-slate-700 hover:text-indigo-500">
+          + Follow-up ($<span id="label-fee-followup">95.00</span>)
+        </button>
+      </div>
+
+      <!-- Line items table -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-700 dark:text-slate-300">Billable Services &amp; Items</label>
+          <button id="btn-add-line-item" type="button" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+            + Add Line Item
+          </button>
+        </div>
+        
+        <div class="space-y-2" id="inv-form-items-container">
+          <!-- Rows will be injected and managed dynamically -->
+        </div>
+      </div>
+
+      <!-- Summary calculations -->
+      <div class="card p-4 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
+        <div class="flex justify-between text-slate-500">
+          <span>Subtotal</span>
+          <span id="inv-calc-subtotal" class="font-mono font-medium text-slate-900 dark:text-slate-100">$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <span>Tax Rate (%):</span>
+            <input id="inv-form-tax-rate" type="number" min="0" max="100" step="0.5" value="10.0" class="w-16 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-right font-mono" />
+          </div>
+          <span id="inv-calc-tax" class="font-mono font-medium text-slate-900 dark:text-slate-100">$0.00</span>
+        </div>
+        <div class="flex justify-between text-sm font-bold text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-700">
+          <span>Total Balance Due</span>
+          <span id="inv-calc-total" class="font-mono text-indigo-600 dark:text-indigo-400">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Notes / Remarks -->
+      <div>
+        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Invoice Remarks &amp; Insurer Notes</label>
+        <textarea id="inv-form-notes" rows="2" placeholder="e.g. Health fund claimable under item 500 / 505." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button id="btn-cancel-invoice" type="button" class="btn-ghost py-2 px-4 cursor-pointer">Cancel</button>
+        <button id="btn-submit-invoice" type="submit" class="btn-primary py-2 px-5 cursor-pointer">Save &amp; Generate Invoice</button>
+      </div>
+    </form>
   </div>
 
 </body>

@@ -146,6 +146,11 @@ function switchView(target) {
     loadExerciseLibraryHub();
   }
 
+  // Activate invoicing & billing ledger when navigating to it (Phase 8)
+  if (target === 'invoicing' && typeof loadInvoicingLedger === 'function') {
+    loadInvoicingLedger();
+  }
+
   // Activate settings preferences when navigating to it (NEVER defaults to exercise library)
   if (target === 'settings') {
     if (typeof initSettingsView === 'function') initSettingsView();
@@ -1353,6 +1358,15 @@ if (btnProfileBookAppt) {
       closePatientProfile();
       switchView('diary');
       window.Diary.openEventDrawer({ patient_id: activePortfolioPatientId, patient_name: pName });
+    }
+  });
+}
+
+const btnProfileDischargePdf = $('btn-profile-discharge-pdf');
+if (btnProfileDischargePdf) {
+  btnProfileDischargePdf.addEventListener('click', () => {
+    if (activePortfolioPatientId && typeof exportPatientDischargeSummary === 'function') {
+      exportPatientDischargeSummary(activePortfolioPatientId);
     }
   });
 }
@@ -3355,11 +3369,870 @@ async function handleExerciseFormSubmit(e) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SETTINGS: GENERAL & CLINIC PREFERENCES (DEFAULT VIEW)
+// PHASE 8: INVOICING & BILLING LEDGER, SETTINGS, AND LOCAL PDF ENGINE
 // ═══════════════════════════════════════════════════════════════════════════
 
+let currentInvoiceFilter = { status: 'All', search: '' };
+let currentInvoiceLineItems = [];
+let clinicSettingsCache = {};
+
+function formatCurrency(amount) {
+  const symbol = clinicSettingsCache.currency_symbol || '$';
+  return symbol + Number(amount || 0).toFixed(2);
+}
+
+function formatDateLocal(isoDateStr) {
+  if (!isoDateStr) return '—';
+  try {
+    const d = new Date(isoDateStr);
+    if (isNaN(d.getTime())) return isoDateStr;
+    return d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (_) {
+    return isoDateStr;
+  }
+}
+
+// ── Invoicing Ledger Controller ─────────────────────────────────────────────
+
+async function loadInvoicingLedger(filter = {}) {
+  if (filter.status !== undefined) currentInvoiceFilter.status = filter.status;
+  if (filter.search !== undefined) currentInvoiceFilter.search = filter.search;
+
+  try {
+    // 1. Fetch practice settings to ensure cache is warm
+    if (window.api?.settings) {
+      clinicSettingsCache = await window.api.settings.getAll() || {};
+    }
+
+    // 2. Fetch stats
+    const stats = await window.api.invoices.getStats();
+    if (stats) {
+      if ($('inv-stat-total')) $('inv-stat-total').textContent = formatCurrency(stats.total_invoiced);
+      if ($('inv-stat-paid')) $('inv-stat-paid').textContent = formatCurrency(stats.total_paid);
+      if ($('inv-stat-pending')) $('inv-stat-pending').textContent = formatCurrency(stats.total_pending);
+      if ($('inv-stat-overdue')) $('inv-stat-overdue').textContent = formatCurrency(stats.total_overdue);
+      if ($('inv-stat-count')) $('inv-stat-count').textContent = `${stats.total_count} ${stats.total_count === 1 ? 'invoice' : 'invoices'} recorded`;
+    }
+
+    // 3. Fetch filtered invoices list
+    const rows = await window.api.invoices.list(currentInvoiceFilter);
+    const tbody = $('inv-table-body');
+    const emptyState = $('inv-empty-state');
+    if (!tbody) return;
+
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = '';
+      if (emptyState) emptyState.classList.remove('hidden');
+      return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+    tbody.innerHTML = rows.map(inv => {
+      const isOverdue = inv.status === 'Overdue' || (inv.status === 'Pending' && new Date(inv.due_date) < new Date());
+      let badgeCls = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+      if (inv.status === 'Paid') {
+        badgeCls = 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30';
+      } else if (inv.status === 'Pending' && !isOverdue) {
+        badgeCls = 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30';
+      } else if (isOverdue) {
+        badgeCls = 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30';
+      }
+
+      const displayStatus = (inv.status === 'Pending' && isOverdue) ? 'Overdue' : inv.status;
+      const patientFullName = `${escapeHtml(inv.first_name)} ${escapeHtml(inv.last_name)}`;
+      const issueFmt = formatDateLocal(inv.issue_date);
+      const dueFmt = formatDateLocal(inv.due_date);
+
+      return `
+        <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+          <td class="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+            ${escapeHtml(inv.invoice_number)}
+          </td>
+          <td class="py-3 px-4">
+            <div class="font-medium text-slate-900 dark:text-slate-100">${patientFullName}</div>
+            <div class="text-[10px] text-slate-400">${escapeHtml(inv.phone || inv.email || 'No contact')}</div>
+          </td>
+          <td class="py-3 px-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+            ${issueFmt}
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <span class="${isOverdue && inv.status !== 'Paid' ? 'text-rose-600 dark:text-rose-400 font-semibold' : 'text-slate-600 dark:text-slate-400'}">
+              ${dueFmt}
+            </span>
+          </td>
+          <td class="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-400">
+            <span class="font-medium text-slate-800 dark:text-slate-200">${inv.item_count} ${inv.item_count === 1 ? 'item' : 'items'}</span>
+            ${inv.notes ? `<span class="text-[11px] text-slate-400 block truncate">${escapeHtml(inv.notes)}</span>` : ''}
+          </td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+            ${formatCurrency(inv.total)}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeCls}">
+              ${displayStatus}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <div class="inline-flex items-center justify-end gap-1.5">
+              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1 cursor-pointer"
+                      title="Export Official PDF Receipt" onclick="exportInvoiceReceipt(${inv.id})">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9Z" />
+                </svg>
+                <span class="pointer-events-none">PDF</span>
+              </button>
+              ${inv.status !== 'Paid' ? `
+                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer"
+                        title="Mark Paid" onclick="updateInvoiceStatus(${inv.id}, 'Paid')">
+                  ✓ Paid
+                </button>
+              ` : `
+                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        title="Mark Pending" onclick="updateInvoiceStatus(${inv.id}, 'Pending')">
+                  Revert
+                </button>
+              `}
+              <button type="button" class="btn-ghost text-xs py-1 px-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded cursor-pointer"
+                      title="Delete Invoice" onclick="deleteInvoice(${inv.id})">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('[Invoicing] Failed to load ledger:', err);
+  }
+}
+
+async function updateInvoiceStatus(id, newStatus) {
+  try {
+    await window.api.invoices.update(id, { status: newStatus });
+    await loadInvoicingLedger();
+  } catch (err) {
+    alert('Failed to update invoice status: ' + err.message);
+  }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Are you sure you want to permanently delete this invoice record?')) return;
+  try {
+    await window.api.invoices.delete(id);
+    await loadInvoicingLedger();
+  } catch (err) {
+    alert('Failed to delete invoice: ' + err.message);
+  }
+}
+
+window.updateInvoiceStatus = updateInvoiceStatus;
+window.deleteInvoice = deleteInvoice;
+
+async function populateInvoicePatientSelect(selectedId = null) {
+  const sel = $('inv-form-patient');
+  if (!sel) return;
+  try {
+    const patients = await window.api.patients.list();
+    sel.innerHTML = '<option value="">Select a patient...</option>' +
+      (patients || []).map(p => `
+        <option value="${p.id}" ${selectedId && Number(selectedId) === p.id ? 'selected' : ''}>
+          ${escapeHtml(p.last_name)}, ${escapeHtml(p.first_name)} (${escapeHtml(p.phone || p.email || 'ID: ' + p.id)})
+        </option>
+      `).join('');
+  } catch (err) {
+    console.warn('[Invoicing] Failed to load patients list:', err);
+  }
+}
+
+function openInvoiceDrawer(presetPatientId = null) {
+  const drawer = $('drawer-invoice');
+  const backdrop = $('drawer-invoice-backdrop');
+  if (!drawer || !backdrop) return;
+
+  populateInvoicePatientSelect(presetPatientId);
+
+  // Set default dates
+  const today = new Date().toISOString().slice(0, 10);
+  const due = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+  if ($('inv-form-issue-date')) $('inv-form-issue-date').value = today;
+  if ($('inv-form-due-date')) $('inv-form-due-date').value = due;
+  if ($('inv-form-status')) $('inv-form-status').value = 'Pending';
+  if ($('inv-form-payment-method')) $('inv-form-payment-method').value = 'Credit/Debit Card';
+  if ($('inv-form-notes')) $('inv-form-notes').value = '';
+
+  const initFee = parseFloat(clinicSettingsCache.fee_initial) || 140.0;
+  const taxRate = parseFloat(clinicSettingsCache.tax_rate) !== undefined ? parseFloat(clinicSettingsCache.tax_rate) : 10.0;
+  if ($('inv-form-tax-rate')) $('inv-form-tax-rate').value = taxRate;
+
+  currentInvoiceLineItems = [
+    { description: 'Initial Comprehensive MSK Assessment (60 min)', quantity: 1, unit_price: initFee }
+  ];
+  renderInvoiceLineItems();
+  recalculateInvoiceTotals();
+
+  drawer.classList.remove('hidden');
+  backdrop.classList.remove('hidden');
+  drawer.style.setProperty('display', 'flex', 'important');
+  drawer.style.setProperty('pointer-events', 'auto', 'important');
+  backdrop.style.setProperty('display', 'block', 'important');
+  backdrop.style.setProperty('pointer-events', 'auto', 'important');
+}
+
+function closeInvoiceDrawer() {
+  const drawer = $('drawer-invoice');
+  const backdrop = $('drawer-invoice-backdrop');
+  if (drawer) {
+    drawer.classList.add('hidden');
+    drawer.style.setProperty('display', 'none', 'important');
+    drawer.style.setProperty('pointer-events', 'none', 'important');
+  }
+  if (backdrop) {
+    backdrop.classList.add('hidden');
+    backdrop.style.setProperty('display', 'none', 'important');
+    backdrop.style.setProperty('pointer-events', 'none', 'important');
+  }
+}
+
+window.openInvoiceDrawer = openInvoiceDrawer;
+window.closeInvoiceDrawer = closeInvoiceDrawer;
+
+function renderInvoiceLineItems() {
+  const container = $('inv-form-items-container');
+  if (!container) return;
+
+  if (currentInvoiceLineItems.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
+        No billable line items added yet. Click "+ Add Line Item" or choose a preset above.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = currentInvoiceLineItems.map((item, idx) => `
+    <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div class="flex-1 min-w-0">
+        <input type="text" placeholder="Service description..." value="${escapeHtml(item.description || '')}"
+               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+               onchange="updateInvoiceLineItem(${idx}, 'description', this.value)" />
+      </div>
+      <div class="w-16">
+        <input type="number" min="1" max="99" value="${item.quantity || 1}" title="Quantity"
+               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-center text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+               onchange="updateInvoiceLineItem(${idx}, 'quantity', this.value)" />
+      </div>
+      <div class="w-24">
+        <input type="number" min="0" step="1" value="${item.unit_price !== undefined ? item.unit_price : 0}" title="Unit Price ($)"
+               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-right text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+               onchange="updateInvoiceLineItem(${idx}, 'unit_price', this.value)" />
+      </div>
+      <div class="w-20 text-right font-mono font-semibold text-xs text-slate-800 dark:text-slate-200 select-none">
+        ${formatCurrency((Number(item.quantity) || 1) * (Number(item.unit_price) || 0))}
+      </div>
+      <button type="button" class="btn-icon text-slate-400 hover:text-rose-500 cursor-pointer" title="Remove line item"
+              onclick="removeInvoiceLineItem(${idx})">
+        <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function updateInvoiceLineItem(index, field, value) {
+  if (!currentInvoiceLineItems[index]) return;
+  if (field === 'quantity') currentInvoiceLineItems[index].quantity = Math.max(1, parseInt(value) || 1);
+  else if (field === 'unit_price') currentInvoiceLineItems[index].unit_price = Math.max(0, parseFloat(value) || 0);
+  else currentInvoiceLineItems[index].description = String(value || '');
+  renderInvoiceLineItems();
+  recalculateInvoiceTotals();
+}
+
+function removeInvoiceLineItem(index) {
+  currentInvoiceLineItems.splice(index, 1);
+  renderInvoiceLineItems();
+  recalculateInvoiceTotals();
+}
+
+function recalculateInvoiceTotals() {
+  const subtotal = currentInvoiceLineItems.reduce((acc, it) => {
+    return acc + ((Number(it.quantity) || 1) * (Number(it.unit_price) || 0));
+  }, 0);
+
+  const taxRate = parseFloat($('inv-form-tax-rate')?.value) || 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
+
+  if ($('inv-calc-subtotal')) $('inv-calc-subtotal').textContent = formatCurrency(subtotal);
+  if ($('inv-calc-tax')) $('inv-calc-tax').textContent = formatCurrency(taxAmount);
+  if ($('inv-calc-total')) $('inv-calc-total').textContent = formatCurrency(total);
+}
+
+window.updateInvoiceLineItem = updateInvoiceLineItem;
+window.removeInvoiceLineItem = removeInvoiceLineItem;
+
+function initInvoicingLedger() {
+  // 1. Status Filter Tabs
+  document.querySelectorAll('.inv-tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.inv-tab-btn').forEach(b => {
+        b.className = 'inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200';
+      });
+      btn.className = 'inv-tab-btn px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer select-none bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400';
+      loadInvoicingLedger({ status: btn.dataset.status });
+    });
+  });
+
+  // 2. Search Debounce
+  let searchDebounce = null;
+  $('inv-search-input')?.addEventListener('input', (e) => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      loadInvoicingLedger({ search: e.target.value.trim() });
+    }, 250);
+  });
+
+  // 3. New Invoice Drawer Triggers
+  $('btn-create-invoice')?.addEventListener('click', () => openInvoiceDrawer());
+  $('btn-close-invoice-drawer')?.addEventListener('click', closeInvoiceDrawer);
+  $('btn-cancel-invoice')?.addEventListener('click', closeInvoiceDrawer);
+  $('drawer-invoice-backdrop')?.addEventListener('click', closeInvoiceDrawer);
+
+  // 4. Quick Fee Presets
+  $('btn-quick-add-initial')?.addEventListener('click', () => {
+    const fee = parseFloat(clinicSettingsCache.fee_initial) || 140.0;
+    currentInvoiceLineItems.push({
+      description: 'Initial Comprehensive MSK Assessment (60 min)',
+      quantity: 1,
+      unit_price: fee
+    });
+    renderInvoiceLineItems();
+    recalculateInvoiceTotals();
+  });
+
+  $('btn-quick-add-followup')?.addEventListener('click', () => {
+    const fee = parseFloat(clinicSettingsCache.fee_followup) || 95.0;
+    currentInvoiceLineItems.push({
+      description: 'Subsequent Treatment Consultation (30 min)',
+      quantity: 1,
+      unit_price: fee
+    });
+    renderInvoiceLineItems();
+    recalculateInvoiceTotals();
+  });
+
+  // 5. Add Line Item Button
+  $('btn-add-line-item')?.addEventListener('click', () => {
+    currentInvoiceLineItems.push({
+      description: '',
+      quantity: 1,
+      unit_price: 50.0
+    });
+    renderInvoiceLineItems();
+    recalculateInvoiceTotals();
+  });
+
+  // 6. Tax Rate Change
+  $('inv-form-tax-rate')?.addEventListener('input', recalculateInvoiceTotals);
+
+  // 7. Form Submit
+  $('form-new-invoice')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const patId = $('inv-form-patient')?.value;
+    if (!patId) {
+      alert('Please select a patient for this invoice.');
+      return;
+    }
+    if (currentInvoiceLineItems.length === 0) {
+      alert('Please add at least one line item to the invoice.');
+      return;
+    }
+
+    const subtotal = currentInvoiceLineItems.reduce((acc, it) => {
+      return acc + ((Number(it.quantity) || 1) * (Number(it.unit_price) || 0));
+    }, 0);
+    const taxRate = parseFloat($('inv-form-tax-rate')?.value) || 0;
+    const taxAmount = (subtotal * taxRate) / 100;
+    const total = subtotal + taxAmount;
+
+    const payload = {
+      patient_id: Number(patId),
+      issue_date: $('inv-form-issue-date')?.value || new Date().toISOString().slice(0, 10),
+      due_date: $('inv-form-due-date')?.value || new Date().toISOString().slice(0, 10),
+      status: $('inv-form-status')?.value || 'Pending',
+      payment_method: $('inv-form-payment-method')?.value || 'Credit/Debit Card',
+      notes: $('inv-form-notes')?.value?.trim() || null,
+      subtotal,
+      tax_rate: taxRate,
+      tax_amount: taxAmount,
+      total,
+      items: currentInvoiceLineItems
+    };
+
+    try {
+      await window.api.invoices.create(payload);
+      closeInvoiceDrawer();
+      await loadInvoicingLedger();
+    } catch (err) {
+      alert('Failed to create invoice: ' + err.message);
+    }
+  });
+}
+
+// ── Local PDF Export Engine (Phase 8) ───────────────────────────────────────
+
+async function exportInvoiceReceipt(invoiceId) {
+  try {
+    const inv = await window.api.invoices.getById(invoiceId);
+    if (!inv) throw new Error('Invoice not found.');
+    const settings = await window.api.settings.getAll() || {};
+
+    const clinicName = escapeHtml(settings.clinic_name || 'Antigravity Sports & Orthopaedic Physiotherapy');
+    const clinicPhone = escapeHtml(settings.clinic_phone || '+61 (02) 9876 5432');
+    const clinicEmail = escapeHtml(settings.clinic_email || 'reception@antigravityphysio.com.au');
+    const clinicAddress = escapeHtml(settings.clinic_address || 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000');
+    const clinicAbn = escapeHtml(settings.clinic_abn || 'ABN 88 123 456 789');
+
+    const pracName = escapeHtml(settings.practitioner_name || 'Dr. Sarah Jenkins, PT, DPT, OCS');
+    const pracTitle = escapeHtml(settings.practitioner_title || 'Senior Orthopaedic Physiotherapist');
+    const provNumber = escapeHtml(settings.provider_number || 'PRV-8829103A');
+    const regNumber = escapeHtml(settings.reg_number || 'AHPRA-PHY00019283');
+
+    const patientName = `${escapeHtml(inv.first_name)} ${escapeHtml(inv.last_name)}`;
+    const patientContact = escapeHtml(inv.phone || inv.email || '—');
+    const patientAddress = escapeHtml(inv.address || '—');
+    const symbol = escapeHtml(settings.currency_symbol || '$');
+
+    const isPaid = inv.status === 'Paid';
+    const statusBg = isPaid ? '#ecfdf5' : (inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb');
+    const statusText = isPaid ? '#059669' : (inv.status === 'Overdue' ? '#e11d48' : '#d97706');
+    const statusBorder = isPaid ? '#a7f3d0' : (inv.status === 'Overdue' ? '#fecdd3' : '#fde68a');
+
+    const itemsHtml = (inv.items || []).map((it, i) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #64748b; width: 30px;">${i + 1}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: #1e293b;">
+          ${escapeHtml(it.description)}
+        </td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: center; color: #334155;">${it.quantity}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: right; font-family: monospace; color: #334155;">${symbol}${Number(it.unit_price).toFixed(2)}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: right; font-family: monospace; font-weight: 700; color: #0f172a;">${symbol}${Number(it.total).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Tax Invoice ${escapeHtml(inv.invoice_number)}</title>
+        <style>
+          @page { size: A4 portrait; margin: 15mm; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #1e293b; line-height: 1.5; font-size: 13px; margin: 0; padding: 0; background: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 25px; }
+          .clinic-name { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; }
+          .clinic-meta { font-size: 11px; color: #64748b; line-height: 1.4; }
+          .doc-type { text-align: right; }
+          .doc-title { font-size: 20px; font-weight: 800; color: #4f46e5; letter-spacing: -0.5px; margin: 0; text-transform: uppercase; }
+          .inv-number { font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 4px; font-family: monospace; }
+          .status-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; background: ${statusBg}; color: ${statusText}; border: 1px solid ${statusBorder}; }
+          .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+          .section-title { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; }
+          .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 12px; }
+          .details-box p { margin: 2px 0; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+          th { background: #f1f5f9; text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+          .totals-area { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+          .totals-table { width: 300px; border-collapse: collapse; }
+          .totals-table td { padding: 6px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+          .totals-table .grand-total { font-size: 15px; font-weight: 800; color: #4f46e5; border-top: 2px solid #4f46e5; border-bottom: none; }
+          .notes-box { background: #f8fafc; border-left: 3px solid #4f46e5; padding: 10px 14px; margin-bottom: 25px; font-size: 11px; color: #475569; border-radius: 0 4px 4px 0; }
+          .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="clinic-name">${clinicName}</h1>
+            <div class="clinic-meta">
+              <div>${clinicAddress}</div>
+              <div>Phone: ${clinicPhone} • Email: ${clinicEmail}</div>
+              <div>${clinicAbn}</div>
+            </div>
+          </div>
+          <div class="doc-type">
+            <h2 class="doc-title">${isPaid ? 'Official Tax Receipt' : 'Official Tax Invoice'}</h2>
+            <div class="inv-number">${escapeHtml(inv.invoice_number)}</div>
+            <div class="status-badge">${escapeHtml(inv.status)}</div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="details-box">
+            <div class="section-title">Patient / Billed To</div>
+            <p><strong>${patientName}</strong></p>
+            <p>Address: ${patientAddress}</p>
+            <p>Contact: ${patientContact}</p>
+            <p>Patient ID: #PAT-${String(inv.patient_id).padStart(4, '0')}</p>
+          </div>
+
+          <div class="details-box">
+            <div class="section-title">Consultation &amp; Practice Details</div>
+            <p><strong>Attending Practitioner:</strong> ${pracName}</p>
+            <p>Title: ${pracTitle}</p>
+            <p>Provider #: <strong>${provNumber}</strong> • Reg #: <strong>${regNumber}</strong></p>
+            <p>Date of Issue: <strong>${formatDateLocal(inv.issue_date)}</strong> • Due: <strong>${formatDateLocal(inv.due_date)}</strong></p>
+            <p>Payment Method: ${escapeHtml(inv.payment_method || 'Electronic')}</p>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30px;">#</th>
+              <th>Service / Consultation Item Description</th>
+              <th style="text-align: center; width: 60px;">Qty</th>
+              <th style="text-align: right; width: 90px;">Rate</th>
+              <th style="text-align: right; width: 100px;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="totals-area">
+          <table class="totals-table">
+            <tr>
+              <td style="color: #64748b;">Subtotal:</td>
+              <td style="text-align: right; font-family: monospace;">${symbol}${Number(inv.subtotal).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="color: #64748b;">Tax / GST (${Number(inv.tax_rate).toFixed(1)}%):</td>
+              <td style="text-align: right; font-family: monospace;">${symbol}${Number(inv.tax_amount).toFixed(2)}</td>
+            </tr>
+            <tr class="grand-total">
+              <td>Total Amount:</td>
+              <td style="text-align: right; font-family: monospace;">${symbol}${Number(inv.total).toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${inv.notes ? `
+          <div class="notes-box">
+            <strong>Remarks / Medico-Legal Billing Notes:</strong><br>
+            ${escapeHtml(inv.notes)}
+          </div>
+        ` : ''}
+
+        <div class="footer">
+          <p>This medical invoice / receipt is valid for private health insurance fund claims (HICAPS), Medicare reimbursement, and tax deductions.</p>
+          <p>Generated locally &amp; securely offline by Antigravity Physiotherapy Suite.</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const cleanFilename = `Invoice_${inv.invoice_number}_${(inv.last_name || 'Patient').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    await window.api.pdf.generate({
+      htmlContent,
+      defaultFilename: cleanFilename,
+      dialogTitle: 'Export Official Tax Invoice / Receipt PDF'
+    });
+
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      alert('Failed to export PDF receipt: ' + err.message);
+    }
+  }
+}
+
+async function exportPatientDischargeSummary(patientId) {
+  try {
+    const data = await window.api.patients.getDischargeData(patientId);
+    if (!data || !data.patient) throw new Error('Patient record not found.');
+    const settings = await window.api.settings.getAll() || {};
+
+    const p = data.patient;
+    const notesList = (p.notes || []).slice().reverse(); // Chronological (oldest first)
+    const programsList = data.programs || [];
+    const appts = p.appointments || [];
+
+    const clinicName = escapeHtml(settings.clinic_name || 'Antigravity Sports & Orthopaedic Physiotherapy');
+    const clinicPhone = escapeHtml(settings.clinic_phone || '+61 (02) 9876 5432');
+    const clinicEmail = escapeHtml(settings.clinic_email || 'reception@antigravityphysio.com.au');
+    const clinicAddress = escapeHtml(settings.clinic_address || 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000');
+    const clinicAbn = escapeHtml(settings.clinic_abn || 'ABN 88 123 456 789');
+
+    const pracName = escapeHtml(settings.practitioner_name || 'Dr. Sarah Jenkins, PT, DPT, OCS');
+    const pracTitle = escapeHtml(settings.practitioner_title || 'Senior Orthopaedic Physiotherapist');
+    const provNumber = escapeHtml(settings.provider_number || 'PRV-8829103A');
+    const regNumber = escapeHtml(settings.reg_number || 'AHPRA-PHY00019283');
+
+    const patientFullName = `${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}`;
+    const initialDate = notesList[0]?.created_at || p.created_at;
+    const dischargeDate = new Date().toISOString();
+
+    const initialNote = notesList[0] || null;
+    const latestNote = notesList.length > 0 ? notesList[notesList.length - 1] : null;
+
+    // Build timeline of treatments
+    const notesSummaryHtml = notesList.map((n, i) => `
+      <div style="margin-bottom: 12px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #4338ca; margin-bottom: 4px;">
+          <span>Session #${i + 1} (${formatDateLocal(n.created_at)})</span>
+        </div>
+        <div style="font-size: 11px; color: #334155;">
+          ${n.subjective ? `<div><strong>S:</strong> ${escapeHtml(n.subjective)}</div>` : ''}
+          ${n.objective ? `<div style="margin-top: 2px;"><strong>O:</strong> ${escapeHtml(n.objective)}</div>` : ''}
+          ${n.assessment ? `<div style="margin-top: 2px;"><strong>A:</strong> ${escapeHtml(n.assessment)}</div>` : ''}
+          ${n.plan ? `<div style="margin-top: 2px;"><strong>P:</strong> ${escapeHtml(n.plan)}</div>` : ''}
+        </div>
+      </div>
+    `).join('') || '<p style="color: #94a3b8; font-style: italic;">No clinical entries recorded.</p>';
+
+    // Build prescribed exercise handouts
+    let programsHtml = '<p style="color: #94a3b8; font-style: italic;">Independent home maintenance program provided.</p>';
+    if (programsList.length > 0) {
+      try {
+        const prog = programsList[0];
+        const schedule = typeof prog.schedule_json === 'string' ? JSON.parse(prog.schedule_json) : prog.schedule_json;
+        if (schedule && Array.isArray(schedule.weeks) && schedule.weeks[0]?.days) {
+          const exercises = [];
+          schedule.weeks[0].days.forEach(d => {
+            if (Array.isArray(d.exercises)) exercises.push(...d.exercises);
+          });
+          if (exercises.length > 0) {
+            programsHtml = exercises.map(ex => `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #f1f5f9; border-radius: 4px; margin-bottom: 6px; font-size: 11px;">
+                <div>
+                  <strong>${escapeHtml(ex.name || 'Exercise')}</strong>
+                  ${ex.cues ? `<div style="color: #64748b; font-size: 10px;">${escapeHtml(ex.cues)}</div>` : ''}
+                </div>
+                <div style="font-family: monospace; font-weight: 700; color: #4338ca; white-space: nowrap;">
+                  ${ex.sets || 3} sets × ${ex.reps || '10'} reps
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (_) {}
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Discharge Summary — ${patientFullName}</title>
+        <style>
+          @page { size: A4 portrait; margin: 15mm; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #1e293b; line-height: 1.5; font-size: 12px; margin: 0; padding: 0; background: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #4338ca; padding-bottom: 12px; margin-bottom: 20px; }
+          .clinic-name { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 2px 0; }
+          .clinic-meta { font-size: 10px; color: #64748b; line-height: 1.4; }
+          .doc-type { text-align: right; }
+          .doc-title { font-size: 16px; font-weight: 800; color: #4338ca; text-transform: uppercase; margin: 0; }
+          .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+          .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 11px; }
+          .section-heading { font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 8px 0; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; }
+          .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+          .kpi-card { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 8px; text-align: center; }
+          .kpi-val { font-size: 15px; font-weight: 800; color: #4338ca; }
+          .kpi-lbl { font-size: 9px; font-weight: 700; color: #6366f1; text-transform: uppercase; }
+          .status-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; }
+          .status-table th { background: #f1f5f9; text-align: left; padding: 8px 10px; font-weight: 700; border-bottom: 1.5px solid #cbd5e1; }
+          .status-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+          .sign-block { margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 15px; border-top: 1px solid #e2e8f0; }
+          .footer { margin-top: 25px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 9px; color: #94a3b8; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="clinic-name">${clinicName}</h1>
+            <div class="clinic-meta">
+              <div>${clinicAddress}</div>
+              <div>Phone: ${clinicPhone} • Email: ${clinicEmail} • ${clinicAbn}</div>
+            </div>
+          </div>
+          <div class="doc-type">
+            <h2 class="doc-title">Clinical Discharge Summary</h2>
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 2px;">
+              Date of Discharge: ${formatDateLocal(dischargeDate)}
+            </div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="details-box">
+            <div style="font-weight: 700; color: #4338ca; font-size: 12px; margin-bottom: 4px;">${patientFullName}</div>
+            <p style="margin: 2px 0;"><strong>DOB:</strong> ${escapeHtml(p.dob || '—')}</p>
+            <p style="margin: 2px 0;"><strong>Phone:</strong> ${escapeHtml(p.phone || '—')} • <strong>Email:</strong> ${escapeHtml(p.email || '—')}</p>
+            <p style="margin: 2px 0;"><strong>Medical Record #:</strong> MRN-${String(p.id).padStart(5, '0')}</p>
+          </div>
+
+          <div class="details-box">
+            <div style="font-weight: 700; color: #4338ca; font-size: 12px; margin-bottom: 4px;">Treating Clinician</div>
+            <p style="margin: 2px 0;"><strong>${pracName}</strong></p>
+            <p style="margin: 2px 0;">${pracTitle}</p>
+            <p style="margin: 2px 0;">Provider #: <strong>${provNumber}</strong> • Registration #: <strong>${regNumber}</strong></p>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-val">${formatDateLocal(initialDate)}</div>
+            <div class="kpi-lbl">Initial Evaluation</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">${formatDateLocal(dischargeDate)}</div>
+            <div class="kpi-lbl">Discharge Date</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">${notesList.length || appts.length || 1} Sessions</div>
+            <div class="kpi-lbl">Total Encounters</div>
+          </div>
+        </div>
+
+        <div class="section-heading">Initial Presentation vs. Discharge Functional Status</div>
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Clinical Dimension</th>
+              <th style="width: 37.5%;">Initial Baseline Status</th>
+              <th style="width: 37.5%;">Discharge / Outcome Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Subjective Symptoms</strong></td>
+              <td>${escapeHtml(initialNote?.subjective || 'Acute functional limitation and localized symptoms.')}</td>
+              <td style="color: #059669; font-weight: 600;">${escapeHtml(latestNote?.subjective || 'Significant symptom resolution; goals met.')}</td>
+            </tr>
+            <tr>
+              <td><strong>Objective Findings &amp; ROM</strong></td>
+              <td>${escapeHtml(initialNote?.objective || 'Deficits in active ROM and localized muscular inhibition.')}</td>
+              <td style="color: #059669; font-weight: 600;">${escapeHtml(latestNote?.objective || 'Symmetrical ROM restored; pain-free loading tolerance achieved.')}</td>
+            </tr>
+            <tr>
+              <td><strong>Diagnostic Assessment</strong></td>
+              <td>${escapeHtml(initialNote?.assessment || p.notes || 'Musculoskeletal dysfunction with functional impairment.')}</td>
+              <td style="color: #059669; font-weight: 600;">${escapeHtml(latestNote?.assessment || 'Rehabilitation complete. Successfully met discharge criteria.')}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-heading">Chronological Clinical Care Summary</div>
+        ${notesSummaryHtml}
+
+        <div class="section-heading">Home Exercise Program &amp; Long-Term Maintenance</div>
+        ${programsHtml}
+
+        <div class="section-heading">Discharge Recommendation &amp; Prognosis</div>
+        <p style="margin: 4px 0 10px 0; font-size: 11px; line-height: 1.6; color: #334155;">
+          The patient has met clinical discharge milestones. They have demonstrated proficiency in their independent self-management home exercise protocol. Follow-up is advised only as needed should recurrence of symptoms occur under unaccustomed mechanical loads.
+        </p>
+
+        <div class="sign-block">
+          <div>
+            <div style="font-weight: 800; font-size: 13px; color: #0f172a;">${pracName}</div>
+            <div style="font-size: 11px; color: #64748b;">${pracTitle}</div>
+            <div style="font-size: 10px; color: #94a3b8; font-family: monospace;">Provider #${provNumber} • Reg #${regNumber}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="border-bottom: 1.5px solid #0f172a; width: 180px; margin-bottom: 4px;"></div>
+            <div style="font-size: 10px; color: #64748b;">Authorized Clinician Signature</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Confidential Medical Record — Approved for Patient Records, Referrers, and Third-Party Payers.</p>
+          <p>Generated locally &amp; securely offline by Antigravity Physiotherapy Suite.</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const cleanFilename = `Discharge_Summary_${(p.last_name || 'Patient').replace(/[^a-zA-Z0-9]/g, '_')}_${(p.first_name || '').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    await window.api.pdf.generate({
+      htmlContent,
+      defaultFilename: cleanFilename,
+      dialogTitle: 'Export Official Patient Discharge Summary PDF'
+    });
+
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      alert('Failed to export discharge summary PDF: ' + err.message);
+    }
+  }
+}
+
+window.exportInvoiceReceipt = exportInvoiceReceipt;
+window.exportPatientDischargeSummary = exportPatientDischargeSummary;
+
+// ── Settings View Controller (Phase 8 SQLite Backed) ───────────────────────
+
+async function loadSettingsGeneralPreferences() {
+  try {
+    if (!window.api?.settings) return;
+    const s = await window.api.settings.getAll() || {};
+    clinicSettingsCache = s;
+
+    // Demographics
+    if (s.clinic_name && $('set-clinic-name')) $('set-clinic-name').value = s.clinic_name;
+    if (s.clinic_phone && $('set-clinic-phone')) $('set-clinic-phone').value = s.clinic_phone;
+    if (s.clinic_email && $('set-clinic-email')) $('set-clinic-email').value = s.clinic_email;
+    if (s.clinic_address && $('set-clinic-address')) $('set-clinic-address').value = s.clinic_address;
+    if (s.clinic_abn && $('set-clinic-abn')) $('set-clinic-abn').value = s.clinic_abn;
+
+    // Practitioner
+    if (s.practitioner_name && $('set-practitioner-name')) $('set-practitioner-name').value = s.practitioner_name;
+    if (s.practitioner_title && $('set-practitioner-title')) $('set-practitioner-title').value = s.practitioner_title;
+    if (s.provider_number && $('set-provider-number')) $('set-provider-number').value = s.provider_number;
+    if (s.reg_number && $('set-reg-number')) $('set-reg-number').value = s.reg_number;
+
+    // Hours & Schedule
+    if (s.work_start && $('set-work-start')) $('set-work-start').value = s.work_start;
+    if (s.work_end && $('set-work-end')) $('set-work-end').value = s.work_end;
+    if (s.slot_duration && $('set-slot-duration')) $('set-slot-duration').value = s.slot_duration;
+
+    if (s.active_days) {
+      try {
+        const days = typeof s.active_days === 'string' ? JSON.parse(s.active_days) : s.active_days;
+        if (Array.isArray(days)) {
+          document.querySelectorAll('#set-active-days-container input[type="checkbox"]').forEach(cb => {
+            cb.checked = days.includes(cb.value);
+          });
+        }
+      } catch (_) {}
+    }
+
+    if ($('set-lunch-enabled')) $('set-lunch-enabled').checked = (s.lunch_enabled === '1' || s.lunch_enabled === true || s.lunch_enabled === 'true');
+    if (s.lunch_start && $('set-lunch-start')) $('set-lunch-start').value = s.lunch_start;
+    if (s.lunch_duration && $('set-lunch-duration')) $('set-lunch-duration').value = s.lunch_duration;
+
+    // Billing & Financial Defaults
+    if (s.fee_initial && $('set-fee-initial')) $('set-fee-initial').value = s.fee_initial;
+    if (s.fee_followup && $('set-fee-followup')) $('set-fee-followup').value = s.fee_followup;
+    if (s.tax_rate && $('set-tax-rate')) $('set-tax-rate').value = s.tax_rate;
+    if (s.currency_symbol && $('set-currency-symbol')) $('set-currency-symbol').value = s.currency_symbol;
+
+    // Update quick preset labels in drawer
+    if (s.fee_initial && $('label-fee-initial')) $('label-fee-initial').textContent = Number(s.fee_initial).toFixed(2);
+    if (s.fee_followup && $('label-fee-followup')) $('label-fee-followup').textContent = Number(s.fee_followup).toFixed(2);
+
+  } catch (err) {
+    console.warn('[Settings] Failed to load preferences from SQLite:', err);
+  }
+}
+
 function initSettingsView() {
-  // Jump buttons to Hubs: bind explicit click handlers triggering primary navigation router
+  // Jump buttons to Hubs
   const btnExLib = $('set-jump-exlib');
   if (btnExLib) {
     btnExLib.onclick = (e) => {
@@ -3376,22 +4249,65 @@ function initSettingsView() {
     };
   }
 
-  // Save clinic preferences
+  // Save clinic preferences to SQLite
   const btnSavePrefs = $('set-btn-save-prefs');
   if (btnSavePrefs) {
-    btnSavePrefs.onclick = () => {
+    btnSavePrefs.onclick = async () => {
+      const activeDays = [];
+      document.querySelectorAll('#set-active-days-container input[type="checkbox"]:checked').forEach(cb => {
+        activeDays.push(cb.value);
+      });
+
       const prefs = {
-        clinicName: $('set-clinic-name')?.value?.trim() || 'PhysioClinic Practice Suite',
-        practitioner: $('set-practitioner-name')?.value?.trim() || 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC',
-        phone: $('set-clinic-phone')?.value?.trim() || '',
-        hours: $('set-clinic-hours')?.value?.trim() || '08:00 – 18:00 (Mon–Fri)'
+        clinic_name: $('set-clinic-name')?.value?.trim() || 'Antigravity Sports & Orthopaedic Physiotherapy',
+        clinic_phone: $('set-clinic-phone')?.value?.trim() || '',
+        clinic_email: $('set-clinic-email')?.value?.trim() || '',
+        clinic_address: $('set-clinic-address')?.value?.trim() || '',
+        clinic_abn: $('set-clinic-abn')?.value?.trim() || '',
+
+        practitioner_name: $('set-practitioner-name')?.value?.trim() || 'Dr. Sarah Jenkins, PT, DPT, OCS',
+        practitioner_title: $('set-practitioner-title')?.value?.trim() || 'Senior Orthopaedic Physiotherapist',
+        provider_number: $('set-provider-number')?.value?.trim() || '',
+        reg_number: $('set-reg-number')?.value?.trim() || '',
+
+        work_start: $('set-work-start')?.value || '08:30',
+        work_end: $('set-work-end')?.value || '17:30',
+        slot_duration: $('set-slot-duration')?.value || '30',
+        active_days: JSON.stringify(activeDays),
+
+        lunch_enabled: $('set-lunch-enabled')?.checked ? '1' : '0',
+        lunch_start: $('set-lunch-start')?.value || '12:30',
+        lunch_duration: $('set-lunch-duration')?.value || '60',
+
+        fee_initial: $('set-fee-initial')?.value || '140.00',
+        fee_followup: $('set-fee-followup')?.value || '95.00',
+        tax_rate: $('set-tax-rate')?.value || '10.0',
+        currency_symbol: $('set-currency-symbol')?.value || '$'
       };
+
       try {
-        localStorage.setItem('clinic:preferences', JSON.stringify(prefs));
-        const origText = btnSavePrefs.textContent;
-        btnSavePrefs.textContent = 'Preferences Saved!';
-        setTimeout(() => { btnSavePrefs.textContent = origText; }, 2000);
-      } catch (_) {}
+        const saved = await window.api.settings.save(prefs);
+        clinicSettingsCache = saved || prefs;
+
+        // Synchronize calendar schedule dynamically
+        if (window.Diary?.updateScheduleConfig) {
+          window.Diary.updateScheduleConfig(prefs);
+        }
+
+        // Show success indicator
+        const feedback = $('set-save-feedback');
+        if (feedback) {
+          feedback.classList.remove('hidden');
+          setTimeout(() => feedback.classList.add('hidden'), 3500);
+        }
+
+        // Update fee labels in invoice drawer
+        if ($('label-fee-initial')) $('label-fee-initial').textContent = Number(prefs.fee_initial).toFixed(2);
+        if ($('label-fee-followup')) $('label-fee-followup').textContent = Number(prefs.fee_followup).toFixed(2);
+
+      } catch (err) {
+        alert('Failed to save settings: ' + err.message);
+      }
     };
   }
 
@@ -3482,20 +4398,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-function loadSettingsGeneralPreferences() {
-  try {
-    const raw = localStorage.getItem('clinic:preferences');
-    if (raw) {
-      const prefs = JSON.parse(raw);
-      if (prefs.clinicName && $('set-clinic-name')) $('set-clinic-name').value = prefs.clinicName;
-      if (prefs.practitioner && $('set-practitioner-name')) $('set-practitioner-name').value = prefs.practitioner;
-      if (prefs.phone && $('set-clinic-phone')) $('set-clinic-phone').value = prefs.phone;
-      if (prefs.hours && $('set-clinic-hours')) $('set-clinic-hours').value = prefs.hours;
-    }
-  } catch (_) {}
-}
-
-// Initialise Exercise Library Hub and Settings View, then enforce initial strict view isolation
+// Initialise Invoicing, Exercise Library Hub and Settings View, then enforce initial strict view isolation
+initInvoicingLedger();
 initExerciseLibraryHub();
 initSettingsView();
 closePatientProfile();
@@ -3504,4 +4408,5 @@ closeRF();
 closeNewPatientModal();
 closeNewProtocolModal();
 closeEditExerciseModal();
+closeInvoiceDrawer();
 switchView('dashboard');

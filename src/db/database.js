@@ -152,6 +152,38 @@ db.transaction(() => {
       duration_weeks  INTEGER DEFAULT 4,
       protocol_json   TEXT    NOT NULL
     );
+
+    -- Phase 8: Clinic Settings & Invoicing ---------------------------------
+    CREATE TABLE IF NOT EXISTS clinic_settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS invoices (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_number  TEXT    NOT NULL UNIQUE,
+      patient_id      INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      issue_date      TEXT    NOT NULL,
+      due_date        TEXT    NOT NULL,
+      status          TEXT    NOT NULL DEFAULT 'Pending',
+      subtotal        REAL    NOT NULL DEFAULT 0.0,
+      tax_rate        REAL    NOT NULL DEFAULT 10.0,
+      tax_amount      REAL    NOT NULL DEFAULT 0.0,
+      total           REAL    NOT NULL DEFAULT 0.0,
+      payment_method  TEXT    DEFAULT 'Credit/Debit Card',
+      notes           TEXT,
+      created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS invoice_items (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_id  INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      description TEXT    NOT NULL,
+      quantity    INTEGER NOT NULL DEFAULT 1,
+      unit_price  REAL    NOT NULL DEFAULT 0.0,
+      total       REAL    NOT NULL DEFAULT 0.0
+    );
   `);
 
   // -- Phase 3 columns (safe migrations for existing databases) ------------
@@ -180,6 +212,10 @@ db.transaction(() => {
     CREATE INDEX IF NOT EXISTS idx_pt_programs_patient   ON pt_programs(patient_id);
     CREATE INDEX IF NOT EXISTS idx_exercise_lib_cat      ON exercise_library(category);
     CREATE INDEX IF NOT EXISTS idx_pt_templates_cat      ON pt_templates(category);
+    CREATE INDEX IF NOT EXISTS idx_invoices_patient      ON invoices(patient_id);
+    CREATE INDEX IF NOT EXISTS idx_invoices_status       ON invoices(status);
+    CREATE INDEX IF NOT EXISTS idx_invoices_date         ON invoices(issue_date);
+    CREATE INDEX IF NOT EXISTS idx_inv_items_inv         ON invoice_items(invoice_id);
   `);
 
 })();
@@ -273,6 +309,42 @@ try {
   } catch (_) {}
 } catch (rehabSeedErr) {
   console.warn('[DB] Rehab seed warning:', rehabSeedErr.message);
+}
+
+// ── Seed Practice Settings (Phase 8) ──────────────────────────────────────
+try {
+  const settingsCount = db.prepare('SELECT COUNT(*) as count FROM clinic_settings').get();
+  if (!settingsCount || settingsCount.count === 0) {
+    const defaultSettings = [
+      ['clinic_name', 'Antigravity Sports & Orthopaedic Physiotherapy'],
+      ['practitioner_name', 'Dr. Sarah Jenkins, PT, DPT, OCS'],
+      ['practitioner_title', 'Senior Orthopaedic Physiotherapist'],
+      ['provider_number', 'PRV-8829103A'],
+      ['reg_number', 'AHPRA-PHY00019283'],
+      ['clinic_phone', '+61 (02) 9876 5432'],
+      ['clinic_email', 'reception@antigravityphysio.com.au'],
+      ['clinic_address', 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000'],
+      ['clinic_abn', 'ABN 88 123 456 789'],
+      ['work_start', '08:30'],
+      ['work_end', '17:30'],
+      ['slot_duration', '30'],
+      ['active_days', '["Mon","Tue","Wed","Thu","Fri"]'],
+      ['lunch_enabled', '1'],
+      ['lunch_start', '12:30'],
+      ['lunch_duration', '60'],
+      ['fee_initial', '140.00'],
+      ['fee_followup', '95.00'],
+      ['tax_rate', '10.0'],
+      ['currency_symbol', '$']
+    ];
+    const insertSetting = db.prepare('INSERT OR IGNORE INTO clinic_settings (key, value) VALUES (?, ?)');
+    for (const [k, v] of defaultSettings) {
+      insertSetting.run(k, v);
+    }
+    console.log('[DB] Seeded practice settings.');
+  }
+} catch (setErr) {
+  console.warn('[DB] Settings seed warning:', setErr.message);
 }
 
 // ── Prepared statements ───────────────────────────────────────────────────
@@ -450,6 +522,17 @@ const patients = {
     patient.notes = notes.listByPatient(id);
     patient.clinical_notes = patient.notes; // backward-compat
     return patient;
+  },
+
+  /**
+   * Phase 8: Comprehensive discharge packet data
+   * Compiles demographics, notes history, ROM/measure outcomes, and rehab programs.
+   */
+  getDischargeData(id) {
+    const patient = this.getById(id);
+    if (!patient) return null;
+    const programs = db.prepare('SELECT * FROM pt_programs WHERE patient_id = ? ORDER BY id DESC').all(Number(id));
+    return { patient, programs };
   },
 
   list()           { return stmts.patientList.all(); },
@@ -887,6 +970,226 @@ const rehab = {
   }
 };
 
+// ── Domain: Clinic Settings & Preferences (Phase 8) ────────────────────────
+const settings = {
+  getAll() {
+    const rows = db.prepare('SELECT key, value FROM clinic_settings').all();
+    const result = {};
+    rows.forEach(r => { result[r.key] = r.value; });
+    return result;
+  },
+
+  get(key) {
+    const row = db.prepare('SELECT value FROM clinic_settings WHERE key = ?').get(key);
+    return row ? row.value : null;
+  },
+
+  set(key, value) {
+    return db.prepare(`
+      INSERT INTO clinic_settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(key, String(value));
+  },
+
+  setMultiple(obj) {
+    const stmt = db.prepare(`
+      INSERT INTO clinic_settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `);
+    const tx = db.transaction((data) => {
+      for (const [k, v] of Object.entries(data)) {
+        if (v !== undefined && v !== null) {
+          stmt.run(k, String(v));
+        }
+      }
+    });
+    tx(obj);
+    return this.getAll();
+  }
+};
+
+// ── Domain: Invoicing & Billing (Phase 8) ───────────────────────────────────
+const invoices = {
+  list(filter = {}) {
+    let sql = `
+      SELECT i.*, p.first_name, p.last_name, p.email, p.phone,
+             (SELECT COUNT(*) FROM invoice_items WHERE invoice_id = i.id) as item_count
+      FROM invoices i
+      JOIN patients p ON i.patient_id = p.id
+      WHERE 1=1
+    `;
+    const params = [];
+    if (filter.status && filter.status !== 'All') {
+      sql += ' AND i.status = ?';
+      params.push(filter.status);
+    }
+    if (filter.search) {
+      sql += ' AND (i.invoice_number LIKE ? OR p.first_name LIKE ? OR p.last_name LIKE ? OR (p.first_name || \' \' || p.last_name) LIKE ? OR i.notes LIKE ?)';
+      const s = `%${filter.search}%`;
+      params.push(s, s, s, s, s);
+    }
+    sql += ' ORDER BY i.id DESC';
+    return db.prepare(sql).all(...params);
+  },
+
+  getById(id) {
+    const inv = db.prepare(`
+      SELECT i.*, p.first_name, p.last_name, p.dob, p.email, p.phone, p.address
+      FROM invoices i
+      JOIN patients p ON i.patient_id = p.id
+      WHERE i.id = ?
+    `).get(Number(id));
+    if (!inv) return null;
+    inv.items = db.prepare('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC').all(Number(id));
+    return inv;
+  },
+
+  create(data) {
+    const tx = db.transaction(() => {
+      const year = new Date().getFullYear();
+      let invNum = data.invoice_number;
+      if (!invNum) {
+        const countRow = db.prepare("SELECT COUNT(*) as c FROM invoices WHERE invoice_number LIKE ?").get(`INV-${year}-%`);
+        const nextNum = (countRow?.c || 0) + 1;
+        invNum = `INV-${year}-${String(nextNum).padStart(3, '0')}`;
+      }
+
+      const info = db.prepare(`
+        INSERT INTO invoices (
+          invoice_number, patient_id, issue_date, due_date, status,
+          subtotal, tax_rate, tax_amount, total, payment_method, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        invNum,
+        Number(data.patient_id),
+        data.issue_date || new Date().toISOString().slice(0, 10),
+        data.due_date || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
+        data.status || 'Pending',
+        Number(data.subtotal) || 0,
+        Number(data.tax_rate) !== undefined ? Number(data.tax_rate) : 10,
+        Number(data.tax_amount) || 0,
+        Number(data.total) || 0,
+        data.payment_method || 'Credit/Debit Card',
+        data.notes || null
+      );
+
+      const invoiceId = info.lastInsertRowid;
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        const itemStmt = db.prepare(`
+          INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, total)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        for (const it of data.items) {
+          const qty = Number(it.quantity) || 1;
+          const up = Number(it.unit_price) || 0;
+          const tot = it.total !== undefined ? Number(it.total) : (qty * up);
+          itemStmt.run(invoiceId, it.description || 'Clinical Service', qty, up, tot);
+        }
+      }
+      return invoiceId;
+    });
+
+    const newId = tx();
+    return this.getById(newId);
+  },
+
+  update(id, data) {
+    const fields = ['status', 'payment_method', 'notes', 'due_date'];
+    const sets = [];
+    const vals = [];
+    fields.forEach(f => {
+      if (data[f] !== undefined) {
+        sets.push(`${f} = ?`);
+        vals.push(data[f]);
+      }
+    });
+    if (sets.length > 0) {
+      sets.push("updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')");
+      vals.push(Number(id));
+      db.prepare(`UPDATE invoices SET ${sets.join(', ')} WHERE id = ?`).run(...vals);
+    }
+    return this.getById(Number(id));
+  },
+
+  delete(id) {
+    return db.prepare('DELETE FROM invoices WHERE id = ?').run(Number(id));
+  },
+
+  getStats() {
+    const row = db.prepare(`
+      SELECT
+        COUNT(*) as total_count,
+        COALESCE(SUM(total), 0) as total_invoiced,
+        COALESCE(SUM(CASE WHEN status = 'Paid' THEN total ELSE 0 END), 0) as total_paid,
+        COALESCE(SUM(CASE WHEN status = 'Pending' AND date(due_date) >= date('now') THEN total ELSE 0 END), 0) as total_pending,
+        COALESCE(SUM(CASE WHEN status = 'Overdue' OR (status = 'Pending' AND date(due_date) < date('now')) THEN total ELSE 0 END), 0) as total_overdue
+      FROM invoices
+    `).get();
+    return row;
+  }
+};
+
+// ── Seed Sample Invoices (Phase 8) ─────────────────────────────────────────
+try {
+  const invCount = db.prepare('SELECT COUNT(*) as count FROM invoices').get();
+  const firstPatient = db.prepare('SELECT id FROM patients LIMIT 1').get();
+  if ((!invCount || invCount.count === 0) && firstPatient) {
+    const pId = firstPatient.id;
+    const inv1 = invoices.create({
+      invoice_number: 'INV-2026-001',
+      patient_id: pId,
+      issue_date: '2026-10-10',
+      due_date: '2026-10-24',
+      status: 'Paid',
+      subtotal: 140.00,
+      tax_rate: 10.0,
+      tax_amount: 14.00,
+      total: 154.00,
+      payment_method: 'Credit/Debit Card',
+      notes: 'Initial MSK consultation and rehabilitation program onboarding.',
+      items: [
+        { description: 'Initial Comprehensive MSK Assessment (60 min)', quantity: 1, unit_price: 140.00, total: 140.00 }
+      ]
+    });
+    const inv2 = invoices.create({
+      invoice_number: 'INV-2026-002',
+      patient_id: pId,
+      issue_date: '2026-10-18',
+      due_date: '2026-11-01',
+      status: 'Pending',
+      subtotal: 120.00,
+      tax_rate: 10.0,
+      tax_amount: 12.00,
+      total: 132.00,
+      payment_method: 'Private Health Insurance / HICAPS',
+      notes: 'Follow-up manual therapy and dry needling.',
+      items: [
+        { description: 'Subsequent Treatment Consultation (30 min)', quantity: 1, unit_price: 95.00, total: 95.00 },
+        { description: 'Dry Needling Consumables & Modality', quantity: 1, unit_price: 25.00, total: 25.00 }
+      ]
+    });
+    const inv3 = invoices.create({
+      invoice_number: 'INV-2026-003',
+      patient_id: pId,
+      issue_date: '2026-09-20',
+      due_date: '2026-10-04',
+      status: 'Overdue',
+      subtotal: 180.00,
+      tax_rate: 10.0,
+      tax_amount: 18.00,
+      total: 198.00,
+      payment_method: 'Electronic Funds Transfer',
+      notes: 'Biomechanical gait analysis & video assessment.',
+      items: [
+        { description: 'Biomechanical Video Gait Analysis', quantity: 1, unit_price: 180.00, total: 180.00 }
+      ]
+    });
+    console.log('[DB] Seeded 3 sample invoices.');
+  }
+} catch (invErr) {
+  console.warn('[DB] Invoices seed warning:', invErr.message);
+}
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -902,6 +1205,8 @@ module.exports = {
   smartPhrases,
   triggerCategories,
   rehab,
+  settings,
+  invoices,
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {

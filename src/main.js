@@ -336,6 +336,103 @@ ipcMain.handle('rehab:exportPdf', async (_e, { htmlContent, defaultFilename }) =
   }
 });
 
+// ── Phase 8: Clinic Settings & Configuration ──────────────────────────────
+ipcMain.handle('settings:getAll', () => {
+  return db.settings.getAll();
+});
+
+ipcMain.handle('settings:get', (_e, key) => {
+  return db.settings.get(key);
+});
+
+ipcMain.handle('settings:set', (_e, key, value) => {
+  return db.settings.set(key, value);
+});
+
+ipcMain.handle('settings:save', (_e, data) => {
+  return db.settings.setMultiple(data);
+});
+
+// ── Phase 8: Invoicing & Billing ──────────────────────────────────────────
+ipcMain.handle('invoices:list', (_e, filter) => {
+  return db.invoices.list(filter || {});
+});
+
+ipcMain.handle('invoices:getById', (_e, id) => {
+  return db.invoices.getById(id);
+});
+
+ipcMain.handle('invoices:create', (_e, data) => {
+  return db.invoices.create(data);
+});
+
+ipcMain.handle('invoices:update', (_e, id, data) => {
+  return db.invoices.update(id, data);
+});
+
+ipcMain.handle('invoices:delete', (_e, id) => {
+  return db.invoices.delete(id);
+});
+
+ipcMain.handle('invoices:getStats', () => {
+  return db.invoices.getStats();
+});
+
+// ── Phase 8: Discharge Summary Data ───────────────────────────────────────
+ipcMain.handle('patients:getDischargeData', (_e, id) => {
+  return db.patients.getDischargeData(id);
+});
+
+// ── Phase 8: Universal 100% Offline Local PDF Generator ───────────────────
+ipcMain.handle('pdf:generate', async (_e, { htmlContent, defaultFilename, dialogTitle, landscape = false }) => {
+  const saveResult = await dialog.showSaveDialog(mainWindow, {
+    title: dialogTitle || 'Export Document as PDF',
+    defaultPath: defaultFilename || 'Medical_Document.pdf',
+    filters: [
+      { name: 'PDF Documents (*.pdf)', extensions: ['pdf'] }
+    ]
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { success: false, canceled: true };
+  }
+
+  const printWin = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  try {
+    await printWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);
+
+    const pdfData = await printWin.webContents.printToPDF({
+      pageSize: 'A4',
+      landscape: !!landscape,
+      printBackground: true,
+      margins: {
+        marginType: 'custom',
+        top: 0.4,
+        bottom: 0.4,
+        left: 0.4,
+        right: 0.4
+      }
+    });
+
+    fs.writeFileSync(saveResult.filePath, pdfData);
+    return { success: true, filePath: saveResult.filePath };
+  } catch (err) {
+    console.error('[PDF Export] Error generating PDF:', err);
+    throw err;
+  } finally {
+    if (!printWin.isDestroyed()) {
+      printWin.close();
+    }
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // APP LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════

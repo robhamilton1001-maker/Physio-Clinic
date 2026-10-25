@@ -9,12 +9,19 @@
 window.Diary = (() => {
 
   // ── Grid constants ──────────────────────────────────────────────────────────
-  const DAY_START  = 7;                        // 07:00
-  const DAY_END    = 19;                       // 19:00
-  const UNIT_MIN   = 15;                       // minutes per grid step
-  const UNIT_PX    = 20;                       // px per 15-min unit
+  let DAY_START    = 7;                         // 07:00 (configurable via clinic_settings)
+  let DAY_END      = 19;                        // 19:00 (configurable via clinic_settings)
+  const UNIT_MIN   = 15;                        // minutes per grid step
+  const UNIT_PX    = 20;                        // px per 15-min unit
   const HOUR_PX    = (60 / UNIT_MIN) * UNIT_PX; // 80px per hour
-  const TOTAL_PX   = (DAY_END - DAY_START) * HOUR_PX; // 960px
+  let TOTAL_PX     = (DAY_END - DAY_START) * HOUR_PX; // dynamically calculated
+
+  // Recurring non-clinical lunch break default (Phase 8)
+  let lunchConfig = {
+    enabled: true,
+    startMin: 12 * 60 + 30, // 12:30
+    endMin: 13 * 60 + 30    // 13:30
+  };
 
   // ── Event type config ───────────────────────────────────────────────────────
   const EV = {
@@ -150,6 +157,29 @@ window.Diary = (() => {
       }
       // Final hour line
       addLine(col, TOTAL_PX, 'diary-line-hour');
+
+      // Recurring non-clinical lunch break band (Phase 8)
+      if (lunchConfig.enabled && lunchConfig.startMin < DAY_END * 60 && lunchConfig.endMin > DAY_START * 60) {
+        const effStart = Math.max(DAY_START * 60, lunchConfig.startMin);
+        const effEnd = Math.min(DAY_END * 60, lunchConfig.endMin);
+        if (effEnd > effStart) {
+          const lTop = minToPx(effStart - DAY_START * 60);
+          const lH = minToPx(effEnd - effStart);
+          const lunchEl = document.createElement('div');
+          lunchEl.className = 'diary-lunch-block';
+          lunchEl.style.top = `${lTop}px`;
+          lunchEl.style.height = `${lH}px`;
+          lunchEl.innerHTML = `
+            <div class="diary-lunch-label">
+              <svg class="h-3 w-3 inline mr-1 text-amber-500/80 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Lunch Break (${hhmm(lunchConfig.startMin)} – ${hhmm(lunchConfig.endMin)})</span>
+            </div>
+          `;
+          col.appendChild(lunchEl);
+        }
+      }
 
       // "Now" band highlight for today
       if (isoDate(day) === today) col.classList.add('is-today-col');
@@ -892,6 +922,49 @@ window.Diary = (() => {
     setInterval(renderNowLine, 60000);
   }
 
+  // ── Public: Schedule Configuration & Dynamic Hours (Phase 8) ───────────────
+  async function updateScheduleConfig(cfg) {
+    if (!cfg && window.api?.settings) {
+      try {
+        cfg = await window.api.settings.getAll();
+      } catch (err) {
+        console.warn('[Diary] Failed to fetch settings for schedule config:', err);
+      }
+    }
+    if (!cfg) return;
+
+    if (cfg.work_start) {
+      const startM = parseHHMM(cfg.work_start);
+      DAY_START = Math.max(0, Math.floor(startM / 60));
+    }
+    if (cfg.work_end) {
+      const endM = parseHHMM(cfg.work_end);
+      DAY_END = Math.min(24, Math.ceil(endM / 60));
+      if (DAY_END <= DAY_START) DAY_END = DAY_START + 8;
+    }
+    TOTAL_PX = (DAY_END - DAY_START) * HOUR_PX;
+
+    lunchConfig.enabled = cfg.lunch_enabled === '1' || cfg.lunch_enabled === true || cfg.lunch_enabled === 'true';
+    if (cfg.lunch_start) {
+      const lStart = parseHHMM(cfg.lunch_start);
+      const dur = Number(cfg.lunch_duration) || 60;
+      lunchConfig.startMin = lStart;
+      lunchConfig.endMin = lStart + dur;
+    }
+
+    if (cfg.active_days) {
+      try {
+        const days = typeof cfg.active_days === 'string' ? JSON.parse(cfg.active_days) : cfg.active_days;
+        if (Array.isArray(days) && days.length > 0) {
+          weekDays = Math.max(1, Math.min(7, days.length));
+        }
+      } catch (_) {}
+    }
+
+    buildGrid();
+    await loadEvents();
+  }
+
   // ── Public: activate ─────────────────────────────────────────────────────────
 
   async function activate() {
@@ -900,6 +973,40 @@ window.Diary = (() => {
       inited = true;
     }
     anchor = new Date();
+    if (window.api?.settings) {
+      try {
+        const cfg = await window.api.settings.getAll();
+        if (cfg) {
+          if (cfg.work_start) {
+            const startM = parseHHMM(cfg.work_start);
+            DAY_START = Math.max(0, Math.floor(startM / 60));
+          }
+          if (cfg.work_end) {
+            const endM = parseHHMM(cfg.work_end);
+            DAY_END = Math.min(24, Math.ceil(endM / 60));
+            if (DAY_END <= DAY_START) DAY_END = DAY_START + 8;
+          }
+          TOTAL_PX = (DAY_END - DAY_START) * HOUR_PX;
+
+          lunchConfig.enabled = cfg.lunch_enabled === '1' || cfg.lunch_enabled === true || cfg.lunch_enabled === 'true';
+          if (cfg.lunch_start) {
+            const lStart = parseHHMM(cfg.lunch_start);
+            const dur = Number(cfg.lunch_duration) || 60;
+            lunchConfig.startMin = lStart;
+            lunchConfig.endMin = lStart + dur;
+          }
+
+          if (cfg.active_days) {
+            try {
+              const days = typeof cfg.active_days === 'string' ? JSON.parse(cfg.active_days) : cfg.active_days;
+              if (Array.isArray(days) && days.length > 0) {
+                weekDays = Math.max(1, Math.min(7, days.length));
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
     buildGrid();
     await loadEvents();
 
@@ -909,6 +1016,6 @@ window.Diary = (() => {
   }
 
   // Expose only what renderer.js needs
-  return { activate, openEventDrawer };
+  return { activate, openEventDrawer, updateScheduleConfig };
 
 })();
