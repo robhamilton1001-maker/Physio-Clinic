@@ -1065,6 +1065,8 @@ window.RehabBuilder = (() => {
   }
 
   // ── PDF Export Action ───────────────────────────────────────────────────────
+  let lastExportedProgramPdfPath = null;
+
   async function exportPatientPdf() {
     let patientInfo = null;
     if (program.patient_id) {
@@ -1082,15 +1084,48 @@ window.RehabBuilder = (() => {
     try {
       const result = await window.api.rehab.exportPdf(htmlContent, defaultFilename);
       if (result && result.success) {
+        lastExportedProgramPdfPath = result.filePath;
         if (btn) btn.innerHTML = '<span>PDF Saved!</span>';
         setTimeout(() => { if (btn) btn.innerHTML = origHtml; }, 2500);
+        return result.filePath;
       } else {
         if (btn) btn.innerHTML = origHtml;
+        return null;
       }
     } catch (err) {
       console.error('[RehabBuilder] PDF Export error:', err);
       alert('Failed to export PDF: ' + err.message);
       if (btn) btn.innerHTML = origHtml;
+      return null;
+    }
+  }
+
+  async function emailPatientPdf() {
+    let patientInfo = null;
+    if (program.patient_id) {
+      patientInfo = patients.find(p => Number(p.id) === Number(program.patient_id));
+    }
+
+    let filePath = lastExportedProgramPdfPath;
+    if (!filePath) {
+      filePath = await exportPatientPdf();
+      if (!filePath) return;
+    }
+
+    const patientEmail = patientInfo ? (patientInfo.email || '') : '';
+    const patientName = patientInfo ? `${patientInfo.first_name} ${patientInfo.last_name}` : 'Patient';
+    const programTitle = program.title || 'Rehabilitation & Exercise Program';
+
+    const subject = `Home Exercise Plan: ${programTitle}`;
+    const body = `Dear ${patientName},\n\nPlease find attached your individualized physiotherapy exercise rehabilitation prescription (${programTitle}).\n\nPlease execute each prescribed movement according to the sets, repetitions, and clinical coaching cues. If you encounter sharp or worsening symptoms, please pause your routine and contact the clinic immediately.\n\nKind regards,\nAntigravity Physiotherapy Clinic`;
+
+    if (window.api?.system?.openEmailClient) {
+      await window.api.system.openEmailClient({
+        to: patientEmail,
+        subject,
+        body,
+        filePath
+      });
     }
   }
 
@@ -1299,6 +1334,7 @@ window.RehabBuilder = (() => {
 
     // Export Patient PDF button
     document.getElementById('rb-btn-export-pdf')?.addEventListener('click', exportPatientPdf);
+    document.getElementById('rb-btn-email-patient')?.addEventListener('click', emailPatientPdf);
 
     // Quick replace modal close & search
     document.getElementById('btn-close-quick-replace')?.addEventListener('click', closeQuickReplaceModal);

@@ -56,7 +56,7 @@ db.transaction(() => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS appointments (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      patient_id    INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+      patient_id    INTEGER REFERENCES patients(id) ON DELETE CASCADE,
       scheduled_at  TEXT    NOT NULL,  -- ISO 8601 datetime
       duration_min  INTEGER NOT NULL DEFAULT 60,
       type          TEXT    NOT NULL DEFAULT 'Initial Assessment',
@@ -66,7 +66,8 @@ db.transaction(() => {
       therapist     TEXT,
       notes         TEXT,
       created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-      updated_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+      updated_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      is_clinical   INTEGER NOT NULL DEFAULT 1
     );
   `);
 
@@ -186,13 +187,55 @@ db.transaction(() => {
     );
   `);
 
-  // -- Phase 3 columns (safe migrations for existing databases) ------------
+  // -- Phase 3 columns & nullable patient_id migration ----------------------
   [
     `ALTER TABLE appointments ADD COLUMN event_type   TEXT    DEFAULT 'clinical_fup'`,
     `ALTER TABLE appointments ADD COLUMN title        TEXT`,
     `ALTER TABLE appointments ADD COLUMN end_time     TEXT`,
     `ALTER TABLE appointments ADD COLUMN is_recurring INTEGER DEFAULT 0`,
+    `ALTER TABLE appointments ADD COLUMN is_clinical   INTEGER DEFAULT 1`,
   ].forEach(sql => { try { db.exec(sql); } catch (_) { /* column exists */ } });
+
+  try {
+    const apptInfo = db.prepare("PRAGMA table_info(appointments)").all();
+    const patCol = apptInfo.find(c => c.name === 'patient_id');
+    if (patCol && patCol.notnull === 1) {
+      db.exec(`
+        PRAGMA foreign_keys = OFF;
+        CREATE TABLE appointments_v2 (
+          id            INTEGER PRIMARY KEY AUTOINCREMENT,
+          patient_id    INTEGER REFERENCES patients(id) ON DELETE CASCADE,
+          scheduled_at  TEXT    NOT NULL,
+          duration_min  INTEGER NOT NULL DEFAULT 60,
+          type          TEXT    NOT NULL DEFAULT 'Initial Assessment',
+          status        TEXT    NOT NULL DEFAULT 'scheduled',
+          room          TEXT,
+          therapist     TEXT,
+          notes         TEXT,
+          created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+          updated_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+          event_type    TEXT    DEFAULT 'clinical_fup',
+          title         TEXT,
+          end_time      TEXT,
+          is_recurring  INTEGER DEFAULT 0,
+          is_clinical   INTEGER DEFAULT 1
+        );
+        INSERT INTO appointments_v2 (id, patient_id, scheduled_at, duration_min, type, status, room, therapist, notes, created_at, updated_at, event_type, title, end_time, is_recurring, is_clinical)
+          SELECT id, patient_id, scheduled_at, duration_min, type, status, room, therapist, notes, created_at, updated_at,
+                 COALESCE(event_type, 'clinical_fup'), title, end_time, COALESCE(is_recurring, 0),
+                 CASE WHEN event_type IN ('lunch', 'admin', 'meeting', 'leave', 'reminder') OR patient_id IS NULL THEN 0 ELSE 1 END
+          FROM appointments;
+        DROP TABLE appointments;
+        ALTER TABLE appointments_v2 RENAME TO appointments;
+        CREATE INDEX IF NOT EXISTS idx_appointments_patient   ON appointments(patient_id);
+        CREATE INDEX IF NOT EXISTS idx_appointments_scheduled ON appointments(scheduled_at);
+        CREATE INDEX IF NOT EXISTS idx_appointments_end       ON appointments(end_time);
+        PRAGMA foreign_keys = ON;
+      `);
+    }
+  } catch (err) {
+    console.error('[DB] Appointments nullable migration error:', err);
+  }
 
   // -- Indexes --------------------------------------------------------------
   db.exec(`
@@ -239,10 +282,12 @@ try {
 // ── Seed & Upgrade Smart Phrases Library ──────────────────────────────────
 try {
   const { SEED_SMART_PHRASES } = require('./smart_phrases_seed');
-  // Check if #ROM-CERVICAL exists in DB and DASH has updated th-text
+  // Check if #ROM-CERVICAL and #CRANIAL-NERVES exist in DB and full library is seeded
   const sampleAssessment = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'ROM-CERVICAL' LIMIT 1").get();
+  const sampleCranial = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'CRANIAL-NERVES' LIMIT 1").get();
   const sampleTh = db.prepare("SELECT content FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'DASH' LIMIT 1").get();
-  const needsReseed = !sampleAssessment || (sampleTh && !sampleTh.content.includes('th-text'));
+  const currentCount = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get()?.count || 0;
+  const needsReseed = !sampleAssessment || !sampleCranial || currentCount < 70 || (sampleTh && !sampleTh.content.includes('th-text'));
 
   if (needsReseed) {
     console.log('[DB] Synchronizing # Clinical Assessments and updated MSK smart phrases...');
@@ -267,12 +312,15 @@ try {
   console.warn('[DB] Smart phrases seed warning:', seedErr.message);
 }
 
-// ── Seed Exercise Library & Pre-Configured Protocols (Phase 7) ────────────
+// ── Seed Exercise Library (Phase 7 / Gross Exercise Library - 370+ Movements) ───
 try {
-  const { SEED_EXERCISES, SEED_TEMPLATES } = require('./rehab_seed');
+  const { SEED_EXERCISES } = require('./rehab_seed');
+
+  // Ensure compatibility alias view 'exercises' pointing to 'exercise_library'
+  db.exec('CREATE VIEW IF NOT EXISTS exercises AS SELECT * FROM exercise_library;');
 
   const exCount = db.prepare('SELECT COUNT(*) AS count FROM exercise_library').get();
-  if (!exCount || exCount.count < 250) {
+  if (!exCount || exCount.count < 370) {
     db.prepare('DELETE FROM exercise_library').run();
     const insertEx = db.prepare(`
       INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
@@ -291,19 +339,22 @@ try {
       }
     });
     seedExTx(SEED_EXERCISES);
-    console.log(`[DB] Seeded ${SEED_EXERCISES.length} exercises into exercise_library.`);
+    console.log(`[DB] Seeded ${SEED_EXERCISES.length} individual atomic exercises into exercise_library.`);
   }
 
-  // Clean up any unapproved legacy placeholder templates to start clean
+  // Ensure protocols / templates list is completely clean for clinician authoring (Zero pre-bundled protocols)
   try {
     db.prepare(`
       DELETE FROM pt_templates 
       WHERE name IN (
         'ACL Reconstruction Phase 1: Weeks 1-4',
         'Achilles Tendinopathy Loading',
+        'Achilles Tendinopathy Heavy Slow Resistance',
         'Subacromial Shoulder Rehab',
+        'Subacromial Shoulder Rehab & Cuff Progression',
         'Chronic Lumbar Motor Control & Stability',
-        'Lateral Ankle Sprain Phase 2'
+        'Lateral Ankle Sprain Phase 2',
+        'Patellofemoral Pain Syndrome (PFPS) Loading'
       )
     `).run();
   } catch (_) {}
@@ -419,8 +470,8 @@ const stmts = {
 
   // Appointments (generic)
   appointmentCreate: db.prepare(`
-    INSERT INTO appointments (patient_id, scheduled_at, duration_min, type, status, room, therapist, notes)
-    VALUES (@patient_id, @scheduled_at, @duration_min, @type, @status, @room, @therapist, @notes)
+    INSERT INTO appointments (patient_id, scheduled_at, duration_min, type, status, room, therapist, notes, event_type, title, end_time, is_clinical)
+    VALUES (@patient_id, @scheduled_at, @duration_min, @type, @status, @room, @therapist, @notes, @event_type, @title, @end_time, @is_clinical)
   `),
 
   appointmentById: db.prepare(`SELECT * FROM appointments WHERE id = ?`),
@@ -541,7 +592,23 @@ const patients = {
 };
 
 const appointments = {
-  create(data) { return stmts.appointmentCreate.run(data); },
+  create(data) {
+    const isClin = data.is_clinical !== undefined ? Number(data.is_clinical) : (data.patient_id ? 1 : 0);
+    return stmts.appointmentCreate.run({
+      patient_id:   data.patient_id ?? null,
+      scheduled_at: data.scheduled_at,
+      duration_min: data.duration_min ?? 60,
+      type:         data.type ?? 'Initial Assessment',
+      status:       data.status ?? 'scheduled',
+      room:         data.room ?? null,
+      therapist:    data.therapist ?? null,
+      notes:        data.notes ?? null,
+      event_type:   data.event_type ?? (isClin ? 'clinical_fup' : 'admin'),
+      title:        data.title ?? null,
+      end_time:     data.end_time ?? null,
+      is_clinical:  isClin,
+    });
+  },
   getById(id)  { return stmts.appointmentById.get(id); },
   update(id, data) { return stmts.appointmentUpdate.run({ ...data, id }); },
   listByPatient(patientId) { return stmts.appointmentsByPatient.all(patientId); },
@@ -1238,13 +1305,16 @@ module.exports = {
 
     /** Insert a new event row. Returns the full inserted row. */
     createEvent(data) {
+      const isClin = data.is_clinical !== undefined
+        ? Number(data.is_clinical)
+        : (['clinical_np', 'clinical_fup', 'clinical_review'].includes(data.event_type) ? 1 : 0);
       const info = db.prepare(`
         INSERT INTO appointments
           (patient_id, event_type, title, scheduled_at, end_time,
-           duration_min, is_recurring, status, type, notes)
+           duration_min, is_recurring, status, type, notes, is_clinical)
         VALUES
           (@patient_id, @event_type, @title, @scheduled_at, @end_time,
-           @duration_min, @is_recurring, @status, @type, @notes)
+           @duration_min, @is_recurring, @status, @type, @notes, @is_clinical)
       `).run({
         patient_id:   data.patient_id   ?? null,
         event_type:   data.event_type   ?? 'clinical_fup',
@@ -1256,6 +1326,7 @@ module.exports = {
         status:       data.status       ?? 'scheduled',
         type:         data.type         ?? data.event_type ?? 'clinical_fup',
         notes:        data.notes        ?? null,
+        is_clinical:  isClin,
       });
       return db.prepare(`
         SELECT a.*, p.first_name, p.last_name
@@ -1269,7 +1340,7 @@ module.exports = {
     updateEvent(id, data) {
       const ALLOWED = [
         'patient_id','event_type','title','scheduled_at','end_time',
-        'duration_min','is_recurring','status','type','notes',
+        'duration_min','is_recurring','status','type','notes','is_clinical',
       ];
       const sets   = [];
       const values = [];

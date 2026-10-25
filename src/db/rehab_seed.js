@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Phase 7: Exhaustive Offline Exercise Library & Protocols (262+ Movements)
- * Covering Strength & Conditioning, Orthopaedic Rehabilitation, and Gym Movements.
+ * Exhaustive Offline Gross Exercise Library (374+ Atomic Movements)
+ * 100% Standalone Individual Exercises. ZERO Pre-Loaded Protocols.
  */
 
 const SEED_EXERCISES = [
@@ -1839,65 +1839,795 @@ const SEED_EXERCISES = [
     "default_sets": 3,
     "default_reps": "10-12 reps",
     "cues": "Cable low to high, lift handle diagonally upward across chest to overhead, brace core against rotational extension."
+  },
+  {
+    "name": "Low Bar Back Squat (Powerlifting)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5-6 reps",
+    "cues": "Bar rests on posterior deltoids, hip hinge initiates descent, knees track over midfoot, maintain tight upper back and upright torso angle."
+  },
+  {
+    "name": "High Bar Olympic Back Squat",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "6-8 reps",
+    "cues": "Bar sits high on upper trapezius, vertical spine descent, deep hip and knee flexion with forward knee travel over toes."
+  },
+  {
+    "name": "Safety Squat Bar (SSB) Squat",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "6-8 reps",
+    "cues": "Hold handles lightly, fight the camber pulling you forward, engage upper back and core, vertical torso descent."
+  },
+  {
+    "name": "Pin Squat (Bottom-Up Concentric)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "3-5 reps",
+    "cues": "Descend to safety pins set just above parallel, dead stop for 1 second without releasing core tightness, explode upward."
+  },
+  {
+    "name": "Box Squat (Static-Overcoming)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5 reps",
+    "cues": "Hinge back to sit on box, break hip-knee momentum while maintaining core brace, drive through mid-foot to stand."
+  },
+  {
+    "name": "2-Second Paused Squat",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-6 reps",
+    "cues": "Full depth at parallel, hold motionless in the hole for 2 full seconds without bouncing, drive up with max velocity."
+  },
+  {
+    "name": "Tempo Squat (3-1-0 Concentric Drive)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "6 reps",
+    "cues": "3 seconds eccentric descent, 1 second pause at parallel, explode upward with zero deceleration at top."
+  },
+  {
+    "name": "Tempo Squat (4-2-0 Hypertrophy & Control)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "5 reps",
+    "cues": "4 full seconds lowering, 2 full seconds pause at parallel, powerful drive without hip shift or torso drift."
+  },
+  {
+    "name": "Spanish Squat (Heavy Band Isometric)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "45s hold",
+    "cues": "Heavy looped band behind knee joint line, vertical shins, sit back to 70-90° knee angle, drive quads into band resistance."
+  },
+  {
+    "name": "Front Squat (Clean Grip / Cross-Arm)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "6-8 reps",
+    "cues": "Elbows high and parallel to floor, upright spine, push knees wide and drive out of the hole maintaining high chest."
+  },
+  {
+    "name": "Goblet Squat with Kettlebell / Dumbbell",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Hold weight tight at sternum, drop hips between heels, elbows tap medial knees, maintain neutral spine."
+  },
+  {
+    "name": "Bulgarian Split Squat (Loaded DB)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Rear foot laces on flat bench, front knee tracks 2nd toe, drop rear knee straight down, slight forward torso incline."
+  },
+  {
+    "name": "Belt Squat (Spine Sparing)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "10-12 reps",
+    "cues": "Load suspended through pelvis eliminating spinal axial loading, push knees forward and wide, full quadriceps focus."
+  },
+  {
+    "name": "Competition Grip Flat Bench Press",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5 reps",
+    "cues": "Scapulae retracted and depressed, arch within legal parameters, lower to sternum, 1s pause, press back over shoulders."
+  },
+  {
+    "name": "Close Grip Bench Press (Triceps & Lockout)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Hands shoulder-width apart, elbows tucked at 30-45°, touch lower chest, drive to full lockout."
+  },
+  {
+    "name": "Spoto Press (1-Inch Off Chest Pause)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5-6 reps",
+    "cues": "Lower bar to hover exactly 1 inch above sternum, pause for 2 seconds under maximal muscular tension, press without touching chest."
+  },
+  {
+    "name": "2-Board / 3-Board Bench Press",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-6 reps",
+    "cues": "Overload triceps and lockout strength, touch boards smoothly with soft rebound, explode to locked elbows."
+  },
+  {
+    "name": "Pin Press (Chest Level Bench)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-5 reps",
+    "cues": "Bar rests on safety pins just touching chest, press concentrically from dead stop without pre-stretch tension."
+  },
+  {
+    "name": "Pin Press (Mid-Range Lockout)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-6 reps",
+    "cues": "Pins set at 90° elbow flexion sticking point, drive bar from complete rest to full lockout."
+  },
+  {
+    "name": "Larsen Press (Feet-Up Bench Press)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Legs extended straight off end of bench with zero leg drive, brace core tight, controlled bar path to chest."
+  },
+  {
+    "name": "Incline Barbell Bench Press (30-Degree)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Set incline to 30°, lower bar to clavicular head of pectoralis major, elbows 45° to torso, smooth lockout."
+  },
+  {
+    "name": "Floor Press with Dumbbells",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Lie on floor with knees bent, lower dumbbells until triceps rest gently on floor, pause 1s, press to top."
+  },
+  {
+    "name": "Floor Press with Barbell",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "6-8 reps",
+    "cues": "Eliminates shoulder hyperextension, triceps tap floor softly, drive upward to full elbow extension."
+  },
+  {
+    "name": "3-Second Paused Bench Press",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-5 reps",
+    "cues": "Lower bar to chest, maintain full leg drive and lat tightness motionless for 3 seconds, explosive press."
+  },
+  {
+    "name": "Deficit Push-Ups on Blocks / Parallettes",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Hands elevated on blocks, lower chest below hand level for deep pectoral stretch, protract scapulae at top."
+  },
+  {
+    "name": "Band-Resisted Push-Ups",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Resistance band looped across upper back and held in palms, accelerate into lockout against increasing band tension."
+  },
+  {
+    "name": "Conventional Deadlift (Barbell)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5 reps",
+    "cues": "Feet hip-width, bar over midfoot, engage lats, push floor away through heels, lock hips and knees simultaneously."
+  },
+  {
+    "name": "Sumo Deadlift (Barbell)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5 reps",
+    "cues": "Wide stance, toes pointed outward, vertical shins and torso, push knees out over toes, open hips through floor."
+  },
+  {
+    "name": "Deficit Deadlift (1-2 Inch Platform)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "4-6 reps",
+    "cues": "Stand on 1-2 inch rubber mat, requires deeper hip hinge and quad drive off the floor, preserve lumbar neutral."
+  },
+  {
+    "name": "Paused Deadlift (1-Inch Off Floor)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "3-4 reps",
+    "cues": "Pull bar 1 inch off floor, hold rock steady for 2 seconds without spinal rounding, complete pull to lockout."
+  },
+  {
+    "name": "Paused Deadlift (Below Knee Pause)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "3-5 reps",
+    "cues": "Pull bar to tibial tuberosity, pause 2 seconds maintaining lat tightness and hip position, finish pull."
+  },
+  {
+    "name": "Block / Rack Pulls (Below Knee)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5-6 reps",
+    "cues": "Bar elevated on 3-4 inch blocks, focuses on glute and hamstring lockout power without excessive shear."
+  },
+  {
+    "name": "Block / Rack Pulls (Mid-Shin)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5 reps",
+    "cues": "Bar elevated to mid-shin level, practice initial wedge and leg drive with reduced range of motion."
+  },
+  {
+    "name": "Romanian Deadlift (Barbell RDL)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "8-10 reps",
+    "cues": "Slight knee bend fixed in place, hinge hips straight back, lower bar along thighs to mid-shin, squeeze glutes to stand."
+  },
+  {
+    "name": "Snatch Grip Romanian Deadlift (RDL)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Wide grip challenges upper back, lats, and deep hamstring stretch, hips pushed back while spine stays rigid."
+  },
+  {
+    "name": "Trap Bar Deadlift (High Handle)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "6-8 reps",
+    "cues": "Stand inside hex bar, grab elevated handles, upright torso posture, equal quad and posterior chain recruitment."
+  },
+  {
+    "name": "Trap Bar Deadlift (Low Handle)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 4,
+    "default_reps": "5-6 reps",
+    "cues": "Hex bar flipped to low handles, full range hip hinge from floor with reduced lumbar shear compared to straight bar."
+  },
+  {
+    "name": "Single-Leg Stiff-Legged Deadlift (Dumbbell)",
+    "category": "Powerlifting & SBD",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Single stance leg with micro-bend, contralateral hip hinges back, dumbbell tracks down shin, level pelvis."
+  },
+  {
+    "name": "Pelvic Clocks (12 to 6 / 3 to 9 Tilt)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps each axis",
+    "cues": "Supine hook-lying, isolate subtle pelvic tilting from 12 oclock (posterior tilt) to 6 oclock (anterior tilt) and lateral clock faces."
+  },
+  {
+    "name": "Deadbug (Bilateral Arm & Leg Lowering)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Tabletop 90/90, imprint lumbar spine against floor, lower both arms and feet toward floor without arching lower back."
+  },
+  {
+    "name": "Deadbug (Contralateral Reach & Hold)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Opposite arm and leg reach away simultaneously, exhale into abdominal brace, maintain absolute pelvic stability."
+  },
+  {
+    "name": "Bird-Dog with Isometric End-Range Hold",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "8 reps with 5s hold",
+    "cues": "Quadruped position, reach opposite arm and leg in line with spine, avoid lumbar hyperextension, hold 5 seconds."
+  },
+  {
+    "name": "The Hundred (Level 1: Knees Bent)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 1,
+    "default_reps": "100 pumps (10 breath cycles)",
+    "cues": "Head and shoulders curled off mat, knees bent at 90°, pump arms vigorously 6 inches, inhale 5 counts, exhale 5 counts."
+  },
+  {
+    "name": "The Hundred (Level 2: Legs Tabletop)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 1,
+    "default_reps": "100 pumps (10 breath cycles)",
+    "cues": "Shins parallel to ceiling in tabletop, imprint spine, pump stiff arms from shoulders with rhythmic breathing."
+  },
+  {
+    "name": "The Hundred (Level 3: Extended Legs 45°)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 1,
+    "default_reps": "100 pumps (10 breath cycles)",
+    "cues": "Legs extended straight at 45° Pilates V, draw navel to spine, maintain stable pelvis throughout 100 arm pumps."
+  },
+  {
+    "name": "Single Leg Stretch (Pilates Mat)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Head curled up, draw one knee into chest with outside hand on ankle, opposite leg extended at 45°, switch smoothly."
+  },
+  {
+    "name": "Double Leg Stretch (Pilates Mat)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Hug both knees into chest, inhale reach arms overhead and legs long at 45°, exhale circle arms wide and hug knees."
+  },
+  {
+    "name": "Swimming (Prone Lumbar & Glute Extension)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "30s flutter",
+    "cues": "Prone, lift arms, chest, and legs, flutter alternate limbs in rapid paddling motion, elongate spine from toes to crown."
+  },
+  {
+    "name": "Side-Kick Series: Front & Back",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Side-lying with banana body curve, top leg hip height, kick forward twice with flexed foot, sweep back with pointed foot."
+  },
+  {
+    "name": "Side-Kick Series: Up & Down Lateral",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Lift top leg straight up towards ceiling with pointed toe, flex foot and resist lowering back to hip level."
+  },
+  {
+    "name": "Side-Kick Series: Small Controlled Circles",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 circles each dir",
+    "cues": "Top leg at hip height, draw small crisp tennis-ball sized circles clockwise then counter-clockwise without torso sway."
+  },
+  {
+    "name": "Spine Stretch Forward (Thoracic Articulation)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "6-8 reps",
+    "cues": "Seated tall with legs extended mat-width, peel spine forward over thighs vertebra by vertebra, pull navel back."
+  },
+  {
+    "name": "The Saw (Rotational Thoracic Mobility)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "6 reps per side",
+    "cues": "Seated wide arms out, rotate torso, saw pinky finger past opposite pinky toe, ground opposite sitting bone."
+  },
+  {
+    "name": "Transversus Abdominis (TrA) Drawing-in Maneuver",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 x 10s hold",
+    "cues": "Gentle 20-30% submaximal contraction of deep lower abdomen between ASIS spines without breath-holding or rib flaring."
+  },
+  {
+    "name": "Bridging with Ball Squeeze (Adductor/Pelvic Floor)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "12 reps with 3s hold",
+    "cues": "Small Pilates ball between knees, squeeze ball firmly, peel spine off mat to neutral bridge, align ribs and pelvis."
+  },
+  {
+    "name": "Single-Leg Pelvic Bridge with Level Hips",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Lift one leg straight, press stance heel down, raise hips to bridge ensuring ASIS spines remain perfectly horizontal."
+  },
+  {
+    "name": "Clamshell with Neutral Pelvic Spine",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "15 reps per side",
+    "cues": "Side-lying, knees 90°, feet glued, open top knee like a clamshell without rolling top hip backward, isolate gluteus medius."
+  },
+  {
+    "name": "Quadruped Rocking (Deep Hip Flexion & Neutral Spine)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "On hands and knees, push hips back toward heels maintaining lumbar lordosis without rounding or tucking pelvis."
+  },
+  {
+    "name": "Prone Press-Up / Cobra (McKenzie Lumbar Extension)",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "10 reps with 2s hold",
+    "cues": "Hands under shoulders, press chest up extending lumbar spine while keeping hips and pelvis completely relaxed on floor."
+  },
+  {
+    "name": "Quadruped Thoracic Thread-the-Needle",
+    "category": "Clinical Pilates & Motor Control",
+    "default_sets": 3,
+    "default_reps": "8 reps per side",
+    "cues": "Reach one arm underneath torso across the floor with palm up, lower shoulder to ground, open arm to ceiling on return."
+  },
+  {
+    "name": "Ankle Pumps (DVT Prophylaxis & Circulation)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "20-30 reps/hr",
+    "cues": "Vigorously pump feet up into dorsiflexion and down into plantarflexion to promote venous return and prevent DVT."
+  },
+  {
+    "name": "Isometric Quad Sets (Towel Roll under Knee)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "15 x 5s hold",
+    "cues": "Towel roll beneath knee joint, drive back of knee down into towel while pulling toes back to fire vastus medialis."
+  },
+  {
+    "name": "Isometric Gluteal Squeezes",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "15 x 5s hold",
+    "cues": "Supine or seated, squeeze buttocks together firmly for 5 seconds without holding breath, release smoothly."
+  },
+  {
+    "name": "Active-Assisted Heel Slides (Towel / Strap Assist)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Loop towel around foot, gently pull foot toward buttocks to comfortable stretch, hold 3s at max flexion, slide back."
+  },
+  {
+    "name": "Terminal Knee Extension (TKE) over Foam Roll",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Foam roll under distal thigh, lift heel off bed until knee is completely locked straight, hold 2s peak contraction."
+  },
+  {
+    "name": "Seated Active Knee Extension (0-90°)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "12 reps",
+    "cues": "Sit tall in high chair, kick surgical leg straight out to full extension against gravity, pause 2s at top, lower slowly."
+  },
+  {
+    "name": "Passive Knee Extension Hangs (Towel under Heel)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "5-10 min hang",
+    "cues": "Place rolled towel strictly beneath heel with knee unsupported, allow gravity to gently stretch knee into 0° extension."
+  },
+  {
+    "name": "Straight Leg Raise (SLR) with Zero Extensor Lag",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Lock knee 100% straight before lifting leg 8-10 inches off bed; if knee sags or lags, return to quad sets."
+  },
+  {
+    "name": "Seated Long Arc Quads (0-90° Active)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Seated upright, extend knee from 90° flexion to 0° full extension with light ankle weight or resistance, 3s descent."
+  },
+  {
+    "name": "Short Arc Quads over Bolster",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "15 reps",
+    "cues": "Bolster under knee, lift heel to straighten leg through terminal 30 degrees, pause 2s, control lowering."
+  },
+  {
+    "name": "Forward Step-Ups (4-Inch Aerobic Block)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Step onto low 4-inch block with surgical leg, press through heel to stand tall, do not push off trailing foot."
+  },
+  {
+    "name": "Controlled Step-Downs (Eccentric Quad Control)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "10 reps per side",
+    "cues": "Stand on step, lower non-surgical heel gently to floor in front over 3 seconds, control surgical knee alignment."
+  },
+  {
+    "name": "Stationary Bike (Pedal Rocking to Full Revolutions)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 1,
+    "default_reps": "10-15 minutes",
+    "cues": "Rock pedals back and forth to end-range flexion, progress to slow full revolutions with zero pedal resistance."
+  },
+  {
+    "name": "Mini Squats (0-45° Wall Supported)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "12 reps",
+    "cues": "Back supported against smooth wall or holding sturdy handrail, squat down to 45° knee flexion, push back up."
+  },
+  {
+    "name": "Standing Bilateral Calf Raises (Flat Ground)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "15-20 reps",
+    "cues": "Hands lightly on counter, rise high onto balls of both feet, hold 1s at apex, lower heels slowly to floor."
+  },
+  {
+    "name": "Supported Forward Lunges (Chair / Rail Assist)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "8-10 reps per side",
+    "cues": "Step forward holding firm support, drop back knee straight down, keep front knee tracking over 2nd toe."
+  },
+  {
+    "name": "Sled Leg Press (Bilateral Light Resistance)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Feet shoulder-width on footplate, smooth concentric press to soft lockout, slow 3s eccentric return to 90°."
+  },
+  {
+    "name": "Sled Leg Press (Unilateral Light Load)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps per leg",
+    "cues": "Single leg placed centrally, press through midfoot, control descent to 80-90° flexion without hip rotation."
+  },
+  {
+    "name": "Wall Sits (60° Knee Flexion Hold)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "30-45s hold",
+    "cues": "Slide down wall to comfortable 60° knee angle, press lumbar spine flat into wall, equal weight distribution."
+  },
+  {
+    "name": "Rocker / Balance Board Bilateral Stance",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "45s hold",
+    "cues": "Stand on board near support wall, maintain level platform without edges tapping ground, micro-adjust balance."
+  },
+  {
+    "name": "Single-Leg Stance Balance (Firm Ground)",
+    "category": "Post-Op Knee (TKR)",
+    "default_sets": 3,
+    "default_reps": "30s hold per leg",
+    "cues": "Stand on surgical leg with hands ready near rail, maintain level pelvis and soft knee, focus eyes on static target."
+  },
+  {
+    "name": "Ankle Pumps (THR DVT Prevention & Circulation)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "25 reps/hr",
+    "cues": "Full range dorsiflexion and plantarflexion in bed to stimulate calf muscle pump and reduce thromboembolism risk."
+  },
+  {
+    "name": "Supine Isometric Quad Sets (THR Bed Level)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "15 x 5s hold",
+    "cues": "Tighten thigh muscles, press knee flat into mattress, hold 5 seconds, keep toes pointing straight toward ceiling."
+  },
+  {
+    "name": "Supine Isometric Glute Sets (THR)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "15 x 5s hold",
+    "cues": "Contract buttocks together firmly for 5 seconds without holding breath, promote gluteal re-activation."
+  },
+  {
+    "name": "Supine Heel Slides (<90° Safe Hip Flexion)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Slide heel toward buttocks strictly avoiding hip flexion beyond 90 degrees (Posterior Hip Precaution)."
+  },
+  {
+    "name": "Supine Hip Abduction (Slider Board Assist)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Slide surgical leg out to side on plastic sheet/slider, return to midline without crossing legs past center."
+  },
+  {
+    "name": "High Seated Active Knee Extensions (THR)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "12 reps",
+    "cues": "Seated on elevated firm chair with hips higher than knees, kick foot out straight to lock knee, hold 2s."
+  },
+  {
+    "name": "Standing Hip Extension (Supported by Walker / Rail)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Stand upright holding rail, extend surgical leg backward from hip without arching lower back, hold 2s."
+  },
+  {
+    "name": "Standing Hip Abduction (Supported by Walker / Rail)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Stand tall with toes facing forward, lift surgical leg out to side 20-30°, avoid trunk side-bending."
+  },
+  {
+    "name": "Standing Bilateral Weight Shifts (Symmetrical Loading)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "15 reps each side",
+    "cues": "Hands lightly on counter, gently transfer body weight from good leg to surgical leg, achieve 50/50 balance."
+  },
+  {
+    "name": "Supine Bridging (Bilateral, Neutral Spine)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10-12 reps",
+    "cues": "Knees bent to 70°, lift pelvis off bed by driving heels down, maintain neutral pelvis without hyperextension."
+  },
+  {
+    "name": "Clamshells (Unresisted within Precautions <45°)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "12-15 reps per side",
+    "cues": "Side-lying, knees bent, open top knee gently to 35-40° without rolling pelvis backward, strictly unresisted initially."
+  },
+  {
+    "name": "Forward Step-Ups (Low 4-Inch Step)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10 reps per leg",
+    "cues": "Step up with surgical leg onto low step, press through heel, bring trailing foot up, step down smoothly."
+  },
+  {
+    "name": "Side-Stepping (Bodyweight, Wide Base, No Crossover)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "10 steps each dir",
+    "cues": "Step sideways across room maintaining wide base of support, never cross surgical leg across midline."
+  },
+  {
+    "name": "Sit-to-Stand (Elevated Firm Chair with Armrests)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 3,
+    "default_reps": "8-10 reps",
+    "cues": "Scoot to edge of tall chair, surgical foot slightly forward, use armrests to press up, stand fully upright."
+  },
+  {
+    "name": "Upright Stationary Cycling (High Saddle, Zero Resistance)",
+    "category": "Post-Op Hip (THR)",
+    "default_sets": 1,
+    "default_reps": "10-15 minutes",
+    "cues": "Saddle adjusted high to prevent hip flexion >90°, gentle continuous pedaling with minimal resistance."
+  },
+  {
+    "name": "Composite Tendon Glides: Straight Fist",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "10 reps with 3s hold",
+    "cues": "MCP joints flex to 90° while PIP and DIP joints remain completely straight; targets maximum FDS excursion."
+  },
+  {
+    "name": "Composite Tendon Glides: Hook Fist (Claw Fist)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "10 reps with 3s hold",
+    "cues": "MCP joints extended straight while PIP and DIP joints flex fully; maximizes differential glide between FDP and FDS."
+  },
+  {
+    "name": "Composite Tendon Glides: Tabletop Fist (Lumbrical Position)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "10 reps with 3s hold",
+    "cues": "MCP joints flexed to 90° with interphalangeal joints extended straight; isolates intrinsic lumbricals and interossei."
+  },
+  {
+    "name": "Composite Tendon Glides: Full Composite Fist",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "10 reps with 3s hold",
+    "cues": "Fingertips curl into deep palm, thumb wraps outside fingers, full excursion of flexor digitorum profundus (FDP)."
+  },
+  {
+    "name": "Median Nerve Glides (Butler Neurodynamic Progression)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "8-10 cycles",
+    "cues": "Wrist neutral fist -> fingers extended -> wrist/fingers extended -> thumb extended -> forearm supinated -> gentle thumb stretch."
+  },
+  {
+    "name": "Ulnar Nerve Glides (Elbow Flexion & Wrist Extension)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "8-10 cycles",
+    "cues": "Wrist and fingers extended, bend elbow bringing hand upside down by ear (waiter / mask position), oscillate smoothly."
+  },
+  {
+    "name": "Radial Nerve Slider / Tensioner (Thumb-in-Fist & Pronation)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "8-10 cycles",
+    "cues": "Shoulder depressed and extended, elbow straight, pronate forearm, flex wrist and tuck thumb into fist, oscillate neck."
+  },
+  {
+    "name": "Theraputty Power Grip Squeeze",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "15 reps",
+    "cues": "Squeeze ball of putty into fist using all digits, hold 3s peak contraction, roll putty back into ball between sets."
+  },
+  {
+    "name": "Theraputty Key Pinch (Thumb Lateral Pinch)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Place roll of putty between thumb pad and radial side of index middle phalanx, pinch down firmly like turning a key."
+  },
+  {
+    "name": "Theraputty Tip Pinch (Pad-to-Pad Pinch)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "12 reps each finger",
+    "cues": "Pinch putty between thumb pad and individual fingertips (index, middle, ring, little) forming rounded O shape."
+  },
+  {
+    "name": "Theraputty Finger Extension Wrap (Extensor Digitorum)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "12-15 reps",
+    "cues": "Wrap pancake of putty around curled fingertips, spread and extend fingers outward against resistance."
+  },
+  {
+    "name": "Theraputty Interossei Scissor Spread",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "12 reps between digits",
+    "cues": "Place cylinder of putty between adjacent fingers, squeeze fingers together like scissors to strengthen palmar interossei."
+  },
+  {
+    "name": "Finger Band Resisted Extensions (Rubber Band)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "15-20 reps",
+    "cues": "Looped elastic band around fingertips, open hand wide extending fingers and thumb against resistance, pause 1s."
+  },
+  {
+    "name": "Tyler Twist with FlexBar (Tennis Elbow / Lateral Epicondyle)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "15 reps",
+    "cues": "Grasp FlexBar in wrist extension on affected side, twist with unaffected hand, extend both arms forward, slowly untwist with affected wrist."
+  },
+  {
+    "name": "Reverse Tyler Twist with FlexBar (Golfer Elbow / Medial Epicondyle)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "15 reps",
+    "cues": "Grasp FlexBar in wrist flexion on affected side, twist with unaffected hand, extend arms, slowly resist eccentric extension into flexion."
+  },
+  {
+    "name": "Forearm Pronation / Supination Drill (Asymmetric DB / Hammer)",
+    "category": "Hand Therapy & Intrinsic Drills",
+    "default_sets": 3,
+    "default_reps": "12-15 reps each dir",
+    "cues": "Elbow bent to 90° tucked at ribs, hold hammer or off-center dumbbell by bottom of handle, rotate slowly into full pronation and supination."
   }
 ];
 
-// Helper to construct repetitive week blocks
-function createWeekSchedule(daySchedule, durationWeeks = 4, focusPrefix = 'Phase Progression') {
-  const weeks = [];
-  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  for (let w = 1; w <= durationWeeks; w++) {
-    const daysObj = {};
-    for (const d of DAYS) {
-      if (daySchedule[d]) {
-        daysObj[d] = JSON.parse(JSON.stringify(daySchedule[d]));
-      } else {
-        daysObj[d] = [];
-      }
-    }
-    weeks.push({
-      week_num: w,
-      title: `Week ${w}`,
-      focus: `${focusPrefix} (Week ${w} of ${durationWeeks})`,
-      days: daysObj
-    });
-  }
-  return weeks;
-}
-
-const SEED_TEMPLATES = [
-  {
-    "name": "ACL Reconstruction Phase 1: Weeks 1-4",
-    "category": "Knee / Post-Op",
-    "duration_weeks": 4,
-    "protocol_json": "{\"title\":\"ACL Reconstruction Phase 1 (Weeks 1-4)\",\"description\":\"Restoration of full passive extension, quadriceps reactivation, swelling reduction, and progressive early loading.\",\"duration_weeks\":4,\"weeks\":[{\"week_num\":1,\"title\":\"Week 1\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_etk4wda\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Focus on knee extension drive into band; shins vertical.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_ij4lnbu\",\"name\":\"Terminal Knee Extension (TKE)\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Medium Band\",\"frequency\":\"2x/day\",\"cues\":\"Lock vastus medialis at full extension.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_jww0z89\",\"name\":\"Slider Hamstring Curl (Bilateral)\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Bridge hips high, slow 3s eccentric descent.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_b24d71y\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight / 5kg\",\"frequency\":\"1x/day\",\"cues\":\"Target quad motor units at 60° knee flexion.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_ainqszk\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep pelvis level; drive heel down.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_mneg0vo\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Mid-range plantarflexion hold.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_ugkjxfw\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Drive quad expansion without patellar pain.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_d61dccq\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Board\",\"frequency\":\"1x/day\",\"cues\":\"Track knee over 2nd toe; light heel touch.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"},{\"id\":\"ex_ksaotoy\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Squeeze block firmly between knees.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 1)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":2,\"title\":\"Week 2\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_z5v1l5u\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Focus on knee extension drive into band; shins vertical.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_n0stftf\",\"name\":\"Terminal Knee Extension (TKE)\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Medium Band\",\"frequency\":\"2x/day\",\"cues\":\"Lock vastus medialis at full extension.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_v6k4s2p\",\"name\":\"Slider Hamstring Curl (Bilateral)\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Bridge hips high, slow 3s eccentric descent.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_kd9omk8\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight / 5kg\",\"frequency\":\"1x/day\",\"cues\":\"Target quad motor units at 60° knee flexion.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_782bfwy\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep pelvis level; drive heel down.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_1n49y39\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Mid-range plantarflexion hold.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_j8qucda\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Drive quad expansion without patellar pain.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_7btez01\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Board\",\"frequency\":\"1x/day\",\"cues\":\"Track knee over 2nd toe; light heel touch.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"},{\"id\":\"ex_plof1v1\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Squeeze block firmly between knees.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 2)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":3,\"title\":\"Week 3\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_goj37bb\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Focus on knee extension drive into band; shins vertical.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_0q8d3kc\",\"name\":\"Terminal Knee Extension (TKE)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Medium Band\",\"frequency\":\"2x/day\",\"cues\":\"Lock vastus medialis at full extension.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_5yfawgb\",\"name\":\"Slider Hamstring Curl (Bilateral)\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Bridge hips high, slow 3s eccentric descent.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_joo1lwp\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight / 5kg\",\"frequency\":\"1x/day\",\"cues\":\"Target quad motor units at 60° knee flexion.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_uxoq041\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep pelvis level; drive heel down.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_d2vs42d\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Mid-range plantarflexion hold.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_d4nwoeu\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Drive quad expansion without patellar pain.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_mqvf3g6\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Board\",\"frequency\":\"1x/day\",\"cues\":\"Track knee over 2nd toe; light heel touch.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"},{\"id\":\"ex_9lu82fy\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Squeeze block firmly between knees.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 3)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":4,\"title\":\"Week 4\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_dkfzodv\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Focus on knee extension drive into band; shins vertical.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_h6ste3m\",\"name\":\"Terminal Knee Extension (TKE)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Medium Band\",\"frequency\":\"2x/day\",\"cues\":\"Lock vastus medialis at full extension.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_vqbryvk\",\"name\":\"Slider Hamstring Curl (Bilateral)\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Bridge hips high, slow 3s eccentric descent.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_tnxw3il\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight / 5kg\",\"frequency\":\"1x/day\",\"cues\":\"Target quad motor units at 60° knee flexion.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_bntty9k\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep pelvis level; drive heel down.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_96tsqbq\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Mid-range plantarflexion hold.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_wxgztzv\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"2x/day\",\"cues\":\"Drive quad expansion without patellar pain.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_1zmj0yi\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Board\",\"frequency\":\"1x/day\",\"cues\":\"Track knee over 2nd toe; light heel touch.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"},{\"id\":\"ex_ldvb1ca\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Squeeze block firmly between knees.\",\"notes\":\"ACL Post-Op Recovery Protocol (Week 4)\"}],\"Sat\":[],\"Sun\":[]}}]}"
-  },
-  {
-    "name": "Achilles Tendinopathy Heavy Slow Resistance",
-    "category": "Foot & Ankle",
-    "duration_weeks": 6,
-    "protocol_json": "{\"title\":\"Achilles Midportion Tendinopathy Loading (Weeks 1-6)\",\"description\":\"Heavy Slow Resistance (HSR) protocol combined with Alfredson eccentrics to stimulate collagen remodeling and tendon stiffness.\",\"duration_weeks\":6,\"weeks\":[{\"week_num\":1,\"title\":\"Week 1\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_9c7wtsy\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_8ybpxju\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_z3k4vtk\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_z05q9cb\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_yrh3ibg\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_tt8953m\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_91zozmn\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_kmmj497\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"},{\"id\":\"ex_19fxzub\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 1)\"}],\"Sun\":[]}},{\"week_num\":2,\"title\":\"Week 2\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_o6kszjl\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_fanfv4o\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_yrgg4lc\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_mhbl7mv\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_3a2xpb1\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_7fxqsr9\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_a5db5lb\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_ae29f40\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"},{\"id\":\"ex_zi4uoml\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 2)\"}],\"Sun\":[]}},{\"week_num\":3,\"title\":\"Week 3\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_1jkgrx5\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_iuk3csv\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_3iw8lqm\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_5hr9m0d\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_vtqtjg1\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_n7oqtmv\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_c1iraz1\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_jag46st\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"},{\"id\":\"ex_l106sjv\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 3)\"}],\"Sun\":[]}},{\"week_num\":4,\"title\":\"Week 4\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_a0v4yi0\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_kss99qk\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_gb350ik\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_n0w22d0\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_zib9kxe\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_7tutofx\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_scpq0ca\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_we5rmmm\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"},{\"id\":\"ex_010b40s\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 4)\"}],\"Sun\":[]}},{\"week_num\":5,\"title\":\"Week 5\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_0lo41vg\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_wkdcgrf\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_8ebco6v\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_ukugjim\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_ydxaiz9\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_1wrgjcy\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_hcuo9kn\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_b5hmihx\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"},{\"id\":\"ex_63jaiya\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 5)\"}],\"Sun\":[]}},{\"week_num\":6,\"title\":\"Week 6\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[],\"Tue\":[{\"id\":\"ex_kuo023y\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold; 2 minutes rest between sets.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_16u25mq\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Lower heel past step edge over 3 seconds; knee straight.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_5ul8yu3\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s pause\",\"weight_kg\":\"Dumbbell on knees\",\"frequency\":\"1x/day\",\"cues\":\"Deep stretch into dorsiflexion, explosive plantarflexion.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"}],\"Wed\":[],\"Thu\":[{\"id\":\"ex_kx0ruri\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Bodyweight / +10kg\",\"frequency\":\"1x/day\",\"cues\":\"Analgesic isometric hold.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_9ahuxwl\",\"name\":\"Tibialis Anterior Heel Raises (Wall Lean)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"20 reps\",\"hold_sec\":\"1s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Full dorsiflexion against wall.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_5brdowr\",\"name\":\"Bent-Knee Eccentric Heel Drop (Soleus Focus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Knee bent at 30° to target soleus tendon.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_w0vuwot\",\"name\":\"Bilateral Isometric Calf Raise on Step\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"+15kg Barbell\",\"frequency\":\"1x/day\",\"cues\":\"Progressive tendon loading.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_qaip92c\",\"name\":\"Seated Calf Raise (Soleus)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":5,\"reps\":\"10 reps\",\"hold_sec\":\"3s pause\",\"weight_kg\":\"+15kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Control lowering.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"},{\"id\":\"ex_4m46wu4\",\"name\":\"Single-Leg Eccentric Heel Drop (Alfredson)\",\"category\":\"Foot, Ankle & Calf\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"3s ecc\",\"weight_kg\":\"+5kg Backpack\",\"frequency\":\"1x/day\",\"cues\":\"Eccentric tempo strictly enforced.\",\"notes\":\"Achilles HSR Protocol (Week 6)\"}],\"Sun\":[]}}]}"
-  },
-  {
-    "name": "Subacromial Shoulder Rehab & Cuff Progression",
-    "category": "Shoulder",
-    "duration_weeks": 6,
-    "protocol_json": "{\"title\":\"Subacromial Impingement & Rotator Cuff Progression (Weeks 1-6)\",\"description\":\"Restores scapulohumeral rhythm, lower trapezius/serratus anterior recruitment, and progressive rotator cuff capacity.\",\"duration_weeks\":6,\"weeks\":[{\"week_num\":1,\"title\":\"Week 1\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_xbxh2bp\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_vt9ux04\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_eyufbog\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_f7etqun\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_0vf2q4x\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_a7h3z4x\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_0wymu5y\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_tya9a3u\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"},{\"id\":\"ex_dhbnbl4\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 1)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":2,\"title\":\"Week 2\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_d2hhagq\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":3,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_ex5ygzz\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_5pcf6ki\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_a8mr8xi\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_dbpy2j5\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_626u6k2\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_8wnak20\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_1895idd\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"},{\"id\":\"ex_8kxjzee\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 2)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":3,\"title\":\"Week 3\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_i32w8sk\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_djjitsq\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_xqy7qm8\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_skpcc7r\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_a4b8swz\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_b9bgfr9\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_y49jda9\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_5d7qbx5\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"},{\"id\":\"ex_az9tpad\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 3)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":4,\"title\":\"Week 4\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_9pzd7pz\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_0bnifvn\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_bxw67b5\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_84rl156\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_cpojulk\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_d0jb4eg\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_wnun5tb\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_15rut4q\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"},{\"id\":\"ex_qwcq56x\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 4)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":5,\"title\":\"Week 5\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_2tn4i17\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_lwd20dd\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_xsjl0zq\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_ivqsf2a\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_gl8sm17\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_1pwhomv\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_kb2let4\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_q370vlj\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"},{\"id\":\"ex_tcerkuz\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 5)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":6,\"title\":\"Week 6\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_mjf314w\",\"name\":\"Side-Lying Shoulder External Rotation\",\"category\":\"Shoulder & Rotator Cuff\",\"sets\":4,\"reps\":\"15 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1-2 kg DB\",\"frequency\":\"1x/day\",\"cues\":\"Towel under elbow; clean rotation without compensation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_ur5ahbp\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Protract scapulae into upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_m5kp7vp\",\"name\":\"Prone Y-Raise (Lower Trapezius)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Initiate from lower trap; thumbs to ceiling.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_dlxmky1\",\"name\":\"Face Pull with External Rotation\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Resistance Band\",\"frequency\":\"1x/day\",\"cues\":\"Pull to eye level, rotate forearms back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_0x0wgxl\",\"name\":\"Cable External Rotation (at 0° Abduction)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable\",\"frequency\":\"1x/day\",\"cues\":\"Control eccentric lowering over 3s.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_tt00ks0\",\"name\":\"Kettlebell Arm-Bar (Thoracic Mobility & Cuff)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"4-6 kg KB\",\"frequency\":\"1x/day\",\"cues\":\"Pack shoulder blade down and back.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_0ytogw1\",\"name\":\"Serratus Wall Slide with Foam Roller\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Mini-Band\",\"frequency\":\"1x/day\",\"cues\":\"Active upward rotation.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_om259uy\",\"name\":\"Push-Up to Plus (Serratus Anterior)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"High elbow position.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"},{\"id\":\"ex_bikylm4\",\"name\":\"Prone T-Raise (Middle Trapezius & Rhomboids)\",\"category\":\"Shoulder & Scapula\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"1kg plates\",\"frequency\":\"1x/day\",\"cues\":\"Keep neck relaxed.\",\"notes\":\"Subacromial Decompression & Rotator Cuff Protocol (Week 6)\"}],\"Sat\":[],\"Sun\":[]}}]}"
-  },
-  {
-    "name": "Lumbar Spine Stabilization & McGill Big 3",
-    "category": "Spine & Core",
-    "duration_weeks": 4,
-    "protocol_json": "{\"title\":\"Lumbar Spine Stabilization & McGill Big 3 (Weeks 1-4)\",\"description\":\"Low-back sparing core endurance protocol designed to spare spinal discs while maximizing torso stiffness.\",\"duration_weeks\":4,\"weeks\":[{\"week_num\":1,\"title\":\"Week 1\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_br7orbe\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hands under lumbar arch; lift chest 1 inch.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_6fhqezy\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"8 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Opposite arm/leg reach; zero lumbar motion.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_goxl7h0\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Elbow under shoulder; straight torso.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_e65acgf\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable / Band\",\"frequency\":\"1x/day\",\"cues\":\"Resist rotation; hold arms locked out 3s.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_4czvwat\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Neutral spine endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_xvgxn5m\",\"name\":\"Dead Bug (Contralateral Reach)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Ribs depressed, lumbar flat to floor.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_lq9sylz\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"5-4-3 rep descending pyramid.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_kxq2jee\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Build lateral core endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"},{\"id\":\"ex_b42gfx2\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Square hips and athletic stance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 1)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":2,\"title\":\"Week 2\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_cq80hxj\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hands under lumbar arch; lift chest 1 inch.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_1b3591v\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"8 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Opposite arm/leg reach; zero lumbar motion.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_938e52x\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Elbow under shoulder; straight torso.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_2zgykdo\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable / Band\",\"frequency\":\"1x/day\",\"cues\":\"Resist rotation; hold arms locked out 3s.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_kl6jyo5\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Neutral spine endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_80zo6ak\",\"name\":\"Dead Bug (Contralateral Reach)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Ribs depressed, lumbar flat to floor.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_wqk1drs\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"5-4-3 rep descending pyramid.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_uswcptg\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Build lateral core endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"},{\"id\":\"ex_ynxw3ss\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Square hips and athletic stance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 2)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":3,\"title\":\"Week 3\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_za4gqt2\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hands under lumbar arch; lift chest 1 inch.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_h3bsxmx\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"8 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Opposite arm/leg reach; zero lumbar motion.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_gazkekt\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Elbow under shoulder; straight torso.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_bqq9sb6\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable / Band\",\"frequency\":\"1x/day\",\"cues\":\"Resist rotation; hold arms locked out 3s.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_clkdvw5\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Neutral spine endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_uz9k6kx\",\"name\":\"Dead Bug (Contralateral Reach)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Ribs depressed, lumbar flat to floor.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_hsljrzn\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"5-4-3 rep descending pyramid.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_1wlaecy\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Build lateral core endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"},{\"id\":\"ex_jwjz7h1\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Square hips and athletic stance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 3)\"}],\"Sat\":[],\"Sun\":[]}},{\"week_num\":4,\"title\":\"Week 4\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_7ahef46\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hands under lumbar arch; lift chest 1 inch.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_q4kxhao\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"8 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Opposite arm/leg reach; zero lumbar motion.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_v0g80jr\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Elbow under shoulder; straight torso.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"}],\"Tue\":[],\"Wed\":[{\"id\":\"ex_987w1jp\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Cable / Band\",\"frequency\":\"1x/day\",\"cues\":\"Resist rotation; hold arms locked out 3s.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_0h01rwh\",\"name\":\"Bird-Dog with Isometric Hold\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"5s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Neutral spine endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_pzp2q9j\",\"name\":\"Dead Bug (Contralateral Reach)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10 reps\",\"hold_sec\":\"2s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Ribs depressed, lumbar flat to floor.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"}],\"Thu\":[],\"Fri\":[{\"id\":\"ex_19i697m\",\"name\":\"McGill Curl-Up\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"10s hold\",\"hold_sec\":\"10s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"5-4-3 rep descending pyramid.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_zssnbwu\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Build lateral core endurance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"},{\"id\":\"ex_vsouubx\",\"name\":\"Pallof Press (Anti-Rotation)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Square hips and athletic stance.\",\"notes\":\"McGill Spinal Stability Protocol (Week 4)\"}],\"Sat\":[],\"Sun\":[]}}]}"
-  },
-  {
-    "name": "Patellofemoral Pain Syndrome (PFPS) Loading",
-    "category": "Knee / Anterior Pain",
-    "duration_weeks": 4,
-    "protocol_json": "{\"title\":\"Patellofemoral Pain Syndrome (PFPS) Quad & Hip Protocol (Weeks 1-4)\",\"description\":\"Proximal hip abductor strengthening paired with targeted quadriceps isometrics to optimize patellar tracking and load tolerance.\",\"duration_weeks\":4,\"weeks\":[{\"week_num\":1,\"title\":\"Week 1\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_shfmh19\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"1x/day\",\"cues\":\"Pain-free quadriceps loading.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_br7db16\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Engage adductor-vastus medialis synergy.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_t9rmdmt\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hip extension strength.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"}],\"Tue\":[],\"Wed\":[],\"Thu\":[{\"id\":\"ex_ap8k2pd\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Slow controlled knee over toes.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_075kzca\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Abductor & oblique endurance.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_wjvg3dd\",\"name\":\"Bulgarian Split Squat\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"8 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep front knee tracking over 2nd toe.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_r72ar84\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Deep isometric quad burn.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_wn3b859\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"5kg DB\",\"frequency\":\"1x/day\",\"cues\":\"60° angle to minimize joint reaction force.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"},{\"id\":\"ex_qwct6v2\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Smooth eccentric control.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 1)\"}],\"Sun\":[]}},{\"week_num\":2,\"title\":\"Week 2\",\"focus\":\"Early Activation & Tissue Tolerance\",\"days\":{\"Mon\":[{\"id\":\"ex_xkidnqm\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"1x/day\",\"cues\":\"Pain-free quadriceps loading.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_xy2pgtv\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Engage adductor-vastus medialis synergy.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_mwvbvtv\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hip extension strength.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"}],\"Tue\":[],\"Wed\":[],\"Thu\":[{\"id\":\"ex_kd6jel5\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Slow controlled knee over toes.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_7foqvfw\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Abductor & oblique endurance.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_h5vcqe4\",\"name\":\"Bulgarian Split Squat\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"8 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep front knee tracking over 2nd toe.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_br7wusl\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Deep isometric quad burn.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_6o8pdg8\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"5kg DB\",\"frequency\":\"1x/day\",\"cues\":\"60° angle to minimize joint reaction force.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"},{\"id\":\"ex_an3pu3k\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":3,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Smooth eccentric control.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 2)\"}],\"Sun\":[]}},{\"week_num\":3,\"title\":\"Week 3\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_r7vfmyc\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"1x/day\",\"cues\":\"Pain-free quadriceps loading.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_i81nrqf\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Engage adductor-vastus medialis synergy.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_dn7jn2l\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hip extension strength.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"}],\"Tue\":[],\"Wed\":[],\"Thu\":[{\"id\":\"ex_sfygs48\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Slow controlled knee over toes.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_82dmyw0\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Abductor & oblique endurance.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_2wrmbll\",\"name\":\"Bulgarian Split Squat\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"8 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep front knee tracking over 2nd toe.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_869xyxq\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Deep isometric quad burn.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_r3ug09r\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"5kg DB\",\"frequency\":\"1x/day\",\"cues\":\"60° angle to minimize joint reaction force.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"},{\"id\":\"ex_7sns0cz\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Smooth eccentric control.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 3)\"}],\"Sun\":[]}},{\"week_num\":4,\"title\":\"Week 4\",\"focus\":\"Progressive Resistance & Functional Capacity\",\"days\":{\"Mon\":[{\"id\":\"ex_vzytvnq\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Heavy Band\",\"frequency\":\"1x/day\",\"cues\":\"Pain-free quadriceps loading.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_lvyl1o9\",\"name\":\"Wall Sit with Adductor Squeeze\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"40s hold\",\"hold_sec\":\"40s\",\"weight_kg\":\"Foam Block\",\"frequency\":\"1x/day\",\"cues\":\"Engage adductor-vastus medialis synergy.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_jxagh4i\",\"name\":\"Single-Leg Glute Bridge with Hold\",\"category\":\"Hamstring & Posterior Chain\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"3s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Hip extension strength.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"}],\"Tue\":[],\"Wed\":[],\"Thu\":[{\"id\":\"ex_qjem2s7\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Slow controlled knee over toes.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_n6yrt6g\",\"name\":\"Side Plank (Knee / Full Lever)\",\"category\":\"Spine & Core\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Abductor & oblique endurance.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_6t3ip4c\",\"name\":\"Bulgarian Split Squat\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"8 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Bodyweight\",\"frequency\":\"1x/day\",\"cues\":\"Keep front knee tracking over 2nd toe.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"}],\"Fri\":[],\"Sat\":[{\"id\":\"ex_gkbqucl\",\"name\":\"Spanish Squat (Isometric)\",\"category\":\"Knee & Quad\",\"sets\":5,\"reps\":\"45s hold\",\"hold_sec\":\"45s\",\"weight_kg\":\"Band\",\"frequency\":\"1x/day\",\"cues\":\"Deep isometric quad burn.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_0rajqu9\",\"name\":\"Leg Extension (Isometric 60°)\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"30s hold\",\"hold_sec\":\"30s\",\"weight_kg\":\"5kg DB\",\"frequency\":\"1x/day\",\"cues\":\"60° angle to minimize joint reaction force.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"},{\"id\":\"ex_mqd86zp\",\"name\":\"Poliquin Step-Up\",\"category\":\"Knee & Quad\",\"sets\":4,\"reps\":\"12 reps\",\"hold_sec\":\"—\",\"weight_kg\":\"Slant Block\",\"frequency\":\"1x/day\",\"cues\":\"Smooth eccentric control.\",\"notes\":\"PFPS Quad & Hip Rehabilitation Protocol (Week 4)\"}],\"Sun\":[]}}]}"
-  }
-];
+// Pre-loaded multi-week protocols strictly omitted per workflow architecture
+const SEED_TEMPLATES = [];
 
 module.exports = {
   SEED_EXERCISES,

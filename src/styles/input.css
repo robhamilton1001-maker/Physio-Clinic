@@ -220,6 +220,22 @@
   /* ── Diary: grid ─────────────────────────────────────────────────────── */
   .diary-gutter-spacer { width: 52px; }
   .diary-col-headers-grid { display: grid; }
+  .diary-columns-grid {
+    display: grid;
+    flex: 1 1 0%;
+    position: relative;
+    min-width: 0;
+    pointer-events: auto !important;
+  }
+
+  #diary-scroll {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    pointer-events: auto !important;
+  }
 
   .diary-col-hdr {
     @apply flex flex-col items-center justify-center py-2 gap-0.5 text-center
@@ -238,56 +254,73 @@
     @apply absolute right-2 text-[10px] font-mono font-medium
            text-slate-400 dark:text-slate-600 select-none leading-none;
     transform: translateY(-50%);
+    pointer-events: none !important;
   }
 
   .diary-col {
     @apply relative border-r border-slate-200 dark:border-slate-800/70;
     min-width: 0;
+    height: 100%;
+    pointer-events: auto !important;
+    cursor: crosshair;
   }
   .diary-col:last-child { @apply border-r-0; }
   .diary-col.is-today-col { @apply bg-indigo-500/[0.025]; }
 
-  .diary-line-hour  { @apply absolute left-0 right-0 h-px bg-slate-200 dark:bg-slate-800; }
-  .diary-line-half  { @apply absolute left-0 right-0 h-px bg-slate-100 dark:bg-slate-800/60; }
-  .diary-line-qtr   { @apply absolute left-4 right-0 h-px border-t border-dashed border-slate-100 dark:border-slate-800/30; }
+  .diary-line-hour  {
+    @apply absolute left-0 right-0 h-px bg-slate-200 dark:bg-slate-800;
+    pointer-events: none !important;
+  }
+  .diary-line-half  {
+    @apply absolute left-0 right-0 h-px border-t border-dashed border-slate-200/90 dark:border-slate-800/80;
+    pointer-events: none !important;
+  }
+  .diary-line-qtr   {
+    @apply absolute left-4 right-0 h-px border-t border-dotted border-slate-100 dark:border-slate-800/40;
+    pointer-events: none !important;
+  }
 
   .diary-now-line {
-    @apply absolute left-0 right-0 h-px z-10 bg-indigo-500 dark:bg-indigo-400;
-    pointer-events: none;
+    @apply absolute left-0 right-0 h-0.5 z-10 bg-indigo-500 dark:bg-indigo-400;
+    pointer-events: none !important;
   }
   .diary-now-dot {
-    @apply absolute z-10 h-2.5 w-2.5 rounded-full bg-indigo-500 dark:bg-indigo-400;
-    left: -4px;
-    pointer-events: none;
+    @apply absolute z-10 h-3 w-3 rounded-full bg-indigo-600 dark:bg-indigo-400 ring-4 ring-indigo-500/20 animate-pulse;
+    left: -5px;
+    pointer-events: none !important;
   }
 
   .diary-ev {
     @apply absolute left-1 right-1 rounded-md overflow-hidden select-none cursor-pointer z-[5]
            transition-shadow duration-100;
+    pointer-events: auto !important;
   }
   .diary-ev:hover        { @apply shadow-lg; }
-  .diary-ev.ev-dragging  { @apply opacity-70 shadow-2xl z-20 rotate-[0.5deg]; }
-  .diary-ev.ev-resizing  { @apply cursor-ns-resize; }
-  .diary-ev-inner  { @apply px-2 py-1 overflow-hidden h-full; }
-  .diary-ev-title  { @apply text-[11px] font-semibold leading-snug truncate; }
-  .diary-ev-meta   { @apply text-[10px] leading-snug opacity-75 truncate mt-px; }
+  .diary-ev.ev-dragging  { @apply opacity-75 shadow-2xl z-30 scale-[1.01] rotate-[0.5deg]; cursor: grabbing; }
+  .diary-ev.ev-resizing  { @apply cursor-ns-resize opacity-90 shadow-xl z-20; }
+  .diary-ev-inner  { @apply px-2 py-1 overflow-hidden h-full pointer-events-none; }
+  .diary-ev-title  { @apply text-[11px] font-semibold leading-snug truncate pointer-events-none; }
+  .diary-ev-meta   { @apply text-[10px] leading-snug opacity-75 truncate mt-px pointer-events-none; }
 
   .diary-ev-resize {
-    @apply absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize z-10;
-    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.08));
+    @apply absolute bottom-0 left-0 right-0 h-2.5 cursor-ns-resize z-10;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.12));
     border-radius: 0 0 6px 6px;
+    pointer-events: auto !important;
   }
-  .diary-ev-resize:hover { @apply bg-black/10 dark:bg-white/10; }
+  .diary-ev-resize:hover { @apply bg-black/15 dark:bg-white/15; }
 
   .diary-draw-preview {
     @apply absolute left-1 right-1 rounded-md z-20 select-none pointer-events-none
-           bg-indigo-500/20 border border-indigo-400/60 border-dashed
-           text-[10px] font-semibold text-indigo-400 dark:text-indigo-300
-           flex items-center justify-center;
+           bg-indigo-500/20 border-2 border-indigo-500/70 border-dashed
+           text-[10px] font-semibold text-indigo-700 dark:text-indigo-300
+           flex items-center justify-center shadow-sm;
+    pointer-events: none !important;
   }
 
   .diary-lunch-block {
-    @apply absolute left-0 right-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden;
+    @apply absolute left-0 right-0 z-0 flex items-center justify-center overflow-hidden;
+    pointer-events: none !important;
     background: repeating-linear-gradient(
       -45deg,
       rgba(245, 158, 11, 0.04),
@@ -301,6 +334,7 @@
 
   .diary-lunch-label {
     @apply text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-wider bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded shadow-sm border border-amber-200/50 dark:border-amber-500/20 select-none backdrop-blur-sm;
+    pointer-events: none !important;
   }
 
   .diary-view-btn {

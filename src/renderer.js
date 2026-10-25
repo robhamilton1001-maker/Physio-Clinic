@@ -550,9 +550,23 @@ function setNpLoading(on) {
   if (npSubmit)  npSubmit.disabled   = on;
 }
 
-// "New Appointment" button → open New Patient modal
+// "New Appointment" header button → switch to Diary view and open booking drawer
 const btnNewAppt = $('btn-new-appt');
-if (btnNewAppt) btnNewAppt.addEventListener('click', () => openNewPatientModal());
+if (btnNewAppt) {
+  btnNewAppt.addEventListener('click', () => {
+    switchView('diary');
+    if (window.Diary) {
+      const slot = typeof window.Diary.getNextAvailableTime === 'function'
+        ? window.Diary.getNextAvailableTime()
+        : 9 * 60;
+      window.Diary.openEventDrawer({
+        date: new Date().toISOString().slice(0, 10),
+        startMin: slot,
+        endMin: slot + 30
+      });
+    }
+  });
+}
 
 if (npClose)   npClose.addEventListener('click',   closeNewPatientModal);
 if (npCancel)  npCancel.addEventListener('click',  closeNewPatientModal);
@@ -884,7 +898,7 @@ function initExcelTables(container, optionalTextarea) {
         target.textContent = `${score.toFixed(1)}%`;
       });
 
-      // Update [data-severity-target] (ODI & NDI)
+      // Update [data-severity-target] (ODI & NDI & MSK measures)
       table.querySelectorAll('[data-severity-target]').forEach(sevTarget => {
         const type = sevTarget.dataset.severityTarget;
         if (type === 'odi') {
@@ -908,8 +922,81 @@ function initExcelTables(container, optionalTextarea) {
           else if (sum >= 35) { label = 'Complete Disability'; cls = 'risk-pill risk-high'; }
           sevTarget.textContent = label;
           sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'hit6') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="hit6"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Little to No Impact';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 50 && sum <= 55) { label = 'Some Impact'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 56 && sum <= 59) { label = 'Substantial Impact'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 60) { label = 'Severe Impact'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'startback') {
+          const total = Array.from(table.querySelectorAll('.excel-input[data-group="startback"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          const psych = Array.from(table.querySelectorAll('.excel-input[data-subgroup="sb-psych"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          table.querySelectorAll('[data-sum-target="sb-psych"]').forEach(t => {
+            t.textContent = String(psych);
+          });
+          let label = 'Low Risk';
+          let cls = 'risk-pill risk-low';
+          if (psych >= 4) {
+            label = 'High Risk (Psychosocial Focus)';
+            cls = 'risk-pill risk-high';
+          } else if (total >= 4) {
+            label = 'Medium Risk (Physical Focus)';
+            cls = 'risk-pill risk-med';
+          }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'midas') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="midas"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Grade I (0-5: Little/None)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 6 && sum <= 10) { label = 'Grade II (6-10: Mild)'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 11 && sum <= 20) { label = 'Grade III (11-20: Moderate)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 21) { label = 'Grade IV (21+: Severe)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'rmdq') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="rmdq"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Mild / No Disability';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 4 && sum <= 10) { label = 'Moderate Disability'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 11) { label = 'Severe Disability'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'pcs') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="pcs"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Normal / Low Risk';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 30) { label = 'Clinically Relevant Catastrophizing'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'tskv') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="tskv"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Low Kinesiophobia (≤ 37)';
+          let cls = 'risk-pill risk-low';
+          if (sum > 37) { label = 'High Kinesiophobia (> 37)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
         }
       });
+
+      // Update PRWE / PREE custom formula groups
+      if (tableGroup === 'prwe') {
+        const pain = Array.from(table.querySelectorAll('.excel-input[data-group="prwe-pain"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const fn = Array.from(table.querySelectorAll('.excel-input[data-group="prwe-fn"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const total = pain + (fn / 2);
+        table.querySelectorAll('[data-sum-target="prwe"]').forEach(t => t.textContent = total.toFixed(1));
+      }
+      if (tableGroup === 'pree') {
+        const pain = Array.from(table.querySelectorAll('.excel-input[data-group="pree-pain"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const fn = Array.from(table.querySelectorAll('.excel-input[data-group="pree-fn"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+        const fnNormalized = fn / 3;
+        const total = pain + fnNormalized;
+        table.querySelectorAll('[data-sum-target="pree"]').forEach(t => t.textContent = total.toFixed(1));
+        table.querySelectorAll('[data-sum-target="pree-fn"]').forEach(t => t.textContent = fnNormalized.toFixed(1));
+      }
 
       // Update [data-cutoff-target]
       table.querySelectorAll('[data-cutoff-target]').forEach(pill => {
@@ -1367,6 +1454,15 @@ if (btnProfileDischargePdf) {
   btnProfileDischargePdf.addEventListener('click', () => {
     if (activePortfolioPatientId && typeof exportPatientDischargeSummary === 'function') {
       exportPatientDischargeSummary(activePortfolioPatientId);
+    }
+  });
+}
+
+const btnProfileDischargeEmail = $('btn-profile-discharge-email');
+if (btnProfileDischargeEmail) {
+  btnProfileDischargeEmail.addEventListener('click', () => {
+    if (activePortfolioPatientId && typeof emailPatientDischargeSummary === 'function') {
+      emailPatientDischargeSummary(activePortfolioPatientId);
     }
   });
 }
@@ -3481,6 +3577,13 @@ async function loadInvoicingLedger(filter = {}) {
                 </svg>
                 <span class="pointer-events-none">PDF</span>
               </button>
+              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 flex items-center gap-1 cursor-pointer"
+                      title="Email Invoice to Patient" onclick="emailInvoiceReceipt(${inv.id})">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                <span class="pointer-events-none">Email</span>
+              </button>
               ${inv.status !== 'Paid' ? `
                 <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer"
                         title="Mark Paid" onclick="updateInvoiceStatus(${inv.id}, 'Paid')">
@@ -3784,6 +3887,8 @@ function initInvoicingLedger() {
 }
 
 // ── Local PDF Export Engine (Phase 8) ───────────────────────────────────────
+const lastGeneratedInvoicePdfs = {};
+const lastGeneratedDischargePdfs = {};
 
 async function exportInvoiceReceipt(invoiceId) {
   try {
@@ -3938,16 +4043,53 @@ async function exportInvoiceReceipt(invoiceId) {
     `;
 
     const cleanFilename = `Invoice_${inv.invoice_number}_${(inv.last_name || 'Patient').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    await window.api.pdf.generate({
+    const result = await window.api.pdf.generate({
       htmlContent,
       defaultFilename: cleanFilename,
       dialogTitle: 'Export Official Tax Invoice / Receipt PDF'
     });
 
+    if (result && result.success && result.filePath) {
+      lastGeneratedInvoicePdfs[invoiceId] = result.filePath;
+      return result.filePath;
+    }
+    return null;
+
   } catch (err) {
     if (err.name !== 'AbortError') {
       alert('Failed to export PDF receipt: ' + err.message);
     }
+    return null;
+  }
+}
+
+async function emailInvoiceReceipt(invoiceId) {
+  try {
+    let filePath = lastGeneratedInvoicePdfs[invoiceId];
+    if (!filePath) {
+      filePath = await exportInvoiceReceipt(invoiceId);
+      if (!filePath) return;
+    }
+
+    const inv = await window.api.invoices.getById(invoiceId);
+    if (!inv) return;
+    const settings = await window.api.settings.getAll() || {};
+
+    const to = inv.email || '';
+    const symbol = settings.currency_symbol || '$';
+    const isPaid = inv.status === 'Paid';
+    const subject = `${isPaid ? 'Receipt' : 'Tax Invoice'} #${inv.invoice_number} - ${settings.clinic_name || 'Antigravity Physiotherapy'}`;
+    const body = `Dear ${inv.first_name || 'Patient'},\n\nPlease find attached your official ${isPaid ? 'tax receipt' : 'tax invoice'} (${inv.invoice_number}) from ${settings.clinic_name || 'Antigravity Physiotherapy'}.\n\nTotal Due: ${symbol}${Number(inv.total).toFixed(2)}\nPayment Status: ${inv.status}\n\nKind regards,\n${settings.clinic_name || 'Antigravity Physiotherapy'}\n${settings.clinic_phone || ''}`;
+
+    if (window.api?.system?.openEmailClient) {
+      await window.api.system.openEmailClient({ to, subject, body, filePath });
+      if (typeof showToast === 'function') {
+        showToast('Email client launched & Invoice PDF revealed in Explorer');
+      }
+    }
+  } catch (err) {
+    console.error('[Invoice Email] Error:', err);
+    alert('Failed to dispatch email: ' + err.message);
   }
 }
 
@@ -4159,21 +4301,59 @@ async function exportPatientDischargeSummary(patientId) {
     `;
 
     const cleanFilename = `Discharge_Summary_${(p.last_name || 'Patient').replace(/[^a-zA-Z0-9]/g, '_')}_${(p.first_name || '').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    await window.api.pdf.generate({
+    const result = await window.api.pdf.generate({
       htmlContent,
       defaultFilename: cleanFilename,
       dialogTitle: 'Export Official Patient Discharge Summary PDF'
     });
 
+    if (result && result.success && result.filePath) {
+      lastGeneratedDischargePdfs[patientId] = result.filePath;
+      return result.filePath;
+    }
+    return null;
+
   } catch (err) {
     if (err.name !== 'AbortError') {
       alert('Failed to export discharge summary PDF: ' + err.message);
     }
+    return null;
+  }
+}
+
+async function emailPatientDischargeSummary(patientId) {
+  try {
+    let filePath = lastGeneratedDischargePdfs[patientId];
+    if (!filePath) {
+      filePath = await exportPatientDischargeSummary(patientId);
+      if (!filePath) return;
+    }
+
+    const data = await window.api.patients.getDischargeData(patientId);
+    if (!data || !data.patient) return;
+    const p = data.patient;
+    const settings = await window.api.settings.getAll() || {};
+
+    const to = p.email || '';
+    const subject = `Physiotherapy Discharge Summary - ${p.first_name} ${p.last_name}`;
+    const body = `Dear ${p.first_name},\n\nPlease find attached your formal Physiotherapy Clinical Discharge Summary from ${settings.clinic_name || 'Antigravity Physiotherapy'}.\n\nThis document details your rehabilitation course, objective functional improvements, and prescribed ongoing home exercises. You may share this with your referring physician or insurer.\n\nKind regards,\n${settings.practitioner_name || 'Physiotherapy Team'}\n${settings.clinic_name || 'Antigravity Physiotherapy'}\n${settings.clinic_phone || ''}`;
+
+    if (window.api?.system?.openEmailClient) {
+      await window.api.system.openEmailClient({ to, subject, body, filePath });
+      if (typeof showToast === 'function') {
+        showToast('Email client launched & Discharge Summary PDF revealed in Explorer');
+      }
+    }
+  } catch (err) {
+    console.error('[Discharge Email] Error:', err);
+    alert('Failed to dispatch email: ' + err.message);
   }
 }
 
 window.exportInvoiceReceipt = exportInvoiceReceipt;
+window.emailInvoiceReceipt = emailInvoiceReceipt;
 window.exportPatientDischargeSummary = exportPatientDischargeSummary;
+window.emailPatientDischargeSummary = emailPatientDischargeSummary;
 
 // ── Settings View Controller (Phase 8 SQLite Backed) ───────────────────────
 

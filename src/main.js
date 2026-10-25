@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -103,8 +103,8 @@ ipcMain.handle('appointments:get', (_e, id) => {
 });
 
 ipcMain.handle('appointments:create', (_e, data) => {
-  if (!data || !data.patient_id || !data.scheduled_at) {
-    throw new Error('patient_id and scheduled_at are required.');
+  if (!data || !data.scheduled_at) {
+    throw new Error('scheduled_at is required.');
   }
   return db.appointments.create(data);
 });
@@ -430,6 +430,25 @@ ipcMain.handle('pdf:generate', async (_e, { htmlContent, defaultFilename, dialog
     if (!printWin.isDestroyed()) {
       printWin.close();
     }
+  }
+});
+
+// ── 100% Offline Patient Email Dispatcher with Windows Explorer Reveal ───────
+ipcMain.handle('system:openEmailClient', async (_event, { to, subject, body, filePath }) => {
+  try {
+    const mailtoUrl = `mailto:${encodeURIComponent(to || '')}?subject=${encodeURIComponent(subject || '')}&body=${encodeURIComponent(body || '')}`;
+    
+    // 1. Open the user's default OS desktop email client (Outlook, Thunderbird, Mail, etc.)
+    await shell.openExternal(mailtoUrl);
+    
+    // 2. If a generated PDF path exists, immediately highlight it in Windows File Explorer
+    if (filePath && fs.existsSync(filePath)) {
+      shell.showItemInFolder(filePath);
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('[Email Dispatcher] Error opening email client:', err);
+    return { success: false, error: err.message };
   }
 });
 

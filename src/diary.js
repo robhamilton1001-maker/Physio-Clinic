@@ -10,10 +10,10 @@ window.Diary = (() => {
 
   // ── Grid constants ──────────────────────────────────────────────────────────
   let DAY_START    = 7;                         // 07:00 (configurable via clinic_settings)
-  let DAY_END      = 19;                        // 19:00 (configurable via clinic_settings)
+  let DAY_END      = 20;                        // 20:00 (configurable via clinic_settings, default 07:00-20:00)
   const UNIT_MIN   = 15;                        // minutes per grid step
-  const UNIT_PX    = 20;                        // px per 15-min unit
-  const HOUR_PX    = (60 / UNIT_MIN) * UNIT_PX; // 80px per hour
+  const UNIT_PX    = 20;                        // px per 15-min unit (1 hour = 80px, 30 min = 40px)
+  const HOUR_PX    = (60 / UNIT_MIN) * UNIT_PX; // exactly 80px per hour
   let TOTAL_PX     = (DAY_END - DAY_START) * HOUR_PX; // dynamically calculated
 
   // Recurring non-clinical lunch break default (Phase 8)
@@ -34,18 +34,19 @@ window.Diary = (() => {
     leave:           { color:'#f43f5e', bg:'rgba(244,63,94,0.13)',   label:'Leave',               dur: 480 },
     reminder:        { color:'#ca8a04', bg:'rgba(202,138,4,0.13)',   label:'Reminder',            dur: 15  },
   };
-  const isClinical = t => ['clinical_np','clinical_fup','clinical_review'].includes(t);
+  const isClinical = t => ['clinical_np','clinical_fup','clinical_review'].includes(t) || (typeof t === 'string' && t.startsWith('clinical'));
 
   // ── State ───────────────────────────────────────────────────────────────────
-  let view       = 'week';
-  let weekDays   = 5;
-  let anchor     = new Date();       // pivot date for navigation
-  let events     = [];               // loaded from SQLite
-  let inited     = false;
-  let drawState  = null;             // drag-to-draw
-  let moveState  = null;             // drag existing block
-  let resizeState = null;            // resize block bottom handle
-  let previewEvId = null;            // id shown in appointment preview card
+  let view             = 'week';
+  let weekDays         = 5;
+  let anchor           = new Date();       // pivot date for navigation
+  let events           = [];               // loaded from SQLite
+  let inited           = false;
+  let drawState        = null;             // drag-to-draw
+  let moveState        = null;             // drag existing block
+  let resizeState      = null;             // resize block bottom handle
+  let previewEvId      = null;             // id shown in appointment preview card
+  let dragJustFinished = false;            // guard against click firing right after move/resize
 
   // ── DOM helpers ─────────────────────────────────────────────────────────────
   const $   = id => document.getElementById(id);
@@ -83,7 +84,17 @@ window.Diary = (() => {
     } else {
       endMin = startMin + (ev.duration_min || 30);
     }
-    return { date, startMin, endMin, dur: endMin - startMin };
+    return { date, startMin, endMin, dur: Math.max(UNIT_MIN, endMin - startMin) };
+  }
+
+  /** Compute next available 15-minute slot from current time */
+  function getNextAvailableTime() {
+    const now = new Date();
+    const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+    let nextSlot = Math.ceil(currentTotalMin / 15) * 15;
+    if (nextSlot < DAY_START * 60) nextSlot = DAY_START * 60;
+    if (nextSlot + 30 > DAY_END * 60) nextSlot = 9 * 60;
+    return nextSlot;
   }
 
   // ── Navigation helpers ───────────────────────────────────────────────────────
@@ -111,6 +122,7 @@ window.Diary = (() => {
     if (!colsEl || !hdrEl || !gutEl) return;
 
     // ── Column headers ──
+    hdrEl.style.display = 'grid';
     hdrEl.style.gridTemplateColumns = `repeat(${days.length}, 1fr)`;
     hdrEl.innerHTML = days.map(d => {
       const iso = isoDate(d);
@@ -138,8 +150,10 @@ window.Diary = (() => {
 
     // ── Day columns ──
     colsEl.innerHTML = '';
+    colsEl.style.display = 'grid';
     colsEl.style.gridTemplateColumns = `repeat(${days.length}, 1fr)`;
     colsEl.style.height = `${TOTAL_PX}px`;
+    colsEl.style.pointerEvents = 'auto';
 
     days.forEach((day, ci) => {
       const col = document.createElement('div');
@@ -147,12 +161,12 @@ window.Diary = (() => {
       col.dataset.date   = isoDate(day);
       col.dataset.colIdx = String(ci);
 
-      // Background grid lines
+      // Background grid lines (distinct hour, dashed half-hour, dotted quarter-hour)
       for (let h = DAY_START; h < DAY_END; h++) {
         const base = (h - DAY_START) * HOUR_PX;
-        addLine(col, base,            'diary-line-hour');
-        addLine(col, base + HOUR_PX/2,'diary-line-half');
-        addLine(col, base + HOUR_PX/4,'diary-line-qtr');
+        addLine(col, base,              'diary-line-hour');
+        addLine(col, base + HOUR_PX/4,  'diary-line-qtr');
+        addLine(col, base + HOUR_PX/2,  'diary-line-half');
         addLine(col, base + HOUR_PX*3/4,'diary-line-qtr');
       }
       // Final hour line
@@ -199,7 +213,7 @@ window.Diary = (() => {
     col.appendChild(el);
   }
 
-  // ── "Now" indicator ──────────────────────────────────────────────────────────
+  // ── "Now" indicator (pulsed current time line) ────────────────────────────────
 
   function renderNowLine() {
     const today  = isoDate(new Date());
@@ -209,7 +223,7 @@ window.Diary = (() => {
     if (!todayCol) return;
 
     // Remove old
-    todayCol.querySelectorAll('.diary-now-line').forEach(el => el.remove());
+    todayCol.querySelectorAll('.diary-now-line, .diary-now-dot').forEach(el => el.remove());
 
     const now    = new Date();
     const totalM = now.getHours()*60 + now.getMinutes();
@@ -222,7 +236,7 @@ window.Diary = (() => {
 
     const dot = document.createElement('div');
     dot.className = 'diary-now-dot';
-    dot.style.top = `${topPx - 4}px`;
+    dot.style.top = `${topPx - 5}px`;
 
     todayCol.appendChild(line);
     todayCol.appendChild(dot);
@@ -244,25 +258,49 @@ window.Diary = (() => {
       const col = colsEl.children[ci];
       if (!col) return;
 
-      const cfg    = EV[ev.event_type] || EV.clinical_fup;
+      const clin   = isClinical(ev.event_type);
+      const cfg    = EV[ev.event_type] || (clin ? EV.clinical_fup : EV.admin);
       const topPx  = minToPx(startMin - DAY_START*60);
       const htPx   = Math.max(UNIT_PX, minToPx(dur));
-      const name   = ev.first_name
-        ? `${ev.first_name} ${ev.last_name}`
-        : (ev.title || cfg.label);
+      const pName  = (ev.first_name || ev.last_name) ? `${ev.first_name || ''} ${ev.last_name || ''}`.trim() : '';
+      const titleText = clin ? (pName || ev.title || cfg.label) : (ev.title || cfg.label);
 
       const block = document.createElement('div');
       block.className    = 'diary-ev';
       block.dataset.evId = String(ev.id);
-      block.style.cssText = `top:${topPx}px;height:${htPx}px;background:${cfg.bg};border-left:3px solid ${cfg.color};`;
 
-      block.innerHTML = `
-        <div class="diary-ev-inner">
-          <div class="diary-ev-title" style="color:${cfg.color}">${name}</div>
-          ${dur >= 30 ? `<div class="diary-ev-meta">${hhmm(startMin)}–${hhmm(endMin)}${isClinical(ev.event_type) ? ' · '+cfg.label : ''}</div>` : ''}
-        </div>
-        <div class="diary-ev-resize" data-ev-id="${ev.id}"></div>`;
+      // Distinct visual styling for non-clinical blocks vs clinical appointments
+      if (clin) {
+        block.style.cssText = `top:${topPx}px;height:${htPx}px;background:${cfg.bg};border-left:3px solid ${cfg.color};`;
+        block.innerHTML = `
+          <div class="diary-ev-inner">
+            <div class="diary-ev-title" style="color:${cfg.color}">${titleText}</div>
+            <div class="diary-ev-meta flex items-center gap-1.5">
+              <span class="font-mono">${hhmm(startMin)}–${hhmm(endMin)}</span>
+              <span class="inline-flex items-center px-1 rounded text-[9px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">${dur}m</span>
+              ${dur >= 30 ? `<span class="truncate opacity-80">${cfg.label}</span>` : ''}
+            </div>
+          </div>
+          <div class="diary-ev-resize" data-ev-id="${ev.id}"></div>`;
+      } else {
+        block.style.cssText = `top:${topPx}px;height:${htPx}px;background:${cfg.bg};border-left:3px solid ${cfg.color};border-top:1px dashed ${cfg.color}66;border-bottom:1px dashed ${cfg.color}66;`;
+        block.innerHTML = `
+          <div class="diary-ev-inner flex flex-col justify-center">
+            <div class="diary-ev-title flex items-center gap-1" style="color:${cfg.color}">
+              <span class="uppercase text-[9px] font-bold tracking-wider px-1 py-0.2 rounded bg-black/5 dark:bg-white/10">[${cfg.label.toUpperCase()}]</span>
+              <span class="truncate">${titleText !== cfg.label ? titleText : ''}</span>
+            </div>
+            ${dur >= 30 ? `
+              <div class="diary-ev-meta flex items-center gap-1.5 opacity-85">
+                <span class="font-mono">${hhmm(startMin)}–${hhmm(endMin)}</span>
+                <span class="inline-flex items-center px-1 rounded text-[9px] font-semibold bg-black/5 dark:bg-white/10">${dur}m</span>
+              </div>
+            ` : ''}
+          </div>
+          <div class="diary-ev-resize" data-ev-id="${ev.id}"></div>`;
+      }
 
+      // Mousedown for move or resize
       block.addEventListener('mousedown', e => {
         if (e.target.classList.contains('diary-ev-resize')) {
           e.stopPropagation();
@@ -273,17 +311,26 @@ window.Diary = (() => {
         }
       });
 
+      // Click to open preview card
       block.addEventListener('click', e => {
         e.stopPropagation();
-        if (moveState?.moved || resizeState) return;
+        if (dragJustFinished || moveState?.moved || resizeState) return;
         showApptPreview(ev, e);
+      });
+
+      // Double-click to directly open drawer in edit mode
+      block.addEventListener('dblclick', e => {
+        e.stopPropagation();
+        closeApptPreview();
+        const p = parseEvent(ev);
+        openEventDrawer({ ...ev, ...p });
       });
 
       col.appendChild(block);
     });
   }
 
-  // ── Drag-to-draw ─────────────────────────────────────────────────────────────
+  // ── Drag-to-draw (Interactive Drag-to-Book snapping to 15m) ──────────────────
 
   function attachColDragDraw(col, day) {
     col.addEventListener('mousedown', e => {
@@ -291,36 +338,69 @@ window.Diary = (() => {
       if (e.target.closest('.diary-ev')) return;
       e.preventDefault();
 
-      const yInCol   = getY(e, col);
-      const startMin = clamp(snap(DAY_START*60 + pxToMin(Math.max(0, yInCol))));
+      const yInCol = getY(e, col);
+      const clickedMin = clamp(snap(DAY_START*60 + pxToMin(Math.max(0, yInCol))));
 
       const preview = document.createElement('div');
-      preview.className  = 'diary-draw-preview';
-      preview.style.top  = `${minToPx(startMin - DAY_START*60)}px`;
-      preview.style.height = `${UNIT_PX}px`;
+      preview.className    = 'diary-draw-preview';
+      preview.style.top    = `${minToPx(clickedMin - DAY_START*60)}px`;
+      preview.style.height = `${UNIT_PX * 2}px`; // default 30 min preview
+      preview.textContent  = `${hhmm(clickedMin)} – ${hhmm(clickedMin + 30)} (30m)`;
       col.appendChild(preview);
 
-      drawState = { col, day, startMin, endMin: startMin + UNIT_MIN, preview, moved: false, startY: e.clientY };
+      drawState = {
+        col,
+        day,
+        anchorMin: clickedMin,
+        startMin:  clickedMin,
+        endMin:    clickedMin + 30,
+        preview,
+        moved:     false,
+        startY:    e.clientY,
+      };
 
       const onMove = e2 => {
-        const y2   = getY(e2, col);
-        const raw  = clamp(snap(DAY_START*60 + pxToMin(Math.max(0, y2))));
-        const end  = Math.max(drawState.startMin + UNIT_MIN, raw);
-        drawState.endMin = end;
-        drawState.moved  = Math.abs(e2.clientY - drawState.startY) > 6;
-        preview.style.height   = `${Math.max(UNIT_PX, minToPx(end - drawState.startMin))}px`;
-        preview.textContent    = `${hhmm(drawState.startMin)} – ${hhmm(end)}`;
+        if (!drawState) return;
+        const dy = e2.clientY - drawState.startY;
+        if (!drawState.moved && Math.abs(dy) > 5) {
+          drawState.moved = true;
+        }
+
+        const y2 = getY(e2, col);
+        const currentSlotMin = clamp(snap(DAY_START*60 + pxToMin(Math.max(0, y2))));
+
+        let sMin, eMin;
+        if (currentSlotMin >= drawState.anchorMin) {
+          sMin = drawState.anchorMin;
+          eMin = Math.max(sMin + UNIT_MIN, currentSlotMin);
+        } else {
+          sMin = currentSlotMin;
+          eMin = Math.max(sMin + UNIT_MIN, drawState.anchorMin);
+        }
+
+        drawState.startMin = sMin;
+        drawState.endMin   = eMin;
+
+        preview.style.top    = `${minToPx(sMin - DAY_START*60)}px`;
+        preview.style.height = `${Math.max(UNIT_PX, minToPx(eMin - sMin))}px`;
+        preview.textContent  = `${hhmm(sMin)} – ${hhmm(eMin)} (${eMin - sMin}m)`;
       };
 
       const onUp = () => {
         document.removeEventListener('mousemove', onMove);
         if (preview.parentNode) preview.remove();
+        if (!drawState) return;
         const { startMin, endMin, moved } = drawState;
         drawState = null;
+
+        // Mode A: Dragged range. Mode B: Single-click instant placement (default 30m)
+        const finalStart = startMin;
+        const finalEnd   = moved ? endMin : Math.min(DAY_END * 60, startMin + 30);
+
         openEventDrawer({
           date:     isoDate(day),
-          startMin: startMin,
-          endMin:   moved ? endMin : startMin + 30,
+          startMin: finalStart,
+          endMin:   finalEnd,
         });
       };
 
@@ -329,7 +409,7 @@ window.Diary = (() => {
     });
   }
 
-  // ── Block move ───────────────────────────────────────────────────────────────
+  // ── Block move across time & days ────────────────────────────────────────────
 
   function startBlockMove(e, block, ev, origCol, origCI) {
     if (e.button !== 0) return;
@@ -346,12 +426,12 @@ window.Diary = (() => {
       startX: e.clientX, startY: e.clientY,
       curCol: origCol, curDate: origCol.dataset.date,
     };
-    block.classList.add('ev-dragging');
 
     const onMove = e2 => {
       if (!moveState) return;
       if (!moveState.moved && (Math.abs(e2.clientX - moveState.startX) > 5 || Math.abs(e2.clientY - moveState.startY) > 5)) {
         moveState.moved = true;
+        block.classList.add('ev-dragging');
       }
       if (!moveState.moved) return;
 
@@ -368,7 +448,6 @@ window.Diary = (() => {
       const y2       = getY(e2, targetCol);
       const rawMin   = DAY_START*60 + pxToMin(Math.max(0, y2)) - moveState.clickOffset;
       const newStart = clamp(snap(rawMin));
-      const newEnd   = Math.min(DAY_END*60, newStart + moveState.dur);
 
       block.style.top    = `${minToPx(newStart - DAY_START*60)}px`;
       block.style.height = `${minToPx(moveState.dur)}px`;
@@ -386,6 +465,9 @@ window.Diary = (() => {
       blk.classList.remove('ev-dragging');
 
       if (moved && blk.dataset.pendingStart) {
+        dragJustFinished = true;
+        setTimeout(() => { dragJustFinished = false; }, 150);
+
         const newStart = Number(blk.dataset.pendingStart);
         const newDate  = blk.dataset.pendingDate;
         const newEnd   = newStart + dur;
@@ -405,7 +487,7 @@ window.Diary = (() => {
     document.addEventListener('mouseup',   onUp,   { once: true });
   }
 
-  // ── Block resize ─────────────────────────────────────────────────────────────
+  // ── Block resize (bottom-edge in 15m increments) ─────────────────────────────
 
   function startResize(e, block, ev, col) {
     e.preventDefault();
@@ -430,7 +512,10 @@ window.Diary = (() => {
     const onUp = async () => {
       document.removeEventListener('mousemove', onMove);
       if (!resizeState) return;
-      const { block: blk, ev: e2, startMin, pendingEnd, col: c } = resizeState;
+      dragJustFinished = true;
+      setTimeout(() => { dragJustFinished = false; }, 150);
+
+      const { block: blk, ev: e2, startMin, pendingEnd } = resizeState;
       blk.classList.remove('ev-resizing');
       if (pendingEnd && pendingEnd !== resizeState.origEndMin) {
         const newDur = pendingEnd - startMin;
@@ -454,7 +539,6 @@ window.Diary = (() => {
   // ── Y-in-column helper ───────────────────────────────────────────────────────
 
   function getY(e, col) {
-    // getBoundingClientRect() already accounts for scroll position
     return e.clientY - col.getBoundingClientRect().top;
   }
 
@@ -516,7 +600,7 @@ window.Diary = (() => {
     }
   }
 
-  // ── Event Drawer ─────────────────────────────────────────────────────────────
+  // ── Event Drawer (`#ev-drawer` & `#ev-backdrop`) ─────────────────────────────
 
   function openEventDrawer(cfg = {}) {
     const drawer   = $('ev-drawer');
@@ -533,19 +617,25 @@ window.Diary = (() => {
       backdrop.style.setProperty('pointer-events', 'auto', 'important');
     }
     drawer.classList.remove('hidden', 'translate-x-full');
+    drawer.classList.add('translate-x-0');
     drawer.style.setProperty('display', 'flex', 'important');
     drawer.style.setProperty('pointer-events', 'auto', 'important');
     setTimeout(() => {
-      const first = drawer.querySelector('input:not([type=hidden]):not([disabled])');
-      if (first) first.focus();
+      const isClin = isClinical($('ev-event-type')?.value);
+      if (isClin) {
+        if (!$('ev-patient-id')?.value) $('ev-patient-search')?.focus();
+      } else {
+        $('ev-title')?.focus();
+      }
     }, 80);
   }
 
   function closeEventDrawer() {
     const drawer = $('ev-drawer');
-    const bd = $('ev-backdrop');
+    const bd     = $('ev-backdrop');
 
     drawer?.classList.add('hidden', 'translate-x-full');
+    drawer?.classList.remove('translate-x-0');
     drawer?.style.setProperty('display', 'none', 'important');
     drawer?.style.setProperty('pointer-events', 'none', 'important');
 
@@ -556,6 +646,7 @@ window.Diary = (() => {
       bd.style.setProperty('pointer-events', 'none', 'important');
     }
     $('ev-patient-dropdown')?.classList.add('hidden');
+    $('ev-error')?.classList.add('hidden');
   }
 
   function populateDrawer(cfg) {
@@ -577,11 +668,23 @@ window.Diary = (() => {
     $('ev-start-time').value = cfg.startMin != null ? hhmm(cfg.startMin) : '09:00';
     $('ev-end-time').value   = cfg.endMin   != null ? hhmm(cfg.endMin)   : hhmm((cfg.startMin||540)+30);
 
-    // Patient name in search field
+    // Patient name in search field & badge
     const patSearchEl = $('ev-patient-search');
-    if (patSearchEl) {
-      patSearchEl.value = (cfg.first_name && cfg.last_name)
-        ? `${cfg.first_name} ${cfg.last_name}` : '';
+    const patBadgeEl  = $('ev-patient-badge');
+    const patNameEl   = $('ev-patient-name');
+    const patClearEl  = $('ev-patient-clear');
+    const pFullName   = (cfg.first_name && cfg.last_name)
+      ? `${cfg.first_name} ${cfg.last_name}`
+      : (cfg.patient_name || '');
+
+    if (patSearchEl) patSearchEl.value = pFullName;
+    if (cfg.patient_id && pFullName) {
+      if (patNameEl)  patNameEl.textContent = pFullName;
+      if (patBadgeEl) { patBadgeEl.classList.remove('hidden'); patBadgeEl.classList.add('flex'); }
+      if (patClearEl) patClearEl.classList.remove('hidden');
+    } else {
+      if (patBadgeEl) { patBadgeEl.classList.add('hidden'); patBadgeEl.classList.remove('flex'); }
+      if (patClearEl) patClearEl.classList.add('hidden');
     }
 
     // Title (non-clinical)
@@ -624,7 +727,7 @@ window.Diary = (() => {
     const em = parseHHMM($('ev-end-time')?.value);
     const d  = Math.max(0, em - sm);
     const badge = $('ev-duration-badge');
-    if (badge) badge.textContent = d ? `${d} min` : '';
+    if (badge) badge.textContent = d ? `${d}m` : '';
   }
 
   function applyApptPreset(type) {
@@ -640,9 +743,12 @@ window.Diary = (() => {
   // ── Drawer: patient search ────────────────────────────────────────────────────
 
   function initDrawerPatientSearch() {
-    const input  = $('ev-patient-search');
-    const drop   = $('ev-patient-dropdown');
-    const hidId  = $('ev-patient-id');
+    const input   = $('ev-patient-search');
+    const drop    = $('ev-patient-dropdown');
+    const hidId   = $('ev-patient-id');
+    const badgeEl = $('ev-patient-badge');
+    const nameEl  = $('ev-patient-name');
+    const clearEl = $('ev-patient-clear');
     if (!input || !drop) return;
 
     let timer;
@@ -658,7 +764,7 @@ window.Diary = (() => {
           } else {
             drop.innerHTML = res.map(p => `
               <div class="ev-pat-row" data-id="${p.id}" data-name="${p.first_name} ${p.last_name}">
-                <span class="ev-pat-av">${p.first_name[0]}${p.last_name[0]}</span>
+                <span class="ev-pat-av">${(p.first_name[0]||'')}${(p.last_name[0]||'')}</span>
                 <span>
                   <span class="block text-sm font-medium text-slate-900 dark:text-slate-100">${p.first_name} ${p.last_name}</span>
                   <span class="block text-xs text-slate-400 dark:text-slate-600">${p.phone || p.email || ''}</span>
@@ -666,15 +772,28 @@ window.Diary = (() => {
               </div>`).join('');
             drop.querySelectorAll('.ev-pat-row').forEach(el => {
               el.addEventListener('click', () => {
-                input.value = el.dataset.name;
-                if (hidId) hidId.value = el.dataset.id;
+                const pId   = el.dataset.id;
+                const pName = el.dataset.name;
+                input.value = pName;
+                if (hidId)   hidId.value = pId;
+                if (nameEl)  nameEl.textContent = pName;
+                if (badgeEl) { badgeEl.classList.remove('hidden'); badgeEl.classList.add('flex'); }
+                if (clearEl) clearEl.classList.remove('hidden');
                 drop.classList.add('hidden');
               });
             });
           }
           drop.classList.remove('hidden');
         } catch (err) { console.error('[Diary] Pat search:', err); }
-      }, 200);
+      }, 150);
+    });
+
+    clearEl?.addEventListener('click', () => {
+      input.value = '';
+      if (hidId) hidId.value = '';
+      if (badgeEl) { badgeEl.classList.add('hidden'); badgeEl.classList.remove('flex'); }
+      clearEl.classList.add('hidden');
+      input.focus();
     });
 
     document.addEventListener('mousedown', e => {
@@ -697,6 +816,7 @@ window.Diary = (() => {
     const sm   = parseHHMM(startTimeVal);
     const em   = parseHHMM(endTimeVal);
     const dur  = Math.max(UNIT_MIN, em - sm);
+    const clin = isClinical(et);
 
     const showErr = msg => {
       const el = $('ev-error');
@@ -709,14 +829,14 @@ window.Diary = (() => {
     };
     hideErr();
 
-    if (isClinical(et) && !patId) {
+    if (clin && !patId) {
       showErr('Please select a patient for clinical appointments.');
       $('ev-patient-search')?.focus();
       return;
     }
 
     const payload = {
-      patient_id:   patId ? Number(patId) : null,
+      patient_id:   (clin && patId) ? Number(patId) : null,
       event_type:   et,
       title:        titleVal || EV[et]?.label || et,
       scheduled_at: toISO(dateVal, sm),
@@ -726,6 +846,7 @@ window.Diary = (() => {
       status:       'scheduled',
       type:         EV[et]?.label || et,
       notes:        notesVal || null,
+      is_clinical:  clin ? 1 : 0,
     };
 
     const btn  = $('ev-submit');
@@ -771,8 +892,10 @@ window.Diary = (() => {
     previewEvId = ev.id;
 
     const { startMin, endMin } = parseEvent(ev);
-    const cfg  = EV[ev.event_type] || EV.clinical_fup;
-    const name = ev.first_name ? `${ev.first_name} ${ev.last_name}` : (ev.title || cfg.label);
+    const clin = isClinical(ev.event_type);
+    const cfg  = EV[ev.event_type] || (clin ? EV.clinical_fup : EV.admin);
+    const pName = (ev.first_name || ev.last_name) ? `${ev.first_name || ''} ${ev.last_name || ''}`.trim() : '';
+    const name = clin ? (pName || ev.title || cfg.label) : (ev.title || cfg.label);
 
     $('ap-title').textContent = name;
     $('ap-time').textContent  = `${hhmm(startMin)} – ${hhmm(endMin)} · ${endMin-startMin} min · ${cfg.label}`;
@@ -785,12 +908,11 @@ window.Diary = (() => {
       notesEl.classList.add('hidden');
     }
 
-    // Show "Open Patient Portfolio" only for clinical events
+    // Show "Open Patient Portfolio" only for clinical events with valid patient_id
     const profileBtn = $('ap-open-profile');
-    if (profileBtn) profileBtn.classList.toggle('hidden', !isClinical(ev.event_type) || !ev.patient_id);
+    if (profileBtn) profileBtn.classList.toggle('hidden', !clin || !ev.patient_id);
 
     // Position card near click
-    const rect = document.documentElement.getBoundingClientRect();
     let left = mouseEvent.clientX + 12;
     let top  = mouseEvent.clientY - 40;
     if (left + 290 > window.innerWidth)  left = mouseEvent.clientX - 302;
@@ -808,7 +930,6 @@ window.Diary = (() => {
   // ── Dashboard schedule mirror ─────────────────────────────────────────────────
 
   function updateDashboardSchedule() {
-    // Refresh the dashboard schedule appointment count pill
     const pill = $('appt-count');
     if (pill) {
       const today = isoDate(new Date());
@@ -833,9 +954,11 @@ window.Diary = (() => {
       setDrawerMode('nonclinical');
       $('ev-event-type').value = 'admin';
       applyApptPreset('admin');
+      const titleEl = $('ev-title');
+      if (titleEl && !titleEl.value) titleEl.value = 'Admin / CPD';
     });
 
-    // Appointment type presets
+    // Appointment type presets (Clinical)
     document.querySelectorAll('[data-appt-type]').forEach(btn => {
       btn.addEventListener('click', () => {
         const t = btn.dataset.apptType;
@@ -844,7 +967,7 @@ window.Diary = (() => {
       });
     });
 
-    // Non-clinical presets
+    // Non-clinical presets (Lunch, Admin, Meeting, Leave, Reminder)
     document.querySelectorAll('[data-nc-type]').forEach(btn => {
       btn.addEventListener('click', () => {
         const t = btn.dataset.ncType;
@@ -856,18 +979,20 @@ window.Diary = (() => {
       });
     });
 
-    // Time changes → update badge
+    // Time changes → update duration badge
     [$('ev-start-time'), $('ev-end-time')].forEach(el => {
       el?.addEventListener('change', updateDurationBadge);
+      el?.addEventListener('input',  updateDurationBadge);
     });
 
-    // Drawer: close
-    $('ev-close')?.addEventListener('click',   closeEventDrawer);
-    $('ev-cancel')?.addEventListener('click',  closeEventDrawer);
+    // Drawer: close actions
+    $('ev-close')?.addEventListener('click',    closeEventDrawer);
+    $('ev-cancel')?.addEventListener('click',   closeEventDrawer);
     $('ev-backdrop')?.addEventListener('click', closeEventDrawer);
 
-    // Drawer: form submit
+    // Drawer: form submit & direct button click
     $('ev-form')?.addEventListener('submit', e => { e.preventDefault(); submitDrawer(); });
+    $('ev-submit')?.addEventListener('click', e => { e.preventDefault(); submitDrawer(); });
 
     // Drawer: delete
     $('ev-delete-btn')?.addEventListener('click', deleteEvent);
@@ -884,17 +1009,22 @@ window.Diary = (() => {
     $('diary-today')?.addEventListener('click',     goToday);
     $('diary-view-day')?.addEventListener('click',  () => setView('day'));
     $('diary-view-week')?.addEventListener('click', () => setView('week'));
-    $('diary-book-btn')?.addEventListener('click', () => openEventDrawer({
-      date: isoDate(anchor), startMin: 9*60, endMin: 9*60+30,
-    }));
+    $('diary-book-btn')?.addEventListener('click', () => {
+      const slot = getNextAvailableTime();
+      openEventDrawer({
+        date:     isoDate(anchor || new Date()),
+        startMin: slot,
+        endMin:   slot + 30,
+      });
+    });
 
-    // Appointment preview card
+    // Appointment preview card actions
     $('ap-close')?.addEventListener('click', closeApptPreview);
     $('ap-edit-btn')?.addEventListener('click', () => {
       if (previewEvId == null) return;
       closeApptPreview();
       const ev = events.find(e => e.id === previewEvId);
-      if (ev) { const p = parseEvent(ev); openEventDrawer({...ev, ...p}); }
+      if (ev) { const p = parseEvent(ev); openEventDrawer({ ...ev, ...p }); }
     });
     $('ap-open-profile')?.addEventListener('click', () => {
       if (previewEvId == null) return;
@@ -908,7 +1038,7 @@ window.Diary = (() => {
     // Patient search in drawer
     initDrawerPatientSearch();
 
-    // Global Esc also closes drawer
+    // Global Esc also closes drawer and preview
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { closeEventDrawer(); closeApptPreview(); }
     });
@@ -1018,7 +1148,12 @@ window.Diary = (() => {
     if (scrollEl) scrollEl.scrollTop = HOUR_PX;
   }
 
-  // Expose only what renderer.js needs
-  return { activate, openEventDrawer, updateScheduleConfig };
+  // Expose public API
+  return {
+    activate,
+    openEventDrawer,
+    updateScheduleConfig,
+    getNextAvailableTime,
+  };
 
 })();

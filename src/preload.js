@@ -178,4 +178,9 @@ contextBridge.exposeInMainWorld('api', {
     generate: (opts)     => ipcRenderer.invoke('pdf:generate', opts),
   },
 
+  // ── Domain: Offline System Integration ─────────────────────────────────────
+  system: {
+    openEmailClient: (data) => ipcRenderer.invoke('system:openEmailClient', data),
+  },
+
 });
