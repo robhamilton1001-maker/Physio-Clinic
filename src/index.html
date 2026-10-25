@@ -215,7 +215,7 @@
   <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
 
     <!-- ── DASHBOARD VIEW ────────────────────────────────────────────────── -->
-    <div id="view-dashboard" class="relative flex flex-col h-full overflow-hidden animate-fade-in">
+    <div id="view-dashboard" class="view-container relative flex flex-col h-full overflow-hidden animate-fade-in">
 
       <!-- Top header bar: Clock | Search | Red Flags | New Appointment -->
       <header class="flex-none px-7 py-4
@@ -408,7 +408,7 @@
 
 
     <!-- ── DIARY VIEW (Phase 3) ──────────────────────────────────────────── -->
-    <div id="view-diary" class="relative hidden flex-col h-full overflow-hidden">
+    <div id="view-diary" class="view-container relative hidden flex-col h-full overflow-hidden">
 
       <!-- Diary toolbar -->
       <div class="flex-none flex items-center justify-between gap-4 px-6 py-3
@@ -479,7 +479,7 @@
 
 
     <!-- ── PATIENTS VIEW ─────────────────────────────────────────────────── -->
-    <div id="view-patients" class="relative hidden flex-col h-full overflow-hidden">
+    <div id="view-patients" class="view-container relative hidden flex-col h-full overflow-hidden">
       <!-- Patients toolbar -->
       <div class="flex-none flex items-center justify-between px-6 py-4
                   bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
@@ -532,7 +532,7 @@
 
 
     <!-- ── SMART PHRASES MASTER-DETAIL HUB (Phase 5) ─────────────────────── -->
-    <div id="view-smart-phrases" class="relative hidden flex-col h-full overflow-hidden">
+    <div id="view-smart-phrases" class="view-container relative hidden flex-col h-full overflow-hidden">
 
       <!-- Hub Header Toolbar -->
       <div class="flex-none flex items-center justify-between px-6 py-4
@@ -753,7 +753,7 @@
 
     <!-- ── PLACEHOLDER VIEWS ─────────────────────────────────────────────── -->
         <!-- ── PHASE 7: PHASED S&C AND REHAB BUILDER ──────────────────────────── -->
-        <div id="view-programs" class="relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <div id="view-programs" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
       <!-- ── TIER 1: Header, Template Selection & Program Actions ──────────── -->
       <header class="flex-none px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 z-10 shadow-sm">
@@ -948,7 +948,7 @@
     </div><!-- /view-programs -->
 
     <!-- ── DEDICATED EXERCISE & PROTOCOL LIBRARY HUB ────────────────────────── -->
-    <div id="view-exercise-library" class="relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div id="view-exercise-library" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <!-- Header with Two Primary Tabs -->
       <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div>
@@ -1045,7 +1045,7 @@
       </div>
     </div>
 
-<div id="view-invoicing" class="relative hidden flex-col h-full items-center justify-center overflow-hidden">
+<div id="view-invoicing" class="view-container relative hidden flex-col h-full items-center justify-center overflow-hidden">
       <div class="text-center space-y-2.5 animate-fade-in">
         <svg class="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700"
              fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
@@ -1065,7 +1065,7 @@
     </div>
 
             <!-- ── PRACTICE SETTINGS & CLINIC PREFERENCES (DEFAULT VIEW) ──────────── -->
-    <div id="view-settings" class="relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div id="view-settings" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
         <div>
           <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings &amp; Preferences</h1>
@@ -1154,7 +1154,7 @@
        [1] FULL-SCREEN SESSION CLOCK OVERLAY  — z-50
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="clock-overlay"
-       class="fixed inset-0 z-50 flex flex-col items-center justify-center
+       class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center
               bg-slate-950/[0.96] backdrop-blur-md
               opacity-0 pointer-events-none
               transition-opacity duration-300 ease-out"
@@ -1227,13 +1227,13 @@
        [2] RED FLAGS SLIDE-OUT PANEL  — z-40
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="rf-backdrop"
-       class="fixed inset-0 z-30
+       class="hidden fixed inset-0 z-30
               bg-slate-950/50 backdrop-blur-[2px]
               opacity-0 pointer-events-none transition-opacity duration-300">
   </div>
 
   <aside id="rf-drawer"
-         class="fixed inset-y-0 right-0 z-40 w-[440px] flex flex-col overflow-hidden
+         class="hidden fixed inset-y-0 right-0 z-40 w-[440px] flex flex-col overflow-hidden
                 bg-white dark:bg-slate-900
                 border-l border-slate-200 dark:border-slate-800/80
                 shadow-2xl shadow-slate-950/40
@@ -1365,12 +1365,12 @@
        [3] NEW PATIENT MODAL  — z-60
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="np-backdrop"
-       class="fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-[2px]
+       class="hidden fixed inset-0 z-60 bg-slate-950/60 backdrop-blur-[2px]
               opacity-0 pointer-events-none transition-opacity duration-250">
   </div>
 
   <div id="np-modal"
-       class="fixed inset-0 z-60 flex items-center justify-center p-4
+       class="hidden fixed inset-0 z-60 flex items-center justify-center p-4
               opacity-0 pointer-events-none transition-all duration-250"
        role="dialog" aria-modal="true" aria-labelledby="np-title">
 
@@ -1510,12 +1510,12 @@
        [4] DIARY EVENT DRAWER  — z-[40], slides from right
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="ev-backdrop"
-       class="fixed inset-0 z-[35] bg-slate-950/50 backdrop-blur-[2px]
+       class="hidden fixed inset-0 z-[35] bg-slate-950/50 backdrop-blur-[2px]
               opacity-0 pointer-events-none transition-opacity duration-250">
   </div>
 
   <aside id="ev-drawer"
-         class="fixed inset-y-0 right-0 z-[40] w-[420px] flex flex-col overflow-hidden
+         class="hidden fixed inset-y-0 right-0 z-[40] w-[420px] flex flex-col overflow-hidden
                 bg-white dark:bg-slate-900
                 border-l border-slate-200 dark:border-slate-800/80
                 shadow-2xl shadow-slate-950/40
@@ -1749,7 +1749,7 @@
        [7] PATIENT PORTFOLIO HUB (Phase 4)  — z-30
   ════════════════════════════════════════════════════════════════════════ -->
   <div id="patient-profile"
-       class="fixed inset-0 z-30 flex flex-col
+       class="hidden fixed inset-0 z-30 flex flex-col
               bg-slate-50 dark:bg-slate-950
               opacity-0 pointer-events-none
               transition-opacity duration-200"
@@ -2249,10 +2249,10 @@
 
   <!-- ── MODAL: Create / Edit Protocol Template ────────────────────────────── -->
   <div id="modal-edit-protocol-template"
-       class="hidden fixed inset-0 z-50 flex items-center justify-center p-4
+       class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4
               bg-slate-950/75 backdrop-blur-sm pointer-events-auto"
        role="dialog" aria-modal="true">
-    <div class="relative z-[51] w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
+    <div class="relative z-[71] w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4 pointer-events-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h2 id="modal-proto-title" class="text-sm font-semibold text-slate-900 dark:text-slate-100">New Protocol Template</h2>
         <button id="btn-close-proto-modal" data-action="close-protocol-modal" type="button" class="btn-icon cursor-pointer">

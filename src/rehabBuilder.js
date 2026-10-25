@@ -858,7 +858,9 @@ window.RehabBuilder = (() => {
     if (!modal) return;
 
     modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-    modal.classList.add('flex', 'pointer-events-auto');
+    modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
     document.body.classList.add('modal-open');
 
     const sourceLabel = document.getElementById('shift-source-label');
@@ -889,7 +891,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-shift-day');
     if (modal) {
       modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-      modal.classList.remove('flex', 'pointer-events-auto');
+      modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+      modal.style.setProperty('display', 'none', 'important');
+      modal.style.setProperty('pointer-events', 'none', 'important');
     }
     document.body.classList.remove('modal-open');
   }
@@ -952,7 +956,9 @@ window.RehabBuilder = (() => {
     if (!modal) return;
 
     modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-    modal.classList.add('flex', 'pointer-events-auto');
+    modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
     document.body.classList.add('modal-open');
 
     const searchInput = document.getElementById('modal-replace-search');
@@ -969,7 +975,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-quick-replace');
     if (modal) {
       modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-      modal.classList.remove('flex', 'pointer-events-auto');
+      modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+      modal.style.setProperty('display', 'none', 'important');
+      modal.style.setProperty('pointer-events', 'none', 'important');
     }
     document.body.classList.remove('modal-open');
   }
@@ -1031,7 +1039,9 @@ window.RehabBuilder = (() => {
     if (!modal) return;
 
     modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-    modal.classList.add('flex', 'pointer-events-auto');
+    modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
     document.body.classList.add('modal-open');
     const nameInput = document.getElementById('modal-template-name-input');
     if (nameInput) {
@@ -1047,7 +1057,9 @@ window.RehabBuilder = (() => {
     const modal = document.getElementById('modal-save-template');
     if (modal) {
       modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-      modal.classList.remove('flex', 'pointer-events-auto');
+      modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+      modal.style.setProperty('display', 'none', 'important');
+      modal.style.setProperty('pointer-events', 'none', 'important');
     }
     document.body.classList.remove('modal-open');
   }

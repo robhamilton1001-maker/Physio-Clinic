@@ -26,7 +26,7 @@
 
   /* Universal button hitbox fix: ensure entire button area responds instantly to clicks */
   button {
-    pointer-events: auto !important;
+    pointer-events: auto;
     user-select: none;
   }
   button > *,
@@ -515,10 +515,19 @@ button {
 }
 button > *,
 button * {
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
-/* ── Strict View Isolation & Ghost Click Elimination ─────────────────────── */
+/* ── Strict Inactivity & Overlay Disabling ───────────────────────────────── */
+.pointer-events-none,
+.pointer-events-none *,
+.pointer-events-none button,
+.opacity-0,
+.opacity-0 *,
+.opacity-0 button,
+.hidden,
+.hidden *,
+.hidden button,
 .view-pane-hidden,
 .view-pane-hidden *,
 .view-pane-hidden button,
@@ -526,10 +535,17 @@ button * {
 .view-pane-hidden [data-nav-view],
 .view-pane-hidden input,
 .view-pane-hidden select,
-[aria-hidden="true"].view-pane-hidden,
-[aria-hidden="true"].view-pane-hidden * {
-  display: none !important;
+[aria-hidden="true"],
+[aria-hidden="true"] *,
+[aria-hidden="true"] button {
   pointer-events: none !important;
+}
+
+.hidden,
+.view-pane-hidden,
+[aria-hidden="true"].hidden,
+[aria-hidden="true"].view-pane-hidden {
+  display: none !important;
   visibility: hidden !important;
 }
 
@@ -538,5 +554,22 @@ button * {
   pointer-events: auto !important;
   visibility: visible !important;
   position: relative !important;
+}
+
+/* Modals when active must have pointer-events auto on card and children */
+.modal-open,
+[role="dialog"]:not(.hidden),
+[role="dialog"]:not(.hidden) * {
+  pointer-events: auto;
+}
+[role="dialog"]:not(.hidden) input,
+[role="dialog"]:not(.hidden) select,
+[role="dialog"]:not(.hidden) button,
+[role="dialog"]:not(.hidden) textarea {
+  pointer-events: auto !important;
+}
+[role="dialog"]:not(.hidden) button > *,
+[role="dialog"]:not(.hidden) button * {
+  pointer-events: none !important;
 }
 

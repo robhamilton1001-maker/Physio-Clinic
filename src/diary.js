@@ -496,11 +496,15 @@ window.Diary = (() => {
     // Populate
     populateDrawer(cfg);
 
-    drawer.classList.remove('translate-x-full');
     if (backdrop) {
-      backdrop.classList.remove('opacity-0','pointer-events-none');
-      backdrop.classList.add('opacity-100','pointer-events-auto');
+      backdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100', 'pointer-events-auto');
+      backdrop.style.setProperty('display', 'block', 'important');
+      backdrop.style.setProperty('pointer-events', 'auto', 'important');
     }
+    drawer.classList.remove('hidden', 'translate-x-full');
+    drawer.style.setProperty('display', 'flex', 'important');
+    drawer.style.setProperty('pointer-events', 'auto', 'important');
     setTimeout(() => {
       const first = drawer.querySelector('input:not([type=hidden]):not([disabled])');
       if (first) first.focus();
@@ -508,9 +512,19 @@ window.Diary = (() => {
   }
 
   function closeEventDrawer() {
-    $('ev-drawer')?.classList.add('translate-x-full');
+    const drawer = $('ev-drawer');
     const bd = $('ev-backdrop');
-    if (bd) { bd.classList.remove('opacity-100','pointer-events-auto'); bd.classList.add('opacity-0','pointer-events-none'); }
+
+    drawer?.classList.add('hidden', 'translate-x-full');
+    drawer?.style.setProperty('display', 'none', 'important');
+    drawer?.style.setProperty('pointer-events', 'none', 'important');
+
+    if (bd) {
+      bd.classList.remove('opacity-100', 'pointer-events-auto');
+      bd.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+      bd.style.setProperty('display', 'none', 'important');
+      bd.style.setProperty('pointer-events', 'none', 'important');
+    }
     $('ev-patient-dropdown')?.classList.add('hidden');
   }
 

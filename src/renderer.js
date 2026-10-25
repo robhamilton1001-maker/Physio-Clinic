@@ -89,26 +89,33 @@ const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs'
 
 function switchView(target) {
   if (target === 'pt-programs') target = 'programs';
-  ALL_VIEWS.forEach(v => {
-    const el = $(`view-${v}`);
-    if (!el) return;
-    const isActive = (v === target);
-    if (isActive) {
-      el.classList.remove('hidden', 'view-pane-hidden');
-      el.classList.add('flex', 'view-pane-active');
-      el.style.setProperty('display', 'flex', 'important');
-      el.style.setProperty('pointer-events', 'auto', 'important');
-      el.style.setProperty('visibility', 'visible', 'important');
-      el.setAttribute('aria-hidden', 'false');
-    } else {
-      el.classList.add('hidden', 'view-pane-hidden');
-      el.classList.remove('flex', 'view-pane-active');
-      el.style.setProperty('display', 'none', 'important');
-      el.style.setProperty('pointer-events', 'none', 'important');
-      el.style.setProperty('visibility', 'hidden', 'important');
-      el.setAttribute('aria-hidden', 'true');
-    }
+
+  // Ensure full-screen overlays (such as patient portfolio) are completely closed on view switch
+  if (typeof closePatientProfile === 'function') {
+    closePatientProfile();
+  }
+
+  // Strictly hide ALL view containers
+  document.querySelectorAll('.view-container').forEach(view => {
+    view.classList.add('hidden', 'view-pane-hidden');
+    view.classList.remove('flex', 'view-pane-active');
+    view.style.setProperty('display', 'none', 'important');
+    view.style.setProperty('pointer-events', 'none', 'important');
+    view.style.setProperty('visibility', 'hidden', 'important');
+    view.setAttribute('aria-hidden', 'true');
   });
+
+  // Activate exclusively the active view
+  const activeView = document.getElementById(`view-${target}`);
+  if (activeView) {
+    activeView.classList.remove('hidden', 'view-pane-hidden');
+    activeView.classList.add('flex', 'view-pane-active');
+    activeView.style.setProperty('display', 'flex', 'important');
+    activeView.style.setProperty('pointer-events', 'auto', 'important');
+    activeView.style.setProperty('visibility', 'visible', 'important');
+    activeView.setAttribute('aria-hidden', 'false');
+  }
+
   document.querySelectorAll('[data-view]').forEach(link => {
     link.className = (link.dataset.view === target || (target === 'programs' && link.dataset.view === 'pt-programs')) ? 'nav-item-active' : 'nav-item';
   });
@@ -207,13 +214,17 @@ const clockTrigger   = $('clock-trigger');
 
 function openClockOverlay() {
   if (!clockOverlay) return;
-  clockOverlay.classList.remove('opacity-0', 'pointer-events-none');
-  clockOverlay.classList.add('opacity-100', 'pointer-events-auto');
+  clockOverlay.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  clockOverlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  clockOverlay.style.setProperty('display', 'flex', 'important');
+  clockOverlay.style.setProperty('pointer-events', 'auto', 'important');
 }
 function closeClockOverlay() {
   if (!clockOverlay) return;
-  clockOverlay.classList.remove('opacity-100', 'pointer-events-auto');
-  clockOverlay.classList.add('opacity-0', 'pointer-events-none');
+  clockOverlay.classList.remove('opacity-100', 'pointer-events-auto', 'flex');
+  clockOverlay.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+  clockOverlay.style.setProperty('display', 'none', 'important');
+  clockOverlay.style.setProperty('pointer-events', 'none', 'important');
 }
 
 if (clockTrigger) clockTrigger.addEventListener('click', openClockOverlay);
@@ -269,15 +280,28 @@ const rfClose    = $('rf-close');
 
 function openRF() {
   if (!rfDrawer) return;
-  rfDrawer.classList.remove('translate-x-full');
-  rfBackdrop.classList.remove('opacity-0', 'pointer-events-none');
-  rfBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+  if (rfBackdrop) {
+    rfBackdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    rfBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+    rfBackdrop.style.setProperty('display', 'block', 'important');
+    rfBackdrop.style.setProperty('pointer-events', 'auto', 'important');
+  }
+  rfDrawer.classList.remove('hidden', 'translate-x-full');
+  rfDrawer.style.setProperty('display', 'flex', 'important');
+  rfDrawer.style.setProperty('pointer-events', 'auto', 'important');
 }
 function closeRF() {
   if (!rfDrawer) return;
-  rfDrawer.classList.add('translate-x-full');
-  rfBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
-  rfBackdrop.classList.add('opacity-0', 'pointer-events-none');
+  rfDrawer.classList.add('hidden', 'translate-x-full');
+  rfDrawer.style.setProperty('display', 'none', 'important');
+  rfDrawer.style.setProperty('pointer-events', 'none', 'important');
+
+  if (rfBackdrop) {
+    rfBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
+    rfBackdrop.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    rfBackdrop.style.setProperty('display', 'none', 'important');
+    rfBackdrop.style.setProperty('pointer-events', 'none', 'important');
+  }
 }
 
 ['btn-red-flags', 'btn-red-flags-2'].forEach(id => {
@@ -472,10 +496,16 @@ function openNewPatientModal(prefill = '') {
   hideNpError();
   setNpLoading(false);
 
-  npBackdrop.classList.remove('opacity-0', 'pointer-events-none');
-  npBackdrop.classList.add('opacity-100', 'pointer-events-auto');
-  npModal.classList.remove('opacity-0', 'pointer-events-none');
-  npModal.classList.add('opacity-100', 'pointer-events-auto');
+  if (npBackdrop) {
+    npBackdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    npBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+    npBackdrop.style.setProperty('display', 'block', 'important');
+    npBackdrop.style.setProperty('pointer-events', 'auto', 'important');
+  }
+  npModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  npModal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  npModal.style.setProperty('display', 'flex', 'important');
+  npModal.style.setProperty('pointer-events', 'auto', 'important');
   npPanel.classList.remove('translate-y-4');
 
   // Auto-focus first name
@@ -484,10 +514,16 @@ function openNewPatientModal(prefill = '') {
 
 function closeNewPatientModal() {
   if (!npModal) return;
-  npBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
-  npBackdrop.classList.add('opacity-0', 'pointer-events-none');
-  npModal.classList.remove('opacity-100', 'pointer-events-auto');
-  npModal.classList.add('opacity-0', 'pointer-events-none');
+  if (npBackdrop) {
+    npBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
+    npBackdrop.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    npBackdrop.style.setProperty('display', 'none', 'important');
+    npBackdrop.style.setProperty('pointer-events', 'none', 'important');
+  }
+  npModal.classList.remove('opacity-100', 'pointer-events-auto', 'flex');
+  npModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+  npModal.style.setProperty('display', 'none', 'important');
+  npModal.style.setProperty('pointer-events', 'none', 'important');
   npPanel.classList.add('translate-y-4');
 }
 
@@ -1194,8 +1230,11 @@ async function openPatientProfile(id, preloaded = null) {
   activePortfolioPatientId = Number(id);
 
   // Show overlay
-  patientProfile.classList.remove('opacity-0', 'pointer-events-none');
-  patientProfile.classList.add('opacity-100', 'pointer-events-auto');
+  patientProfile.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  patientProfile.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  patientProfile.style.setProperty('display', 'flex', 'important');
+  patientProfile.style.setProperty('pointer-events', 'auto', 'important');
+  patientProfile.setAttribute('aria-hidden', 'false');
 
   // Fetch full patient data
   const patient = preloaded && preloaded.notes
@@ -1285,8 +1324,11 @@ async function openPatientProfile(id, preloaded = null) {
 
 function closePatientProfile() {
   if (!patientProfile) return;
-  patientProfile.classList.add('opacity-0', 'pointer-events-none');
-  patientProfile.classList.remove('opacity-100', 'pointer-events-auto');
+  patientProfile.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+  patientProfile.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+  patientProfile.style.setProperty('display', 'none', 'important');
+  patientProfile.style.setProperty('pointer-events', 'none', 'important');
+  patientProfile.setAttribute('aria-hidden', 'true');
   activePortfolioPatientId = null;
 }
 
@@ -2957,6 +2999,13 @@ function initExerciseLibraryHub() {
   // Protocol template modal wiring
   $('btn-close-proto-modal')?.addEventListener('click', closeNewProtocolModal);
   $('btn-cancel-proto-modal')?.addEventListener('click', closeNewProtocolModal);
+  $('btn-submit-proto-modal')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleProtocolTemplateSubmit(e);
+  });
+  $('modal-edit-protocol-template')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-edit-protocol-template') closeNewProtocolModal();
+  });
   $('form-edit-protocol-template')?.addEventListener('submit', handleProtocolTemplateSubmit);
 
   // Exercise modal wiring
@@ -3096,8 +3145,13 @@ function openNewProtocolModal() {
   $('edit-proto-name').value = '';
   $('edit-proto-cat').value = 'Knee & Quad';
   $('edit-proto-duration').value = '4';
+
   modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-  modal.classList.add('flex', 'pointer-events-auto');
+  modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  modal.style.setProperty('display', 'flex', 'important');
+  modal.style.setProperty('pointer-events', 'auto', 'important');
+  modal.setAttribute('aria-hidden', 'false');
+
   document.body.classList.add('modal-open');
   setTimeout(() => $('edit-proto-name')?.focus(), 50);
 }
@@ -3106,7 +3160,10 @@ function closeNewProtocolModal() {
   const modal = $('modal-edit-protocol-template');
   if (modal) {
     modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-    modal.classList.remove('flex', 'pointer-events-auto');
+    modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
+    modal.setAttribute('aria-hidden', 'true');
   }
   document.body.classList.remove('modal-open');
 }
@@ -3251,7 +3308,11 @@ function openEditExerciseModal(exercise = null) {
   }
 
   modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-  modal.classList.add('flex', 'pointer-events-auto');
+  modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  modal.style.setProperty('display', 'flex', 'important');
+  modal.style.setProperty('pointer-events', 'auto', 'important');
+  modal.setAttribute('aria-hidden', 'false');
+
   document.body.classList.add('modal-open');
   setTimeout(() => $('edit-ex-name')?.focus(), 50);
 }
@@ -3260,7 +3321,10 @@ function closeEditExerciseModal() {
   const modal = $('modal-edit-exercise');
   if (modal) {
     modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-    modal.classList.remove('flex', 'pointer-events-auto');
+    modal.classList.remove('flex', 'opacity-100', 'pointer-events-auto');
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
+    modal.setAttribute('aria-hidden', 'true');
   }
   document.body.classList.remove('modal-open');
 }
@@ -3434,4 +3498,10 @@ function loadSettingsGeneralPreferences() {
 // Initialise Exercise Library Hub and Settings View, then enforce initial strict view isolation
 initExerciseLibraryHub();
 initSettingsView();
+closePatientProfile();
+closeClockOverlay();
+closeRF();
+closeNewPatientModal();
+closeNewProtocolModal();
+closeEditExerciseModal();
 switchView('dashboard');
