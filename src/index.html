@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: file:;" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PhysioClinic</title>
   <script src="./themeInit.js"></script>
@@ -21,16 +21,15 @@
                 bg-white dark:bg-slate-900
                 border-r border-slate-200 dark:border-slate-800/80">
 
-    <!-- Brand mark -->
-    <div class="h-[60px] flex-none flex items-center gap-3 px-4
+    <!-- Brand mark / Global Navigation Header Branding -->
+    <div id="global-clinic-branding" class="h-[60px] flex-none flex items-center gap-3 px-4
                 border-b border-slate-100 dark:border-slate-800/70">
-      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md
-                   bg-indigo-600 dark:bg-indigo-500 text-white text-[11px] font-bold tracking-tight">
-        PC
-      </span>
-      <div class="leading-tight">
-        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">PhysioClinic</p>
-        <p class="text-[10px] text-slate-400 dark:text-slate-600 mt-px">Practice Suite</p>
+      <div id="global-branding-logo-container" class="shrink-0 flex items-center justify-center">
+        <img id="global-clinic-logo" src="../assets/logo.png" alt="SoloPhysio Logo" class="h-8 w-8 max-h-8 max-w-8 object-contain rounded-md" />
+      </div>
+      <div class="leading-tight min-w-0 flex-1">
+        <p id="global-clinic-name" class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">SoloPhysio</p>
+        <p id="global-clinic-subtitle" class="text-[10px] text-slate-400 dark:text-slate-500 mt-px truncate">v1.0.0</p>
       </div>
     </div>
 
@@ -227,12 +226,23 @@
     <!-- ── DASHBOARD VIEW ────────────────────────────────────────────────── -->
     <div id="view-dashboard" class="view-container relative flex flex-col h-full overflow-hidden animate-fade-in">
 
-      <!-- Top header bar: Clock | Search | Red Flags | New Appointment -->
+      <!-- Top header bar: Clinic Branding | Clock | Search | Red Flags | New Appointment -->
       <header class="flex-none px-7 py-4
                      bg-white/95 dark:bg-slate-900/95
                      backdrop-blur-sm
                      border-b border-slate-200 dark:border-slate-800/80">
         <div class="flex items-center gap-5">
+
+          <!-- Top-left Dashboard Clinic Branding Badge -->
+          <div id="dashboard-clinic-branding" class="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-800 shrink-0">
+            <div id="dashboard-branding-logo-container" class="shrink-0 flex items-center justify-center">
+              <img id="dashboard-clinic-logo" src="../assets/logo.png" alt="SoloPhysio Logo" class="h-9 w-9 max-h-10 max-w-10 object-contain rounded-md" />
+            </div>
+            <div class="leading-tight max-w-[170px] sm:max-w-[210px]">
+              <h2 id="dashboard-clinic-name" class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">SoloPhysio</h2>
+              <p id="dashboard-clinic-subtitle" class="text-[10px] text-slate-400 dark:text-slate-500 truncate">v1.0.0</p>
+            </div>
+          </div>
 
           <!-- Clickable Clock -->
           <button id="clock-trigger"
@@ -1305,39 +1315,79 @@
     </div>
 
     <!-- ── PRACTICE SETTINGS & CLINIC PREFERENCES (Phase 8 Upgraded) ──────────── -->
-    <div id="view-settings" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <header class="flex-none px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-        <div>
-          <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings &amp; Preferences</h1>
-          <p class="text-xs text-slate-400 dark:text-slate-500">Configure clinic hours, schedule bounds, practitioner credentials, and billing defaults.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <!-- Clean sub-navigation pills to jump to hubs -->
-          <button id="set-jump-exlib" data-action="navigate" data-nav-view="exercise-library" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
-            <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-            </svg>
-            <span class="pointer-events-none">Exercise Library Hub →</span>
-          </button>
-          <button id="set-jump-smartphrases" data-action="navigate" data-nav-view="smart-phrases" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
-            <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-            </svg>
-            <span class="pointer-events-none">Smart Phrases Hub →</span>
-          </button>
-        </div>
-      </header>
+    <div id="view-settings" class="view-container relative hidden">
+      <div class="settings-sections-wrapper">
+        <header class="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">Practice Settings &amp; Preferences</h1>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Configure clinic hours, schedule bounds, practitioner credentials, and billing defaults.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Clean sub-navigation pills to jump to hubs -->
+            <button id="set-jump-exlib" data-action="navigate" data-nav-view="exercise-library" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
+              <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+              </svg>
+              <span class="pointer-events-none">Exercise Library Hub →</span>
+            </button>
+            <button id="set-jump-smartphrases" data-action="navigate" data-nav-view="smart-phrases" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
+              <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+              </svg>
+              <span class="pointer-events-none">Smart Phrases Hub →</span>
+            </button>
+          </div>
+        </header>
 
-      <!-- Settings Content -->
-      <div class="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl">
-        
         <!-- 1. Clinic Demographics & Letterhead -->
-        <div class="card p-5 space-y-4">
+        <div class="settings-card space-y-4">
           <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Appears on official tax receipts, discharge summaries, and exercise handouts.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+
+          <!-- Custom Clinic Logo Management -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/70 flex flex-col sm:flex-row items-center gap-5">
+            <!-- Preview Container: circular or rounded-rectangular preview container -->
+            <div class="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden shadow-inner group">
+              <!-- Live Preview Image -->
+              <img id="settings-clinic-logo-preview" src="" alt="Clinic Logo Preview" class="h-full w-full object-contain p-1.5 hidden" />
+              <!-- Silhouette Placeholder if none is set -->
+              <div id="settings-clinic-logo-placeholder" class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                <svg class="h-8 w-8 stroke-[1.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span class="text-[9px] font-semibold mt-1 tracking-tight uppercase">No Logo</span>
+              </div>
+            </div>
+
+            <!-- Upload Controls & Description -->
+            <div class="flex-1 space-y-2 text-center sm:text-left">
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100">Custom Clinic Letterhead Logo</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Upload your clinic's transparent PNG mark. Scaled automatically across official tax invoices, exercise handouts, and the dashboard header.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                <button id="btn-upload-clinic-logo" type="button" class="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer select-none">
+                  <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <span class="pointer-events-none">Upload Clinic Logo (PNG)</span>
+                </button>
+                <button id="btn-remove-clinic-logo" type="button" class="btn-ghost text-xs py-1.5 px-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-200 dark:hover:border-red-500/20 hidden cursor-pointer select-none">
+                  <span class="pointer-events-none">Remove Logo</span>
+                </button>
+                <span id="logo-upload-feedback" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hidden flex items-center gap-1">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <span>Logo saved</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Name</label>
               <input id="set-clinic-name" type="text"
@@ -1362,7 +1412,7 @@
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
                      placeholder="Tax / Registration ID" />
             </div>
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2" style="grid-column: 1 / -1;">
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Address &amp; Suite</label>
               <input id="set-clinic-address" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -1372,12 +1422,12 @@
         </div>
 
         <!-- 2. Practitioner Profile & Numbers -->
-        <div class="card p-5 space-y-4">
+        <div class="settings-card space-y-4">
           <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practitioner Profile &amp; Registration</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and clinical compliance.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Practitioner Full Name &amp; Suffix</label>
               <input id="set-practitioner-name" type="text"
@@ -1406,12 +1456,12 @@
         </div>
 
         <!-- 3. Practice Working Hours & Calendar Schedule -->
-        <div class="card p-5 space-y-4">
+        <div class="settings-card space-y-4">
           <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Hours &amp; Calendar Schedule</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Updating these bounds dynamically recalculates diary working hours and timeline grid lines.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Work Start Time</label>
               <input id="set-work-start" type="time"
@@ -1479,7 +1529,7 @@
                 Enable Recurring Non-Clinical Lunch Break Band
               </label>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pl-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pl-5" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
               <div>
                 <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Lunch Break Start Time</label>
                 <input id="set-lunch-start" type="time"
@@ -1500,12 +1550,12 @@
         </div>
 
         <!-- 4. Financial & Invoicing Defaults -->
-        <div class="card p-5 space-y-4">
+        <div class="settings-card space-y-4">
           <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Financial &amp; Billing Defaults</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Standard fee presets auto-populate when creating new patient invoices.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Consult Fee</label>
               <input id="set-fee-initial" type="number" min="0" step="5"
@@ -1534,7 +1584,7 @@
         </div>
 
         <!-- 5. Clinical Governance & EULA Status -->
-        <div class="card p-5 space-y-3">
+        <div class="settings-card space-y-3">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Clinical Governance &amp; Medico-Legal EULA</h2>
@@ -1558,7 +1608,7 @@
         </div>
 
         <!-- 6. Universal Offline Data Management & Portability Engine -->
-        <div class="card p-5 space-y-5">
+        <div class="settings-card space-y-5">
           <div class="pb-2 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Universal Offline Data Backups &amp; Portability</h2>
             <p class="text-xs text-slate-400 dark:text-slate-500">Export formatted offline JSON archives of your clinical resources or restore previous backups with safe, non-destructive merging.</p>
@@ -1662,7 +1712,7 @@
         </div>
 
         <!-- 7. Medico-Legal Audit Compliance Notice -->
-        <div class="card p-5 space-y-3 border-l-4 border-l-indigo-500">
+        <div class="settings-card space-y-3 border-l-4 border-l-indigo-500">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
               Active Compliance
@@ -1915,9 +1965,7 @@
       </div><!-- /research-detail-view -->
     </div><!-- /view-paper-detail -->
 
-    </div>
-
-</div><!-- /main content container -->
+  </div><!-- /main content container -->
 
 
   <!-- ═══════════════════════════════════════════════════════════════════════

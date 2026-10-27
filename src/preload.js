@@ -169,6 +169,18 @@ contextBridge.exposeInMainWorld('api', {
     save:   (data)     => ipcRenderer.invoke('settings:save', data),
   },
 
+  // ── Domain: Branding & Clinic Logo Pipeline ──────────────────────────────
+  branding: {
+    get:         ()         => ipcRenderer.invoke('branding:get'),
+    uploadLogo:  ()         => ipcRenderer.invoke('branding:uploadClinicLogo'),
+    removeLogo:  ()         => ipcRenderer.invoke('branding:removeClinicLogo'),
+    onUpdated:   (callback) => {
+      const handler = (_event, data) => callback(data);
+      ipcRenderer.on('branding:updated', handler);
+      return () => ipcRenderer.removeListener('branding:updated', handler);
+    },
+  },
+
   // ── Domain: Legal Disclaimer & Medico-Legal EULA ────────────────────────
   eula: {
     getStatus: ()       => ipcRenderer.invoke('eula:getStatus'),

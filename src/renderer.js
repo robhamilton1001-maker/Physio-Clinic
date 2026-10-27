@@ -98,7 +98,7 @@ function switchView(target) {
   // Strictly hide ALL view containers
   document.querySelectorAll('.view-container').forEach(view => {
     view.classList.add('hidden', 'view-pane-hidden');
-    view.classList.remove('flex', 'view-pane-active');
+    view.classList.remove('flex', 'block', 'view-pane-active', 'active');
     view.style.setProperty('display', 'none', 'important');
     view.style.setProperty('pointer-events', 'none', 'important');
     view.style.setProperty('visibility', 'hidden', 'important');
@@ -109,8 +109,13 @@ function switchView(target) {
   const activeView = document.getElementById(`view-${target}`);
   if (activeView) {
     activeView.classList.remove('hidden', 'view-pane-hidden');
-    activeView.classList.add('flex', 'view-pane-active');
-    activeView.style.setProperty('display', 'flex', 'important');
+    if (target === 'settings') {
+      activeView.classList.add('block', 'view-pane-active', 'active');
+      activeView.style.setProperty('display', 'block', 'important');
+    } else {
+      activeView.classList.add('flex', 'view-pane-active', 'active');
+      activeView.style.setProperty('display', 'flex', 'important');
+    }
     activeView.style.setProperty('pointer-events', 'auto', 'important');
     activeView.style.setProperty('visibility', 'visible', 'important');
     activeView.setAttribute('aria-hidden', 'false');
@@ -4500,6 +4505,11 @@ async function exportInvoiceReceipt(invoiceId) {
     const inv = await window.api.invoices.getById(invoiceId);
     if (!inv) throw new Error('Invoice not found.');
     const settings = await window.api.settings.getAll() || {};
+    let branding = null;
+    try {
+      if (window.api?.branding) branding = await window.api.branding.get();
+    } catch (_) {}
+    const logoBase64 = branding?.logoBase64 || null;
 
     const clinicName = escapeHtml(settings.clinic_name || 'Antigravity Sports & Orthopaedic Physiotherapy');
     const clinicPhone = escapeHtml(settings.clinic_phone || '+61 (02) 9876 5432');
@@ -4566,12 +4576,15 @@ async function exportInvoiceReceipt(invoiceId) {
       </head>
       <body>
         <div class="header">
-          <div>
-            <h1 class="clinic-name">${clinicName}</h1>
-            <div class="clinic-meta">
-              <div>${clinicAddress}</div>
-              <div>Phone: ${clinicPhone} • Email: ${clinicEmail}</div>
-              <div>${clinicAbn}</div>
+          <div style="display: flex; align-items: flex-start; gap: 16px;">
+            ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 56px; max-width: 140px; object-fit: contain; margin-top: 2px;" alt="Clinic Logo" />` : ''}
+            <div>
+              <h1 class="clinic-name">${clinicName}</h1>
+              <div class="clinic-meta">
+                <div>${clinicAddress}</div>
+                <div>Phone: ${clinicPhone} • Email: ${clinicEmail}</div>
+                <div>${clinicAbn}</div>
+              </div>
             </div>
           </div>
           <div class="doc-type">
@@ -4703,6 +4716,11 @@ async function exportPatientDischargeSummary(patientId) {
     const data = await window.api.patients.getDischargeData(patientId);
     if (!data || !data.patient) throw new Error('Patient record not found.');
     const settings = await window.api.settings.getAll() || {};
+    let branding = null;
+    try {
+      if (window.api?.branding) branding = await window.api.branding.get();
+    } catch (_) {}
+    const logoBase64 = branding?.logoBase64 || null;
 
     const p = data.patient;
     const notesList = (p.notes || []).slice().reverse(); // Chronological (oldest first)
@@ -4800,11 +4818,14 @@ async function exportPatientDischargeSummary(patientId) {
       </head>
       <body>
         <div class="header">
-          <div>
-            <h1 class="clinic-name">${clinicName}</h1>
-            <div class="clinic-meta">
-              <div>${clinicAddress}</div>
-              <div>Phone: ${clinicPhone} • Email: ${clinicEmail} • ${clinicAbn}</div>
+          <div style="display: flex; align-items: flex-start; gap: 14px;">
+            ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 52px; max-width: 130px; object-fit: contain; margin-top: 2px;" alt="Clinic Logo" />` : ''}
+            <div>
+              <h1 class="clinic-name">${clinicName}</h1>
+              <div class="clinic-meta">
+                <div>${clinicAddress}</div>
+                <div>Phone: ${clinicPhone} • Email: ${clinicEmail} • ${clinicAbn}</div>
+              </div>
             </div>
           </div>
           <div class="doc-type">
@@ -4960,6 +4981,97 @@ window.emailInvoiceReceipt = emailInvoiceReceipt;
 window.exportPatientDischargeSummary = exportPatientDischargeSummary;
 window.emailPatientDischargeSummary = emailPatientDischargeSummary;
 
+// ── Domain: Branding & Clinic Logo Pipeline ──────────────────────────────
+let currentBranding = {
+  clinicName: '',
+  practitionerName: '',
+  logoPath: null,
+  logoBase64: null
+};
+
+function updateBrandingUI(branding) {
+  if (!branding) return;
+  if (branding.clinicName !== undefined) currentBranding.clinicName = branding.clinicName;
+  if (branding.practitionerName !== undefined) currentBranding.practitionerName = branding.practitionerName;
+  if (branding.logoPath !== undefined) currentBranding.logoPath = branding.logoPath;
+  if (branding.logoBase64 !== undefined) currentBranding.logoBase64 = branding.logoBase64;
+
+  const displayName = (currentBranding.clinicName || '').trim() || 'SoloPhysio';
+  const displaySubtitle = (currentBranding.practitionerName || '').trim() || 'v1.0.0';
+
+  // Default to the master software logo file assets/logo.png
+  const defaultMasterLogoSrc = '../assets/logo.png';
+  const hasCustomLogo = Boolean(currentBranding.logoBase64 || currentBranding.logoPath);
+  const activeLogoSrc = hasCustomLogo
+    ? (currentBranding.logoBase64 || `file://${currentBranding.logoPath}?t=${Date.now()}`)
+    : defaultMasterLogoSrc;
+
+  // 1. Sidebar Brand (Top-Left)
+  const elGlobalName = $('global-clinic-name');
+  if (elGlobalName) elGlobalName.textContent = displayName;
+
+  const elGlobalSubtitle = $('global-clinic-subtitle');
+  if (elGlobalSubtitle) elGlobalSubtitle.textContent = displaySubtitle;
+
+  const elGlobalLogo = $('global-clinic-logo');
+  if (elGlobalLogo) {
+    elGlobalLogo.src = activeLogoSrc;
+    elGlobalLogo.classList.remove('hidden');
+  }
+
+  // 2. Top-Left Dashboard Branding
+  const elDashName = $('dashboard-clinic-name');
+  if (elDashName) elDashName.textContent = displayName;
+
+  const elDashSubtitle = $('dashboard-clinic-subtitle');
+  if (elDashSubtitle) elDashSubtitle.textContent = displaySubtitle;
+
+  const elDashLogo = $('dashboard-clinic-logo');
+  if (elDashLogo) {
+    elDashLogo.src = activeLogoSrc;
+    elDashLogo.classList.remove('hidden');
+  }
+
+  // 3. Settings Screen Preview & Remove Button
+  const elPreview = $('settings-clinic-logo-preview');
+  const elPlaceholder = $('settings-clinic-logo-placeholder');
+  const btnRemove = $('btn-remove-clinic-logo');
+  if (hasCustomLogo) {
+    if (elPreview) {
+      elPreview.src = activeLogoSrc;
+      elPreview.classList.remove('hidden');
+    }
+    if (elPlaceholder) elPlaceholder.classList.add('hidden');
+    if (btnRemove) btnRemove.classList.remove('hidden');
+  } else {
+    if (elPreview) {
+      elPreview.src = '';
+      elPreview.classList.add('hidden');
+    }
+    if (elPlaceholder) elPlaceholder.classList.remove('hidden');
+    if (btnRemove) btnRemove.classList.add('hidden');
+  }
+}
+
+async function initBrandingPipeline() {
+  try {
+    if (!window.api?.branding) return;
+
+    // Listen for live branding updates across the app (branding:updated IPC signal)
+    window.api.branding.onUpdated((data) => {
+      updateBrandingUI(data);
+    });
+
+    // Query clinic_settings table on application start: SELECT clinic_name, logo_path FROM clinic_settings WHERE id = 1
+    const initialBranding = await window.api.branding.get();
+    if (initialBranding) {
+      updateBrandingUI(initialBranding);
+    }
+  } catch (err) {
+    console.warn('[Branding] Failed to init branding pipeline:', err);
+  }
+}
+
 // ── Settings View Controller (Phase 8 SQLite Backed) ───────────────────────
 
 async function loadSettingsGeneralPreferences() {
@@ -4967,6 +5079,16 @@ async function loadSettingsGeneralPreferences() {
     if (!window.api?.settings) return;
     const s = await window.api.settings.getAll() || {};
     clinicSettingsCache = s;
+
+    // Sync branding preview and header from settings / SQLite
+    if (window.api?.branding) {
+      const b = await window.api.branding.get();
+      if (b) {
+        if (!b.practitionerName && s.practitioner_name) b.practitionerName = s.practitioner_name;
+        if (!b.clinicName && s.clinic_name) b.clinicName = s.clinic_name;
+        updateBrandingUI(b);
+      }
+    }
 
     // Demographics
     if ($('set-clinic-name')) $('set-clinic-name').value = s.clinic_name || '';
@@ -5022,6 +5144,55 @@ async function loadSettingsGeneralPreferences() {
 }
 
 function initSettingsView() {
+  // Custom Clinic Logo Management (Settings > Clinic Profile)
+  const btnUploadLogo = $('btn-upload-clinic-logo');
+  if (btnUploadLogo) {
+    btnUploadLogo.onclick = async () => {
+      try {
+        const res = await window.api.branding.uploadLogo();
+        if (res && res.success) {
+          updateBrandingUI(res);
+          const feedback = $('logo-upload-feedback');
+          if (feedback) {
+            feedback.classList.remove('hidden');
+            setTimeout(() => feedback.classList.add('hidden'), 3500);
+          }
+        }
+      } catch (err) {
+        alert('Failed to upload clinic logo: ' + err.message);
+      }
+    };
+  }
+
+  const btnRemoveLogo = $('btn-remove-clinic-logo');
+  if (btnRemoveLogo) {
+    btnRemoveLogo.onclick = async () => {
+      try {
+        const res = await window.api.branding.removeLogo();
+        if (res && res.success) {
+          updateBrandingUI({ logoPath: null, logoBase64: null });
+        }
+      } catch (err) {
+        alert('Failed to remove clinic logo: ' + err.message);
+      }
+    };
+  }
+
+  // Real-time dynamic updates on Clinic Name and Practitioner Name input
+  const inputClinicName = $('set-clinic-name');
+  if (inputClinicName) {
+    inputClinicName.addEventListener('input', () => {
+      updateBrandingUI({ clinicName: inputClinicName.value });
+    });
+  }
+
+  const inputPracName = $('set-practitioner-name');
+  if (inputPracName) {
+    inputPracName.addEventListener('input', () => {
+      updateBrandingUI({ practitionerName: inputPracName.value });
+    });
+  }
+
   // Jump buttons to Hubs
   const btnExLib = $('set-jump-exlib');
   if (btnExLib) {
@@ -5078,6 +5249,12 @@ function initSettingsView() {
       try {
         const saved = await window.api.settings.save(prefs);
         clinicSettingsCache = saved || prefs;
+
+        // Dynamic update of top-left branding across the application
+        updateBrandingUI({
+          clinicName: prefs.clinic_name,
+          practitionerName: prefs.practitioner_name
+        });
 
         // Synchronize calendar schedule dynamically
         if (window.Diary?.updateScheduleConfig) {
@@ -5445,6 +5622,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Initialise Invoicing, Exercise Library Hub and Settings View, then enforce initial strict view isolation
+initBrandingPipeline();
 initInvoicingLedger();
 initExerciseLibraryHub();
 initSettingsView();

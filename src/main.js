@@ -34,6 +34,7 @@ function createWindow() {
     show: false,
     frame: true,
     backgroundColor: '#0f172a',
+    icon: path.join(__dirname, '../assets/logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -446,7 +447,152 @@ ipcMain.handle('settings:set', (_e, key, value) => {
 });
 
 ipcMain.handle('settings:save', (_e, data) => {
-  return db.settings.setMultiple(data);
+  const saved = db.settings.setMultiple(data);
+  if (data && (data.clinic_name !== undefined || data.practitioner_name !== undefined)) {
+    let logoPath = null;
+    let logoBase64 = null;
+    try {
+      const row = db.get('SELECT logo_path FROM clinic_settings WHERE id = 1');
+      if (row && row.logo_path && fs.existsSync(row.logo_path)) {
+        logoPath = row.logo_path;
+        logoBase64 = `data:image/png;base64,${fs.readFileSync(logoPath).toString('base64')}`;
+      }
+    } catch (_) {}
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('branding:updated', {
+        logoPath,
+        logoBase64,
+        clinicName: data.clinic_name !== undefined ? data.clinic_name : (db.settings.get('clinic_name') || ''),
+        practitionerName: data.practitioner_name !== undefined ? data.practitioner_name : (db.settings.get('practitioner_name') || '')
+      });
+    }
+  }
+  return saved;
+});
+
+// ── Domain: Branding & Clinic Logo Pipeline ──────────────────────────────
+ipcMain.handle('branding:get', async () => {
+  let clinicName = '';
+  let logoPath = null;
+  try {
+    const row = db.get('SELECT clinic_name, logo_path FROM clinic_settings WHERE id = 1');
+    if (row) {
+      clinicName = row.clinic_name || '';
+      logoPath = row.logo_path || null;
+    }
+  } catch (_) {
+    clinicName = db.settings.get('clinic_name') || '';
+    logoPath = db.settings.get('logo_path') || null;
+  }
+
+  const practitionerName = db.settings.get('practitioner_name') || '';
+
+  let logoBase64 = null;
+  let fileExists = false;
+  if (logoPath && fs.existsSync(logoPath)) {
+    fileExists = true;
+    try {
+      const buf = fs.readFileSync(logoPath);
+      logoBase64 = `data:image/png;base64,${buf.toString('base64')}`;
+    } catch (_) {}
+  } else {
+    logoPath = null;
+  }
+
+  return {
+    clinicName: clinicName || db.settings.get('clinic_name') || '',
+    practitionerName,
+    logoPath,
+    fileExists,
+    logoBase64
+  };
+});
+
+ipcMain.handle('branding:uploadClinicLogo', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Clinic Logo (PNG)',
+    filters: [{ name: 'PNG Images', extensions: ['png'] }],
+    properties: ['openFile']
+  });
+
+  if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+    return { canceled: true, success: false };
+  }
+
+  const sourcePath = result.filePaths[0];
+  const brandingDir = path.join(app.getPath('userData'), 'clinic_branding');
+  if (!fs.existsSync(brandingDir)) {
+    fs.mkdirSync(brandingDir, { recursive: true });
+  }
+
+  const destPath = path.join(brandingDir, 'clinic_logo.png');
+  fs.copyFileSync(sourcePath, destPath);
+
+  // Update SQLite clinic_settings table (satisfying UPDATE clinic_settings SET logo_path = ? WHERE id = 1)
+  try {
+    db.run('UPDATE clinic_settings SET logo_path = ? WHERE id = 1', [destPath]);
+  } catch (_) {}
+  try {
+    db.settings.set('logo_path', destPath);
+  } catch (_) {}
+
+  let logoBase64 = null;
+  try {
+    const buf = fs.readFileSync(destPath);
+    logoBase64 = `data:image/png;base64,${buf.toString('base64')}`;
+  } catch (_) {}
+
+  const clinicName = db.settings.get('clinic_name') || '';
+  const practitionerName = db.settings.get('practitioner_name') || '';
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('branding:updated', {
+      logoPath: destPath,
+      logoBase64,
+      clinicName,
+      practitionerName
+    });
+  }
+
+  return {
+    success: true,
+    logoPath: destPath,
+    logoBase64,
+    clinicName,
+    practitionerName
+  };
+});
+
+ipcMain.handle('branding:removeClinicLogo', async () => {
+  const brandingDir = path.join(app.getPath('userData'), 'clinic_branding');
+  const destPath = path.join(brandingDir, 'clinic_logo.png');
+
+  try {
+    if (fs.existsSync(destPath)) {
+      fs.unlinkSync(destPath);
+    }
+  } catch (_) {}
+
+  try {
+    db.run('UPDATE clinic_settings SET logo_path = NULL WHERE id = 1');
+  } catch (_) {}
+  try {
+    db.settings.set('logo_path', '');
+  } catch (_) {}
+
+  const clinicName = db.settings.get('clinic_name') || '';
+  const practitionerName = db.settings.get('practitioner_name') || '';
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('branding:updated', {
+      logoPath: null,
+      logoBase64: null,
+      clinicName,
+      practitionerName
+    });
+  }
+
+  return { success: true };
 });
 
 // ── Phase 8: Invoicing & Billing ──────────────────────────────────────────

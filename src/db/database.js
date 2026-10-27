@@ -221,6 +221,39 @@ db.transaction(() => {
 
   try { db.exec(`INSERT OR IGNORE INTO settings (id, eula_accepted) VALUES (1, 0);`); } catch (_) {}
 
+  // -- Clinic Settings Branding & Columns migration -------------------------
+  [
+    `ALTER TABLE clinic_settings ADD COLUMN id INTEGER`,
+    `ALTER TABLE clinic_settings ADD COLUMN logo_path TEXT`,
+    `ALTER TABLE clinic_settings ADD COLUMN clinic_name TEXT`
+  ].forEach(sql => { try { db.exec(sql); } catch (_) {} });
+
+  try {
+    const existingRow = db.prepare('SELECT id FROM clinic_settings WHERE id = 1').get();
+    const cNameRow = db.prepare("SELECT value FROM clinic_settings WHERE key = 'clinic_name'").get();
+    const lPathRow = db.prepare("SELECT value FROM clinic_settings WHERE key = 'logo_path'").get();
+    const currentName = cNameRow ? cNameRow.value : '';
+    const currentLogo = lPathRow ? lPathRow.value : null;
+
+    if (!existingRow) {
+      db.prepare(`
+        INSERT OR REPLACE INTO clinic_settings (key, value, id, clinic_name, logo_path)
+        VALUES ('logo_path', coalesce(?, ''), 1, ?, ?)
+      `).run(currentLogo, currentName, currentLogo);
+    }
+  } catch (_) {}
+
+  try {
+    db.exec(`
+      CREATE TRIGGER IF NOT EXISTS trg_clinic_settings_sync_logo
+      AFTER UPDATE OF logo_path ON clinic_settings
+      WHEN NEW.id = 1
+      BEGIN
+        UPDATE clinic_settings SET value = coalesce(NEW.logo_path, '') WHERE key = 'logo_path';
+      END;
+    `);
+  } catch (_) {}
+
   // -- Phase 3 columns & nullable patient_id migration ----------------------
   [
     `ALTER TABLE appointments ADD COLUMN event_type   TEXT    DEFAULT 'clinical_fup'`,
@@ -1296,19 +1329,43 @@ const settings = {
     const rows = db.prepare('SELECT key, value FROM clinic_settings').all();
     const result = {};
     rows.forEach(r => { result[r.key] = r.value; });
+    try {
+      const row1 = db.prepare('SELECT clinic_name, logo_path FROM clinic_settings WHERE id = 1').get();
+      if (row1) {
+        if (row1.clinic_name !== undefined && !result.clinic_name) result.clinic_name = row1.clinic_name;
+        if (row1.logo_path !== undefined) result.logo_path = row1.logo_path;
+      }
+    } catch (_) {}
     return result;
   },
 
   get(key) {
+    if (key === 'logo_path') {
+      try {
+        const row1 = db.prepare('SELECT logo_path FROM clinic_settings WHERE id = 1').get();
+        if (row1 && row1.logo_path !== undefined) return row1.logo_path;
+      } catch (_) {}
+    }
     const row = db.prepare('SELECT value FROM clinic_settings WHERE key = ?').get(key);
     return row ? row.value : null;
   },
 
   set(key, value) {
-    return db.prepare(`
+    const res = db.prepare(`
       INSERT INTO clinic_settings (key, value) VALUES (?, ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run(key, String(value));
+    `).run(key, String(value || ''));
+
+    if (key === 'logo_path') {
+      try {
+        db.prepare('UPDATE clinic_settings SET logo_path = ? WHERE id = 1').run(value || null);
+      } catch (_) {}
+    } else if (key === 'clinic_name') {
+      try {
+        db.prepare('UPDATE clinic_settings SET clinic_name = ? WHERE id = 1').run(value || '');
+      } catch (_) {}
+    }
+    return res;
   },
 
   setMultiple(obj) {
@@ -1320,6 +1377,11 @@ const settings = {
       for (const [k, v] of Object.entries(data)) {
         if (v !== undefined && v !== null) {
           stmt.run(k, String(v));
+          if (k === 'clinic_name') {
+            try { db.prepare('UPDATE clinic_settings SET clinic_name = ? WHERE id = 1').run(String(v)); } catch (_) {}
+          } else if (k === 'logo_path') {
+            try { db.prepare('UPDATE clinic_settings SET logo_path = ? WHERE id = 1').run(v || null); } catch (_) {}
+          }
         }
       }
     });

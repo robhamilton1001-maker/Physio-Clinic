@@ -675,6 +675,54 @@ button * {
   position: relative !important;
 }
 
+/* ── Settings View Architecture ────────────────────────────────────────── */
+#view-settings {
+  display: none; /* Managed by router */
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 2rem;
+  background-color: var(--bg-main, #f8fafc);
+}
+
+#view-settings.active,
+#view-settings.view-pane-active {
+  display: block !important;
+}
+
+.dark #view-settings,
+[data-theme="dark"] #view-settings {
+  background-color: #020617;
+}
+
+/* Wrap settings sections in clean vertical stack or structured 2-column grid */
+.settings-sections-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+/* Individual setting cards should be full-width blocks with internal padding */
+.settings-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .settings-card,
+[data-theme="dark"] .settings-card {
+  background: #0f172a;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
 /* Modals when active must have pointer-events auto on card and children */
 .modal-open,
 [role="dialog"]:not(.hidden),

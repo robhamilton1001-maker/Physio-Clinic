@@ -176,9 +176,10 @@ window.RehabBuilder = (() => {
   }
 
   // ── Helper: 100% Offline Patient Take-Home PDF Document Generator ───────────
-  function generatePatientPdfHtml(prog, patientInfo = null) {
-    const clinicName = 'PhysioClinic Practice Suite';
-    const practitioner = 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC';
+  function generatePatientPdfHtml(prog, patientInfo = null, branding = null, settings = null) {
+    const clinicName = (branding?.clinicName || settings?.clinic_name || '').trim() || 'PhysioClinic Practice Suite';
+    const practitioner = settings?.practitioner_name ? `${settings.practitioner_name}${settings.practitioner_title ? ', ' + settings.practitioner_title : ''}` : 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC';
+    const logoBase64 = branding?.logoBase64 || null;
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const patName = patientInfo ? `${patientInfo.first_name} ${patientInfo.last_name}` : 'Home Patient';
     const patDob = patientInfo && patientInfo.dob ? new Date(patientInfo.dob).toLocaleDateString('en-GB') : '—';
@@ -308,13 +309,16 @@ window.RehabBuilder = (() => {
 <body>
   <!-- Clinical Letterhead -->
   <div style="border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <h1 style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #0f172a; text-transform: uppercase;">
-        ${escapeHtml(clinicName)}
-      </h1>
-      <p style="font-size: 11px; color: #475569; margin: 2px 0 0 0; font-weight: 500;">
-        ${escapeHtml(practitioner)}
-      </p>
+    <div style="display: flex; align-items: flex-start; gap: 14px;">
+      ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 52px; max-width: 140px; object-fit: contain; margin-top: 1px;" alt="Clinic Logo" />` : ''}
+      <div>
+        <h1 style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #0f172a; text-transform: uppercase;">
+          ${escapeHtml(clinicName)}
+        </h1>
+        <p style="font-size: 11px; color: #475569; margin: 2px 0 0 0; font-weight: 500;">
+          ${escapeHtml(practitioner)}
+        </p>
+      </div>
     </div>
     <div style="text-align: right; font-size: 10px; color: #475569; line-height: 1.4;">
       <div><strong>Issue Date:</strong> ${today}</div>
@@ -1090,7 +1094,14 @@ window.RehabBuilder = (() => {
       patientInfo = patients.find(p => Number(p.id) === Number(program.patient_id));
     }
 
-    const htmlContent = generatePatientPdfHtml(program, patientInfo);
+    let branding = null;
+    let settings = null;
+    try {
+      if (window.api?.branding) branding = await window.api.branding.get();
+      if (window.api?.settings) settings = await window.api.settings.getAll();
+    } catch (_) {}
+
+    const htmlContent = generatePatientPdfHtml(program, patientInfo, branding, settings);
     const sanitizedTitle = (program.title || 'Rehab_Program').replace(/[^a-zA-Z0-9_-]/g, '_');
     const defaultFilename = `${sanitizedTitle}_TakeHome_Prescription.pdf`;
 
