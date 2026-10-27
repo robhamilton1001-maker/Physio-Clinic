@@ -85,7 +85,7 @@ initTheme();
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'exercise-library', 'invoicing', 'settings'];
+const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs', 'exercise-library', 'research-library', 'paper-detail', 'invoicing', 'settings'];
 
 function switchView(target) {
   if (target === 'pt-programs') target = 'programs';
@@ -117,7 +117,10 @@ function switchView(target) {
   }
 
   document.querySelectorAll('[data-view]').forEach(link => {
-    link.className = (link.dataset.view === target || (target === 'programs' && link.dataset.view === 'pt-programs')) ? 'nav-item-active' : 'nav-item';
+    const isTarget = link.dataset.view === target ||
+                     (target === 'paper-detail' && link.dataset.view === 'research-library') ||
+                     (target === 'programs' && link.dataset.view === 'pt-programs');
+    link.className = isTarget ? 'nav-item-active' : 'nav-item';
   });
 
   // Activate diary when navigating to it
@@ -149,6 +152,11 @@ function switchView(target) {
   // Activate invoicing & billing ledger when navigating to it (Phase 8)
   if (target === 'invoicing' && typeof loadInvoicingLedger === 'function') {
     loadInvoicingLedger();
+  }
+
+  // Activate research paper library when navigating to it
+  if (target === 'research-library' && window.ResearchLibrary) {
+    requestAnimationFrame(() => window.ResearchLibrary.activate());
   }
 
   // Activate settings preferences when navigating to it (NEVER defaults to exercise library)
@@ -316,6 +324,140 @@ function closeRF() {
 if (rfClose)    rfClose.addEventListener('click', closeRF);
 if (rfBackdrop) rfBackdrop.addEventListener('click', closeRF);
 
+// ── Dashboard Red Flags Interactive Screening & Alert Box ───────────────────
+const RF_ALERT_MAP = {
+  ces: {
+    title: 'Cauda Equina Syndrome Alert',
+    guideline: 'NICE NG59 / CSP Consensus',
+    text: 'Immediate same-day emergency department transfer for urgent MRI spine (< 4 hrs). Do not delay.',
+    class: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/25'
+  },
+  csm: {
+    title: 'Cervical Myelopathy Alert',
+    guideline: 'BMJ Best Practice / NICE',
+    text: 'Urgent spinal surgical/neurosurgical consult. Zero high-velocity cervical thrust manipulation.',
+    class: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25'
+  },
+  malig: {
+    title: 'Suspected Malignancy Alert',
+    guideline: 'NICE NG12 Suspected Cancer',
+    text: 'Urgent 2-week wait cancer pathway referral via GP for full bloods, ESR/CRP & whole-spine MRI.',
+    class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25'
+  },
+  infect: {
+    title: 'Spinal Infection Alert',
+    guideline: 'NICE NG59 / BMJ',
+    text: 'Immediate emergency department transfer for urgent blood cultures, inflammatory markers & MRI.',
+    class: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/25'
+  },
+  fracture: {
+    title: 'Spinal Fracture Alert',
+    guideline: 'WHO / NICE Guidelines',
+    text: 'Urgent imaging (X-ray / CT). Strict spinal precautions; avoid spinal flexion & manual loading.',
+    class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25'
+  },
+  cad: {
+    title: 'Vascular CAD / Stroke Alert',
+    guideline: 'IFOMPT CAD International Consensus',
+    text: 'Immediate 999 emergency call / hyper-acute stroke pathway. Do not move or manipulate neck.',
+    class: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/25'
+  }
+};
+
+function updateDashRfAlerts() {
+  const alertBox = $('dash-rf-alert-box');
+  if (!alertBox) return;
+
+  const rows = document.querySelectorAll('#dash-rf-list [data-rf-key]');
+  const activeAlerts = [];
+
+  rows.forEach(row => {
+    const key = row.dataset.rfKey;
+    const chip = row.querySelector('.dash-rf-chip');
+    const status = chip?.dataset.status;
+    if (status && status !== 'clear' && RF_ALERT_MAP[key]) {
+      activeAlerts.push({ key, status, ...RF_ALERT_MAP[key] });
+    }
+  });
+
+  if (!activeAlerts.length) {
+    alertBox.classList.add('hidden');
+    alertBox.innerHTML = '';
+  } else {
+    alertBox.classList.remove('hidden');
+    alertBox.innerHTML = activeAlerts.map(a => `
+      <div class="p-2 rounded border ${a.class} space-y-0.5">
+        <div class="flex items-center justify-between font-bold text-[10px]">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span>${a.title} (${a.status.toUpperCase()})</span>
+          </span>
+          <span class="font-mono text-[9px] opacity-75">${a.guideline}</span>
+        </div>
+        <p class="text-[10px] leading-snug">${a.text}</p>
+      </div>
+    `).join('');
+  }
+}
+
+// Wire chip clicking on dashboard
+document.querySelectorAll('#dash-rf-list .dash-rf-chip').forEach(chip => {
+  chip.addEventListener('click', e => {
+    e.stopPropagation();
+    const curr = chip.dataset.status || 'clear';
+    if (curr === 'clear') {
+      chip.dataset.status = 'flag';
+      chip.textContent = 'Flag';
+      chip.className = 'dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+    } else if (curr === 'flag') {
+      chip.dataset.status = 'escalate';
+      chip.textContent = 'Referral';
+      chip.className = 'dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30';
+    } else {
+      chip.dataset.status = 'clear';
+      chip.textContent = 'Clear';
+      chip.className = 'dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20';
+    }
+    updateDashRfAlerts();
+  });
+});
+
+$('dash-rf-btn-clear-all')?.addEventListener('click', () => {
+  document.querySelectorAll('#dash-rf-list .dash-rf-chip').forEach(chip => {
+    chip.dataset.status = 'clear';
+    chip.textContent = 'Clear';
+    chip.className = 'dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20';
+  });
+  updateDashRfAlerts();
+});
+
+$('dash-rf-btn-full-guide')?.addEventListener('click', openRF);
+
+// Copy Red Flags Documentation to Clipboard from Drawer
+$('rf-btn-copy-note')?.addEventListener('click', () => {
+  const noteText = `=== CLINICAL RED FLAGS SCREENING (NICE NG59 / CSP / BMJ / IFOMPT) ===
+- Cauda Equina Syndrome (CES): Screened Clear (No saddle anaesthesia, bladder/bowel retention/incontinence, or progressive bilateral motor weakness).
+- Cervical Myelopathy (CSM): Screened Clear (No spastic gait ataxia, hand clumsiness, +Hoffman's, or +Babinski).
+- Spinal Malignancy: Screened Clear (No unexplained weight loss, constant unremitting night pain, or progressive bony tenderness).
+- Spinal Infection: Screened Clear (No fever, rigors, night sweats, systemic illness, or IV drug history).
+- Spinal Fracture: Screened Clear (No acute focal spinous tenderness, step deformity, or high-velocity trauma).
+- Vascular (CAD / VBI): Screened Clear (Zero 5Ds: Dizziness, Diplopia, Dysarthria, Dysphagia, Drop attacks; Zero 3Ns: Nausea, Numbness, Nystagmus).
+Outcome: Red flags screened clear. Safe for conservative physiotherapy rehabilitation.`;
+
+  navigator.clipboard.writeText(noteText).then(() => {
+    const btn = $('rf-btn-copy-note');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<span>Copied to Clipboard ✓</span>`;
+      setTimeout(() => { btn.innerHTML = orig; }, 1800);
+    }
+  }).catch(err => {
+    console.error('Clipboard error:', err);
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // OMNI-SEARCH  — real-time fuzzy dropdown with keyboard navigation
 // ═══════════════════════════════════════════════════════════════════════════
@@ -464,6 +606,7 @@ document.addEventListener('keydown', e => {
     closeRF();
     closeSearchDropdown();
     closeNewPatientModal();
+    closeEditPatientModal();
   }
 });
 
@@ -493,7 +636,7 @@ function openNewPatientModal(prefill = '') {
   if (!npModal) return;
   // Reset form
   if (npForm) npForm.reset();
-  if (prefill && $('np-first-name')) {
+  if (typeof prefill === 'string' && prefill.trim() && $('np-first-name')) {
     const parts = prefill.trim().split(' ');
     $('np-first-name').value = parts[0] || '';
     $('np-last-name').value  = parts.slice(1).join(' ') || '';
@@ -585,6 +728,9 @@ if (npForm) {
       phone:             ($('np-phone')?.value       || '').trim(),
       email:             ($('np-email')?.value       || '').trim(),
       dob:               ($('np-dob')?.value         || '').trim(),
+      national_id:       ($('np-national-id')?.value || '').trim(),
+      primary_diagnosis: ($('np-diagnosis')?.value   || '').trim(),
+      address:           ($('np-address')?.value     || '').trim(),
       emergency_contact: ($('np-emergency')?.value   || '').trim(),
     };
 
@@ -979,6 +1125,65 @@ function initExcelTables(container, optionalTextarea) {
           if (sum > 37) { label = 'High Kinesiophobia (> 37)'; cls = 'risk-pill risk-high'; }
           sevTarget.textContent = label;
           sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'phq9') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="phq9"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'None / Minimal (0-4)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 5 && sum <= 9) { label = 'Mild (5-9)'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 10 && sum <= 14) { label = 'Moderate (10-14)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 15 && sum <= 19) { label = 'Mod. Severe (15-19)'; cls = 'risk-pill risk-high'; }
+          else if (sum >= 20) { label = 'Severe (20-27)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'gad7') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="gad7"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Minimal (0-4)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 5 && sum <= 9) { label = 'Mild (5-9)'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 10 && sum <= 14) { label = 'Moderate (10-14)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 15) { label = 'Severe (15-21)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'pss') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="pss"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Low Stress (0-13)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 14 && sum <= 26) { label = 'Moderate Stress (14-26)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 27) { label = 'High Stress (27-40)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'pcl5') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="pcl5"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Below Cutoff (< 31)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 31) { label = 'Provisional PTSD (≥ 31)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'iesr') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="iesr"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Subclinical (< 24)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 24 && sum <= 32) { label = 'Mild Impact (24-32)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 33) { label = 'Probable PTSD (≥ 33)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'olbi') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="olbi"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Low Burnout (≤ 35)';
+          let cls = 'risk-pill risk-low';
+          if (sum > 35) { label = 'High Burnout (> 35)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
+        } else if (type === 'sos') {
+          const sum = Array.from(table.querySelectorAll('.excel-input[data-group="sos"]')).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+          let label = 'Minimal (0-3)';
+          let cls = 'risk-pill risk-low';
+          if (sum >= 4 && sum <= 7) { label = 'Low (4-7)'; cls = 'risk-pill risk-low'; }
+          else if (sum >= 8 && sum <= 11) { label = 'Medium (8-11)'; cls = 'risk-pill risk-med'; }
+          else if (sum >= 12 && sum <= 15) { label = 'High (12-15)'; cls = 'risk-pill risk-high'; }
+          else if (sum >= 16) { label = 'Very High (16-32)'; cls = 'risk-pill risk-high'; }
+          sevTarget.textContent = label;
+          sevTarget.className = `excel-severity ${cls}`;
         }
       });
 
@@ -1292,51 +1497,37 @@ function formatInline(str) {
   return s;
 }
 
-const SOAP_TEMPLATE = `### Subjective
-- Presenting complaint & mechanism of injury: 
-- Pain level (0-10) & symptom behavior: 
-- Aggravating & easing factors: 
-- Functional impact: 
-
-### Objective
-- Observation / posture: 
-- Active Range of Motion (AROM): 
-- Palpation & neurodynamic tests: 
-- Orthopedic special tests: 
-
-### Assessment
-- Primary clinical impression / pathology: 
-- Impairment list & clinical prognosis: 
-
-### Plan
-- In-clinic manual therapy & modalities: 
-- Home Exercise Program (HEP) prescribed: 
-- Patient education & red flag precautions: 
-- Follow-up frequency: `;
-
 const patientProfile = $('patient-profile');
 const profileBack    = $('profile-back');
+let currentPortfolioPatient = null;
 
 async function openPatientProfile(id, preloaded = null) {
   if (!patientProfile) return;
   activePortfolioPatientId = Number(id);
 
-  // Show overlay
+  // Fetch full patient data FIRST before showing overlay to prevent visual flash on missing records
+  let patient = preloaded;
+  if (!patient || !patient.notes) {
+    try {
+      patient = await window.api.patients.getById(id);
+    } catch (_) {
+      patient = null;
+    }
+  }
+
+  if (!patient) {
+    console.warn(`[Portfolio] Patient id=${id} not found.`);
+    alert(`Patient record #${id} could not be found in the local database.`);
+    return;
+  }
+  currentPortfolioPatient = patient;
+
+  // Show overlay safely now that patient exists
   patientProfile.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
   patientProfile.classList.add('flex', 'opacity-100', 'pointer-events-auto');
   patientProfile.style.setProperty('display', 'flex', 'important');
   patientProfile.style.setProperty('pointer-events', 'auto', 'important');
   patientProfile.setAttribute('aria-hidden', 'false');
-
-  // Fetch full patient data
-  const patient = preloaded && preloaded.notes
-    ? preloaded
-    : await window.api.patients.getById(id);
-
-  if (!patient) {
-    closePatientProfile();
-    return;
-  }
 
   // Header and Avatar
   const profileName   = $('profile-name');
@@ -1356,14 +1547,25 @@ async function openPatientProfile(id, preloaded = null) {
     profileMeta.textContent = parts.join(' · ') || '—';
   }
 
+  // Set Primary Clinical Diagnosis
+  const diagEl = $('profile-diagnosis-display');
+  if (diagEl) {
+    diagEl.textContent = patient.primary_diagnosis || 'No clinical diagnosis recorded';
+    diagEl.className = patient.primary_diagnosis
+      ? 'mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100'
+      : 'mt-1 text-xs italic text-slate-400 dark:text-slate-500';
+  }
+
   // Demographics Card
   const setText = (elId, val) => { const el = $(elId); if (el) el.textContent = val || '—'; };
-  setText('profile-age',       computeAge(patient.dob));
-  setText('profile-dob',       patient.dob ? fmtDate(patient.dob) : '—');
-  setText('profile-phone',     patient.phone || '—');
-  setText('profile-email',     patient.email || '—');
-  setText('profile-emergency', patient.emergency_contact || 'None specified');
-  setText('profile-since',     fmtDate(patient.created_at));
+  setText('profile-age',         computeAge(patient.dob));
+  setText('profile-dob',         patient.dob ? fmtDate(patient.dob) : '—');
+  setText('profile-national-id', patient.national_id || '—');
+  setText('profile-phone',       patient.phone || '—');
+  setText('profile-email',       patient.email || '—');
+  setText('profile-emergency',   patient.emergency_contact || 'None specified');
+  setText('profile-address',     patient.address || '—');
+  setText('profile-since',       fmtDate(patient.created_at));
 
   // Next Scheduled Appointment Card
   const nextAppt = patient.next_appointment;
@@ -1398,6 +1600,9 @@ async function openPatientProfile(id, preloaded = null) {
         if (window.Diary) {
           closePatientProfile();
           switchView('diary');
+          if (typeof window.Diary.setBookingContext === 'function') {
+            window.Diary.setBookingContext({ patient_id: patient.id, patient_name: fullName });
+          }
           window.Diary.openEventDrawer({ patient_id: patient.id, patient_name: fullName });
         }
       };
@@ -1422,9 +1627,153 @@ function closePatientProfile() {
   patientProfile.style.setProperty('pointer-events', 'none', 'important');
   patientProfile.setAttribute('aria-hidden', 'true');
   activePortfolioPatientId = null;
+  currentPortfolioPatient = null;
 }
 
 if (profileBack) profileBack.addEventListener('click', closePatientProfile);
+
+// ── Edit Patient Demographics Modal ──────────────────────────────────────────
+const epModal    = $('modal-edit-patient') || $('ep-modal');
+const epBackdrop = $('ep-backdrop');
+const epForm     = $('ep-form');
+const epClose    = $('ep-close');
+const epCancel   = $('ep-cancel');
+const epSubmit   = $('ep-submit');
+const epSpinner  = $('ep-spinner');
+const epLabel    = $('ep-submit-label');
+const epError    = $('ep-error');
+const epErrorTxt = $('ep-error-text');
+
+function openEditPatientModal(patient = {}) {
+  const modal = $('modal-edit-patient') || $('ep-modal');
+  const backdrop = $('ep-backdrop');
+  if (!modal) return;
+  if (epError) epError.classList.add('hidden');
+  if ($('ep-first-name')) $('ep-first-name').value = patient.first_name || '';
+  if ($('ep-last-name')) $('ep-last-name').value = patient.last_name || '';
+  if ($('ep-diagnosis')) $('ep-diagnosis').value = patient.primary_diagnosis || '';
+  if ($('ep-national-id')) $('ep-national-id').value = patient.national_id || '';
+  if ($('ep-dob')) $('ep-dob').value = patient.dob || '';
+  if ($('ep-phone')) $('ep-phone').value = patient.phone || '';
+  if ($('ep-email')) $('ep-email').value = patient.email || '';
+  if ($('ep-address')) $('ep-address').value = patient.address || '';
+  if ($('ep-emergency')) $('ep-emergency').value = patient.emergency_contact || '';
+
+  if (backdrop) {
+    backdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    backdrop.classList.add('opacity-100', 'pointer-events-auto');
+    backdrop.style.setProperty('display', 'block', 'important');
+    backdrop.style.setProperty('pointer-events', 'auto', 'important');
+    backdrop.style.setProperty('z-index', '99', 'important');
+  }
+  modal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+  modal.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+  modal.style.setProperty('display', 'flex', 'important');
+  modal.style.setProperty('pointer-events', 'auto', 'important');
+  modal.style.setProperty('z-index', '100', 'important');
+}
+
+function closeEditPatientModal() {
+  const modal = $('modal-edit-patient') || $('ep-modal');
+  const backdrop = $('ep-backdrop');
+  if (backdrop) {
+    backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+    backdrop.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    backdrop.style.setProperty('display', 'none', 'important');
+    backdrop.style.setProperty('pointer-events', 'none', 'important');
+  }
+  if (modal) {
+    modal.classList.remove('opacity-100', 'pointer-events-auto', 'flex');
+    modal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
+  }
+  if (currentPortfolioPatient) {
+    if ($('ep-first-name')) $('ep-first-name').value = currentPortfolioPatient.first_name || '';
+    if ($('ep-last-name')) $('ep-last-name').value = currentPortfolioPatient.last_name || '';
+    if ($('ep-diagnosis')) $('ep-diagnosis').value = currentPortfolioPatient.primary_diagnosis || '';
+    if ($('ep-national-id')) $('ep-national-id').value = currentPortfolioPatient.national_id || '';
+    if ($('ep-dob')) $('ep-dob').value = currentPortfolioPatient.dob || '';
+    if ($('ep-phone')) $('ep-phone').value = currentPortfolioPatient.phone || '';
+    if ($('ep-email')) $('ep-email').value = currentPortfolioPatient.email || '';
+    if ($('ep-address')) $('ep-address').value = currentPortfolioPatient.address || '';
+    if ($('ep-emergency')) $('ep-emergency').value = currentPortfolioPatient.emergency_contact || '';
+  }
+  if ($('ep-error')) $('ep-error').classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('pointer-events');
+}
+
+$('btn-edit-patient-details')?.addEventListener('click', async () => {
+  if (!activePortfolioPatientId) return;
+  // Instantly open without delay
+  if (currentPortfolioPatient && currentPortfolioPatient.id === activePortfolioPatientId) {
+    openEditPatientModal(currentPortfolioPatient);
+  } else {
+    openEditPatientModal({});
+  }
+  // Ensure fresh DB record
+  try {
+    const p = await window.api.patients.getById(activePortfolioPatientId);
+    if (p) {
+      currentPortfolioPatient = p;
+      openEditPatientModal(p);
+    }
+  } catch (err) {
+    console.error('Failed to load patient for edit modal:', err);
+  }
+});
+
+epClose?.addEventListener('click', closeEditPatientModal);
+epCancel?.addEventListener('click', closeEditPatientModal);
+epBackdrop?.addEventListener('click', closeEditPatientModal);
+
+epForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!activePortfolioPatientId) return;
+  const firstName = ($('ep-first-name')?.value || '').trim();
+  const lastName = ($('ep-last-name')?.value || '').trim();
+  if (!firstName || !lastName) {
+    if (epError) {
+      epError.classList.remove('hidden');
+      if (epErrorTxt) epErrorTxt.textContent = 'First and last name are required.';
+    }
+    return;
+  }
+
+  const payload = {
+    first_name: firstName,
+    last_name: lastName,
+    primary_diagnosis: ($('ep-diagnosis')?.value || '').trim(),
+    national_id: ($('ep-national-id')?.value || '').trim(),
+    dob: ($('ep-dob')?.value || '').trim(),
+    phone: ($('ep-phone')?.value || '').trim(),
+    email: ($('ep-email')?.value || '').trim(),
+    address: ($('ep-address')?.value || '').trim(),
+    emergency_contact: ($('ep-emergency')?.value || '').trim(),
+  };
+
+  try {
+    if (epSpinner) epSpinner.classList.remove('hidden');
+    if (epLabel) epLabel.textContent = 'Saving…';
+    if (epSubmit) epSubmit.disabled = true;
+
+    await window.api.patients.update(activePortfolioPatientId, payload);
+    closeEditPatientModal();
+    await openPatientProfile(activePortfolioPatientId);
+    if (typeof loadPatientsDirectory === 'function') loadPatientsDirectory();
+  } catch (err) {
+    if (epError) {
+      epError.classList.remove('hidden');
+      if (epErrorTxt) epErrorTxt.textContent = err.message || 'Failed to update patient.';
+    }
+  } finally {
+    if (epSpinner) epSpinner.classList.add('hidden');
+    if (epLabel) epLabel.textContent = 'Save Changes';
+    if (epSubmit) epSubmit.disabled = false;
+  }
+});
 
 // Quick action buttons in portfolio header
 const btnQuickNewNote = $('btn-quick-new-note');
@@ -1444,6 +1793,9 @@ if (btnProfileBookAppt) {
       const pName = $('profile-name')?.textContent || '';
       closePatientProfile();
       switchView('diary');
+      if (typeof window.Diary.setBookingContext === 'function') {
+        window.Diary.setBookingContext({ patient_id: activePortfolioPatientId, patient_name: pName });
+      }
       window.Diary.openEventDrawer({ patient_id: activePortfolioPatientId, patient_name: pName });
     }
   });
@@ -1576,34 +1928,6 @@ function insertAtCursor(snippet) {
   el.selectionStart = el.selectionEnd = start + snippet.length;
 }
 
-const SOAP_TEMPLATE_RICH = `<h3>Subjective</h3>
-<ul>
-  <li><strong>Presenting complaint &amp; mechanism:</strong> </li>
-  <li><strong>Pain score (0-10) &amp; irritability:</strong> </li>
-  <li><strong>Aggravating / easing factors:</strong> </li>
-  <li><strong>Functional goals:</strong> </li>
-</ul>
-<h3>Objective</h3>
-<ul>
-  <li><strong>Posture &amp; movement observation:</strong> </li>
-  <li><strong>Active ROM &amp; movement quality:</strong> </li>
-  <li><strong>Passive ROM &amp; joint end-feel:</strong> </li>
-  <li><strong>Neurological / special tests:</strong> </li>
-</ul>
-<h3>Assessment</h3>
-<ul>
-  <li><strong>Clinical diagnostic impression:</strong> </li>
-  <li><strong>Contributing impairment factors:</strong> </li>
-  <li><strong>Rehabilitation prognosis:</strong> </li>
-</ul>
-<h3>Plan</h3>
-<ul>
-  <li><strong>Today's manual / exercise intervention:</strong> </li>
-  <li><strong>Home exercise prescription (HEP):</strong> </li>
-  <li><strong>Follow-up scheduling:</strong> </li>
-</ul>`;
-
-$('btn-insert-soap')?.addEventListener('click', () => insertAtCursor(SOAP_TEMPLATE_RICH));
 $('btn-insert-table')?.addEventListener('click', () => insertAtCursor(STARTER_TABLE_HTML));
 $('btn-insert-bullet')?.addEventListener('click', () => insertAtCursor('\n• '));
 $('btn-insert-timestamp')?.addEventListener('click', () => {
@@ -1642,9 +1966,21 @@ if (btnSaveNote) {
     btnSaveNote.disabled = true;
 
     try {
+      const settings = (await window.api.settings.getAll()) || {};
+      const pName = (settings.practitioner_name || '').trim() || 'Practitioner';
+      const pTitle = (settings.practitioner_title || '').trim();
+      const cName = (settings.clinic_name || '').trim() || 'Physiotherapy Clinic';
+      const signDate = new Date().toLocaleString();
+      const sigLine = `Electronically Signed by: ${pName}${pTitle ? ', ' + pTitle : ''} | ${cName} | Date: ${signDate}`;
+
+      let finalContent = cleanContent;
+      if (!finalContent.includes('Electronically Signed by:')) {
+        finalContent = `${finalContent}\n<div class="mt-4 pt-2 border-t border-slate-300 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 font-mono italic">${escapeHtml(sigLine)}</div>`;
+      }
+
       await window.api.notes.create({
         patient_id: activePortfolioPatientId,
-        content: cleanContent,
+        content: finalContent,
       });
 
       if (editor) editor.innerHTML = '';
@@ -1668,6 +2004,73 @@ if (btnSaveNote) {
     }
   });
 }
+
+// ── Red Flags & Safety Screening Co-Pilot Sidebar in Note Editor ─────────────
+const btnToggleRfCopilot = $('btn-toggle-note-rf-copilot');
+const rfCopilotChips     = $('note-rf-copilot-chips');
+
+btnToggleRfCopilot?.addEventListener('click', () => {
+  if (!rfCopilotChips) return;
+  const isHidden = rfCopilotChips.classList.toggle('hidden');
+  btnToggleRfCopilot.textContent = isHidden ? 'Show' : 'Hide';
+});
+
+const RF_COPILOT_TEMPLATES = {
+  ces: `<div class="my-2 p-2.5 rounded-lg bg-red-500/5 border border-red-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Cauda Equina Syndrome (NICE NG59 / CSP)]</strong><br>
+• Saddle/Perianal Sensation: Intact, normal bilateral sensation to light touch (S2-S5)<br>
+• Bladder Function: Normal control, zero urinary retention, change in stream, or overflow incontinence<br>
+• Bowel Function: Intact sphincter control, zero faecal incontinence or loss of tone<br>
+• Motor / Neuro: No progressive bilateral lower limb motor weakness, foot drop, or bilateral radiculopathy<br>
+• <em>Conclusion: Cauda Equina Syndrome red flags screened and excluded.</em>
+</div><p></p>`,
+  csm: `<div class="my-2 p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Cervical Spondylotic Myelopathy (BMJ / NICE NG127)]</strong><br>
+• Upper Extremity: Preserved fine motor dexterity (buttons/zippers/cutlery intact); no dropping objects<br>
+• Lower Extremity: Normal symmetrical gait; negative Romberg; zero spasticity or ataxia<br>
+• Pathological Reflexes: Hoffman (-) bilaterally; Inverted supinator (-); Babinski (-) bilaterally; Clonus 0 beats<br>
+• <em>Conclusion: Cervical myelopathy red flags screened and excluded.</em>
+</div><p></p>`,
+  cad: `<div class="my-2 p-2.5 rounded-lg bg-violet-500/5 border border-violet-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Cervical Artery Dysfunction (IFOMPT CAD Framework)]</strong><br>
+• 5 Ds: Dizziness (-), Diplopia (-), Dysarthria (-), Dysphagia (-), Drop attacks (-)<br>
+• 3 Ns: Nausea (-), Numbness / facial hemi-sensory loss (-), Nystagmus (-)<br>
+• Pain Profile: No sudden-onset atypical severe "thunderclap" occipital or suboccipital headache<br>
+• <em>Conclusion: CAD / cervical vascular pathologies screened and excluded prior to manual therapy.</em>
+</div><p></p>`,
+  malig: `<div class="my-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Spinal Malignancy (NICE NG12 / JOSPT)]</strong><br>
+• Medical History: Zero personal history of primary cancer (prostate, breast, lung, kidney, thyroid, myeloma)<br>
+• Weight & Systemic: No unexplained rapid weight loss; no fever, rigors, or constitutional cachexia<br>
+• Pain Characteristics: Mechanical diurnal variation present; zero severe unrelenting non-mechanical night pain<br>
+• Examination: No localized bony spinous percussion tenderness; no pathological lymphadenopathy<br>
+• <em>Conclusion: Spinal malignancy red flags screened and excluded.</em>
+</div><p></p>`,
+  fracture: `<div class="my-2 p-2.5 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Spinal Fracture (NICE NG41)]</strong><br>
+• Trauma: Zero major high-energy trauma (MVA, fall >1m); zero acute unprovoked low-energy collapse<br>
+• Risk Factors: No prolonged oral corticosteroid use, no known osteoporosis history or fragility fractures<br>
+• Palpation: No acute focal midline spinous process tenderness; no palpable step deformity<br>
+• <em>Conclusion: Acute spinal fracture screened and excluded.</em>
+</div><p></p>`,
+  infect: `<div class="my-2 p-2.5 rounded-lg bg-yellow-500/5 border border-yellow-500/20 text-xs">
+<strong>[RED FLAG SCREENING: Spinal Infection / Discitis / Osteomyelitis (IDSA / BMJ)]</strong><br>
+• Systemic Signs: Apyrexial; zero chills, rigors, or drenching night sweats<br>
+• Risk Profile: No recent invasive spinal procedures/injections, no indwelling lines, no IV drug use<br>
+• Examination: No exquisite focal spinal percussion tenderness; no involuntary paravertebral muscle rigidity<br>
+• <em>Conclusion: Spinal infection red flags screened and excluded.</em>
+</div><p></p>`
+};
+
+document.querySelectorAll('.btn-copilot-stamp').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const rfType = btn.dataset.rfType;
+    const snippet = RF_COPILOT_TEMPLATES[rfType];
+    if (snippet) {
+      insertAtCursor(snippet);
+    }
+  });
+});
 
 // ── Refresh and Render Chronological Notes Feed ─────────────────────────────
 
@@ -1943,37 +2346,30 @@ const SCHEDULE_START = 8;
 const SCHEDULE_END   = 18;
 const SLOT_INTERVAL  = 30;
 
-const DEMO_APPOINTMENTS = [
-  { id: 1, patientName: 'Sarah Mitchell',  type: 'Initial Assessment', hour: 9,  minute: 0,  duration: 60, status: 'confirmed' },
-  { id: 2, patientName: 'James Thornton',  type: 'Follow-up Session',  hour: 11, minute: 0,  duration: 45, status: 'confirmed' },
-  { id: 3, patientName: 'Emma Rodriguez',  type: 'Dry Needling',       hour: 14, minute: 30, duration: 30, status: 'pending'   },
-];
+let currentScheduleDate = new Date();
 
-function buildSchedule() {
-  const container      = $('schedule-container');
-  const scheduleDateEl = $('schedule-date');
-  if (!container) return;
+function formatISODate(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  if (scheduleDateEl) {
-    scheduleDateEl.textContent = new Date().toLocaleDateString('en-AU', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-    });
+function getApptHourMinute(scheduled_at) {
+  if (!scheduled_at) return { hour: 9, minute: 0 };
+  const d = new Date(scheduled_at);
+  if (isNaN(d.getTime())) {
+    const match = String(scheduled_at).match(/(\d{1,2}):(\d{2})/);
+    if (match) return { hour: parseInt(match[1], 10), minute: parseInt(match[2], 10) };
+    return { hour: 9, minute: 0 };
   }
-
-  const frag = document.createDocumentFragment();
-  for (let h = SCHEDULE_START; h < SCHEDULE_END; h++)
-    for (let m = 0; m < 60; m += SLOT_INTERVAL)
-      frag.appendChild(createTimeSlotRow(h, m));
-
-  container.appendChild(frag);
-
-  DEMO_APPOINTMENTS.forEach(appt => {
-    const slot = document.getElementById(slotBodyId(appt.hour, appt.minute));
-    if (slot) slot.appendChild(createApptCard(appt));
-  });
-
-  addNowIndicator();
-  scrollToNow();
+  let h = d.getHours();
+  let m = d.getMinutes();
+  if ((h < SCHEDULE_START || h >= SCHEDULE_END) && (d.getUTCHours() >= SCHEDULE_START && d.getUTCHours() < SCHEDULE_END)) {
+    h = d.getUTCHours();
+    m = d.getUTCMinutes();
+  }
+  return { hour: h, minute: m };
 }
 
 function slotBodyId(h, m) {
@@ -2010,23 +2406,49 @@ function createTimeSlotRow(h, m) {
 }
 
 function createApptCard(appt) {
-  const statusDot  = { confirmed: 'bg-indigo-500', pending: 'bg-amber-400', completed: 'bg-emerald-500' };
-  const statusText = { confirmed: 'Confirmed',     pending: 'Pending',      completed: 'Completed'      };
+  const statusDot  = { confirmed: 'bg-indigo-500', pending: 'bg-amber-400', completed: 'bg-emerald-500', scheduled: 'bg-indigo-500' };
+  const statusText = { confirmed: 'Confirmed',     pending: 'Pending',      completed: 'Completed',      scheduled: 'Scheduled' };
 
   const card = document.createElement('div');
-  card.className = `appt-card status-${appt.status}`;
+  const statusKey = (appt.status || 'confirmed').toLowerCase();
+  card.className = `appt-card status-${statusKey} cursor-pointer`;
   card.draggable = true;
   card.dataset.apptId = String(appt.id);
 
+  const patientName = appt.patientName || (appt.first_name ? `${appt.first_name} ${appt.last_name}` : (appt.title || appt.type || 'Appointment'));
+  const duration = appt.duration || appt.duration_min || 30;
+  const apptType = appt.type || appt.event_type || 'Clinical Session';
+
+  card.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (card.classList.contains('dragging')) return;
+    const pid = appt.patientId || appt.patient_id;
+    if (pid) {
+      try {
+        const patient = await window.api.patients.getById(pid);
+        if (patient) {
+          openPatientProfile(pid, patient);
+          return;
+        }
+      } catch (err) {
+        console.warn('Patient lookup failed:', err);
+      }
+      alert(`Patient record #${pid} (${patientName}) could not be found in the local database.`);
+    } else {
+      alert(`Appointment / Block: ${patientName}\nDuration: ${duration} mins\nType: ${apptType}`);
+    }
+  });
+
   card.innerHTML = `
-    <div class="flex items-center justify-between gap-2">
-      <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate leading-snug">${appt.patientName}</span>
+    <div class="flex items-center justify-between gap-2 pointer-events-none">
+      <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate leading-snug">${escapeHtml(patientName)}</span>
       <span class="flex items-center gap-1 shrink-0">
-        <span class="h-1.5 w-1.5 rounded-full ${statusDot[appt.status] ?? 'bg-slate-400'}"></span>
-        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">${statusText[appt.status] ?? appt.status}</span>
+        <span class="h-1.5 w-1.5 rounded-full ${statusDot[statusKey] ?? 'bg-slate-400'}"></span>
+        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">${statusText[statusKey] ?? appt.status}</span>
       </span>
     </div>
-    <span class="text-[11px] text-slate-400 dark:text-slate-500 leading-snug">${appt.type} &middot; ${appt.duration}&thinsp;min</span>
+    <span class="text-[11px] text-slate-400 dark:text-slate-500 leading-snug pointer-events-none">${escapeHtml(apptType)} &middot; ${duration}&thinsp;min</span>
   `;
 
   card.addEventListener('dragstart', e => {
@@ -2063,7 +2485,85 @@ function scrollToNow() {
   if (row) row.scrollIntoView({ block: 'start', behavior: 'instant' });
 }
 
-buildSchedule();
+async function renderDailySchedule(targetDate = null) {
+  if (targetDate) {
+    currentScheduleDate = new Date(targetDate);
+  }
+  const container = $('schedule-container');
+  const scheduleDateEl = $('schedule-date');
+  const scheduleCountLabel = $('schedule-count-label');
+  const apptCountEl = $('appt-count');
+  if (!container) return;
+
+  const todayStr = formatISODate(new Date());
+  const selectedStr = formatISODate(currentScheduleDate);
+  const isToday = todayStr === selectedStr;
+
+  if (scheduleDateEl) {
+    scheduleDateEl.textContent = currentScheduleDate.toLocaleDateString('en-AU', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+  }
+  if (scheduleCountLabel) {
+    scheduleCountLabel.textContent = isToday ? 'today' : currentScheduleDate.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' });
+  }
+
+  container.innerHTML = '';
+
+  const frag = document.createDocumentFragment();
+  for (let h = SCHEDULE_START; h < SCHEDULE_END; h++) {
+    for (let m = 0; m < 60; m += SLOT_INTERVAL) {
+      frag.appendChild(createTimeSlotRow(h, m));
+    }
+  }
+  container.appendChild(frag);
+
+  let appts = [];
+  try {
+    appts = await window.api.appointments.list({ date: selectedStr });
+  } catch (err) {
+    console.error('Failed to load appointments for schedule:', err);
+    appts = [];
+  }
+
+  if (apptCountEl) {
+    apptCountEl.textContent = Array.isArray(appts) ? appts.length : 0;
+  }
+
+  if (Array.isArray(appts)) {
+    appts.forEach(appt => {
+      const { hour, minute } = getApptHourMinute(appt.scheduled_at);
+      const slotM = minute < 30 ? 0 : 30;
+      const slot = document.getElementById(slotBodyId(hour, slotM)) || document.getElementById(slotBodyId(SCHEDULE_START, 0));
+      if (slot) {
+        slot.appendChild(createApptCard(appt));
+      }
+    });
+  }
+
+  if (isToday) {
+    addNowIndicator();
+    scrollToNow();
+  }
+}
+
+// Wire Day Navigation controls
+$('btn-schedule-prev')?.addEventListener('click', () => {
+  currentScheduleDate.setDate(currentScheduleDate.getDate() - 1);
+  renderDailySchedule();
+});
+
+$('btn-schedule-next')?.addEventListener('click', () => {
+  currentScheduleDate.setDate(currentScheduleDate.getDate() + 1);
+  renderDailySchedule();
+});
+
+$('btn-schedule-today')?.addEventListener('click', () => {
+  currentScheduleDate = new Date();
+  renderDailySchedule();
+});
+
+renderDailySchedule();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SCRATCHPAD
@@ -2101,12 +2601,10 @@ async function loadStats() {
     const elP = $('stat-total-patients');
     const elA = $('stat-today-appts');
     const elN = $('stat-notes');
-    const elC = $('appt-count');
 
-    if (elP) elP.textContent = s.totalPatients ?? 0;
+    if (elP) elP.textContent = s.activePatients ?? 0;
     if (elA) elA.textContent = s.todayAppts    ?? 0;
     if (elN) elN.textContent = s.totalNotes    ?? 0;
-    if (elC) elC.textContent = DEMO_APPOINTMENTS.length;
   } catch (err) {
     console.error('[Stats]', err);
   }
@@ -2163,6 +2661,23 @@ function renderDynamicCategoryTabs() {
       btn.className = 'sp-tab-btn active px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 whitespace-nowrap';
       currentPrefixFilter = btn.dataset.filter;
       renderSmartPhrasesList();
+    });
+
+    btn.addEventListener('dblclick', async (e) => {
+      e.stopPropagation();
+      const prefix = btn.dataset.filter;
+      const cat = triggerCategoriesCache.find(c => c.prefix === prefix);
+      if (!cat) return;
+      const newLabel = prompt(`Rename category "${cat.label}" (${prefix}):`, cat.label);
+      if (newLabel && newLabel.trim() && newLabel.trim() !== cat.label) {
+        try {
+          await window.api.triggerCategories.save(prefix, newLabel.trim());
+          await loadTriggerCategories();
+          renderSmartPhrasesList();
+        } catch (err) {
+          alert('Failed to update category: ' + err.message);
+        }
+      }
     });
   });
 }
@@ -3089,12 +3604,74 @@ function switchExerciseLibraryTab(tab) {
 }
 window.switchExerciseLibraryTab = switchExerciseLibraryTab;
 
+let exerciseCategoriesCache = [];
+
+async function populateExerciseCategoryDropdowns() {
+  try {
+    if (!window.api?.rehab?.getCategories) return;
+    const cats = await window.api.rehab.getCategories();
+    if (!cats || !cats.length) return;
+    exerciseCategoriesCache = cats;
+
+    // 1. #exlib-cat
+    const exlibCat = $('exlib-cat');
+    if (exlibCat) {
+      const currentVal = exlibCat.value || 'All';
+      exlibCat.innerHTML = `<option value="All">All Categories (${cats.length})</option>` +
+        cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      exlibCat.value = cats.includes(currentVal) ? currentVal : 'All';
+    }
+
+    // 2. #edit-ex-cat
+    const editExCat = $('edit-ex-cat');
+    if (editExCat) {
+      const currentVal = editExCat.value || cats[0];
+      editExCat.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
+        `<option value="__NEW__">+ New Category...</option>`;
+      if (cats.includes(currentVal)) {
+        editExCat.value = currentVal;
+      } else if (cats.length > 0) {
+        editExCat.value = cats[0];
+      }
+    }
+  } catch (err) {
+    console.error('[ExLib] Failed to populate exercise categories:', err);
+  }
+}
+
 function initExerciseLibraryHub() {
   const tabProtocols = $('exlib-tab-protocols');
   const tabExercises = $('exlib-tab-exercises');
 
   tabProtocols?.addEventListener('click', () => switchExerciseLibraryTab('protocols'));
   tabExercises?.addEventListener('click', () => switchExerciseLibraryTab('exercises'));
+
+  // Pre-load dynamic categories
+  populateExerciseCategoryDropdowns();
+
+  // Dynamic Category Creation Toggles
+  $('btn-toggle-new-ex-cat')?.addEventListener('click', () => {
+    $('edit-ex-cat-select-wrap')?.classList.add('hidden');
+    $('edit-ex-cat-custom-wrap')?.classList.remove('hidden');
+    $('edit-ex-custom-cat')?.focus();
+  });
+
+  $('btn-cancel-custom-ex-cat')?.addEventListener('click', () => {
+    $('edit-ex-cat-custom-wrap')?.classList.add('hidden');
+    $('edit-ex-cat-select-wrap')?.classList.remove('hidden');
+    const editExCat = $('edit-ex-cat');
+    if (editExCat && editExCat.value === '__NEW__') {
+      editExCat.selectedIndex = 0;
+    }
+  });
+
+  $('edit-ex-cat')?.addEventListener('change', (e) => {
+    if (e.target.value === '__NEW__') {
+      $('edit-ex-cat-select-wrap')?.classList.add('hidden');
+      $('edit-ex-cat-custom-wrap')?.classList.remove('hidden');
+      $('edit-ex-custom-cat')?.focus();
+    }
+  });
 
   // Filter & Search listeners for Exercises tab
   $('exlib-search')?.addEventListener('input', debounce(renderExercisesTable, 150));
@@ -3126,6 +3703,7 @@ function initExerciseLibraryHub() {
 
 async function loadExerciseLibraryHub() {
   try {
+    await populateExerciseCategoryDropdowns();
     exlibProtocols = await window.api.rehab.listTemplates();
     exlibExercises = await window.api.rehab.listExercises();
 
@@ -3406,9 +3984,28 @@ function openEditExerciseModal(exercise = null) {
   const title = $('modal-edit-ex-title');
   if (!modal) return;
 
+  $('edit-ex-cat-custom-wrap')?.classList.add('hidden');
+  $('edit-ex-cat-select-wrap')?.classList.remove('hidden');
+  if ($('edit-ex-custom-cat')) $('edit-ex-custom-cat').value = '';
+
+  const editExCat = $('edit-ex-cat');
+  if (editExCat) {
+    const cats = [...exerciseCategoriesCache];
+    if (exercise && exercise.category && !cats.includes(exercise.category)) {
+      cats.push(exercise.category);
+    }
+    editExCat.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
+      `<option value="__NEW__">+ New Category...</option>`;
+    if (exercise && exercise.category) {
+      editExCat.value = exercise.category;
+    } else if (cats.length > 0) {
+      editExCat.value = cats[0];
+    }
+  }
+
+  const defaultCat = exerciseCategoriesCache[0] || 'Knee & Quad';
   $('edit-ex-id').value = exercise ? exercise.id : '';
   $('edit-ex-name').value = exercise ? exercise.name : '';
-  $('edit-ex-cat').value = exercise ? (exercise.category || 'Knee & Quad') : 'Knee & Quad';
   $('edit-ex-sets').value = exercise ? (exercise.default_sets || 3) : 3;
   $('edit-ex-reps').value = exercise ? (exercise.default_reps || '10-12') : '10-12';
   $('edit-ex-cues').value = exercise ? (exercise.cues || '') : '';
@@ -3443,7 +4040,14 @@ async function handleExerciseFormSubmit(e) {
   e.preventDefault();
   const id = $('edit-ex-id')?.value;
   const name = $('edit-ex-name')?.value?.trim();
-  const category = $('edit-ex-cat')?.value;
+  let category = $('edit-ex-cat')?.value;
+  const customCategory = $('edit-ex-custom-cat')?.value?.trim();
+  const isCustomVisible = !$('edit-ex-cat-custom-wrap')?.classList.contains('hidden');
+
+  if ((isCustomVisible && customCategory) || category === '__NEW__') {
+    category = customCategory || 'General';
+  }
+
   const default_sets = parseInt($('edit-ex-sets')?.value, 10) || 3;
   const default_reps = $('edit-ex-reps')?.value?.trim() || '10';
   const cues = $('edit-ex-cues')?.value?.trim() || '';
@@ -3458,6 +4062,7 @@ async function handleExerciseFormSubmit(e) {
       await window.api.rehab.createExercise(payload);
     }
     closeEditExerciseModal();
+    await populateExerciseCategoryDropdowns();
     await loadExerciseLibraryHub();
   } catch (err) {
     alert('Failed to save exercise: ' + err.message);
@@ -4364,17 +4969,17 @@ async function loadSettingsGeneralPreferences() {
     clinicSettingsCache = s;
 
     // Demographics
-    if (s.clinic_name && $('set-clinic-name')) $('set-clinic-name').value = s.clinic_name;
-    if (s.clinic_phone && $('set-clinic-phone')) $('set-clinic-phone').value = s.clinic_phone;
-    if (s.clinic_email && $('set-clinic-email')) $('set-clinic-email').value = s.clinic_email;
-    if (s.clinic_address && $('set-clinic-address')) $('set-clinic-address').value = s.clinic_address;
-    if (s.clinic_abn && $('set-clinic-abn')) $('set-clinic-abn').value = s.clinic_abn;
+    if ($('set-clinic-name')) $('set-clinic-name').value = s.clinic_name || '';
+    if ($('set-clinic-phone')) $('set-clinic-phone').value = s.clinic_phone || '';
+    if ($('set-clinic-email')) $('set-clinic-email').value = s.clinic_email || '';
+    if ($('set-clinic-address')) $('set-clinic-address').value = s.clinic_address || '';
+    if ($('set-clinic-abn')) $('set-clinic-abn').value = s.clinic_abn || '';
 
     // Practitioner
-    if (s.practitioner_name && $('set-practitioner-name')) $('set-practitioner-name').value = s.practitioner_name;
-    if (s.practitioner_title && $('set-practitioner-title')) $('set-practitioner-title').value = s.practitioner_title;
-    if (s.provider_number && $('set-provider-number')) $('set-provider-number').value = s.provider_number;
-    if (s.reg_number && $('set-reg-number')) $('set-reg-number').value = s.reg_number;
+    if ($('set-practitioner-name')) $('set-practitioner-name').value = s.practitioner_name || '';
+    if ($('set-practitioner-title')) $('set-practitioner-title').value = s.practitioner_title || '';
+    if ($('set-provider-number')) $('set-provider-number').value = s.provider_number || '';
+    if ($('set-reg-number')) $('set-reg-number').value = s.reg_number || '';
 
     // Hours & Schedule
     if (s.work_start && $('set-work-start')) $('set-work-start').value = s.work_start;
@@ -4406,6 +5011,11 @@ async function loadSettingsGeneralPreferences() {
     if (s.fee_initial && $('label-fee-initial')) $('label-fee-initial').textContent = Number(s.fee_initial).toFixed(2);
     if (s.fee_followup && $('label-fee-followup')) $('label-fee-followup').textContent = Number(s.fee_followup).toFixed(2);
 
+    // EULA Status in Settings
+    if (window.api?.eula) {
+      const eulaStatus = await window.api.eula.getStatus();
+      updateEulaStatusCard(eulaStatus);
+    }
   } catch (err) {
     console.warn('[Settings] Failed to load preferences from SQLite:', err);
   }
@@ -4439,14 +5049,14 @@ function initSettingsView() {
       });
 
       const prefs = {
-        clinic_name: $('set-clinic-name')?.value?.trim() || 'Antigravity Sports & Orthopaedic Physiotherapy',
+        clinic_name: $('set-clinic-name')?.value?.trim() || '',
         clinic_phone: $('set-clinic-phone')?.value?.trim() || '',
         clinic_email: $('set-clinic-email')?.value?.trim() || '',
         clinic_address: $('set-clinic-address')?.value?.trim() || '',
         clinic_abn: $('set-clinic-abn')?.value?.trim() || '',
 
-        practitioner_name: $('set-practitioner-name')?.value?.trim() || 'Dr. Sarah Jenkins, PT, DPT, OCS',
-        practitioner_title: $('set-practitioner-title')?.value?.trim() || 'Senior Orthopaedic Physiotherapist',
+        practitioner_name: $('set-practitioner-name')?.value?.trim() || '',
+        practitioner_title: $('set-practitioner-title')?.value?.trim() || '',
         provider_number: $('set-provider-number')?.value?.trim() || '',
         reg_number: $('set-reg-number')?.value?.trim() || '',
 
@@ -4493,6 +5103,262 @@ function initSettingsView() {
 
   loadSettingsGeneralPreferences();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MEDICO-LEGAL EULA GATEWAY & CLINICAL GOVERNANCE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const modalEula         = $('modal-eula-gateway');
+const eulaCheckAccept   = $('eula-check-accept');
+const eulaInputSignee   = $('eula-input-signee');
+const btnEulaConfirm    = $('btn-eula-confirm');
+const btnEulaClose      = $('btn-eula-close');
+const btnEulaDismissRev = $('btn-eula-dismiss-review');
+const eulaGatewayForm   = $('eula-gateway-form');
+const eulaReviewFooter  = $('eula-gateway-review-footer');
+const eulaReviewMeta    = $('eula-review-meta');
+const btnReopenEula     = $('btn-reopen-eula');
+
+function updateEulaStatusCard(status) {
+  const badge = $('set-eula-badge');
+  const signeeEl = $('set-eula-signee');
+  const dateEl = $('set-eula-date');
+  if (status && status.accepted) {
+    if (badge) {
+      badge.textContent = 'Accepted';
+      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30';
+    }
+    if (signeeEl) signeeEl.textContent = status.signee || 'Registered Clinician';
+    if (dateEl) dateEl.textContent = status.timestamp ? new Date(status.timestamp).toLocaleString() : 'Active';
+  } else {
+    if (badge) {
+      badge.textContent = 'Pending Sign-Off';
+      badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30';
+    }
+    if (signeeEl) signeeEl.textContent = 'Unsigned';
+    if (dateEl) dateEl.textContent = 'Pending cold-start declaration';
+  }
+}
+
+async function checkEulaStatusOnStartup() {
+  try {
+    if (!window.api?.eula) return;
+    const status = await window.api.eula.getStatus();
+    updateEulaStatusCard(status);
+    if (!status || !status.accepted) {
+      // First-run blocking gateway mode: unskippable
+      if (modalEula) {
+        modalEula.classList.remove('hidden');
+        modalEula.style.setProperty('display', 'flex', 'important');
+      }
+      if (btnEulaClose) btnEulaClose.classList.add('hidden');
+      if (eulaReviewFooter) eulaReviewFooter.classList.add('hidden');
+      if (eulaGatewayForm) eulaGatewayForm.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('[EULA] Failed to check status:', err);
+  }
+}
+
+function updateEulaConfirmButton() {
+  if (!btnEulaConfirm) return;
+  const isAccepted = !!eulaCheckAccept?.checked;
+  const hasSignee = (eulaInputSignee?.value || '').trim().length > 0;
+  btnEulaConfirm.disabled = !(isAccepted && hasSignee);
+}
+
+eulaCheckAccept?.addEventListener('change', updateEulaConfirmButton);
+eulaInputSignee?.addEventListener('input', updateEulaConfirmButton);
+
+btnEulaConfirm?.addEventListener('click', async () => {
+  const signee = (eulaInputSignee?.value || '').trim();
+  if (!eulaCheckAccept?.checked || !signee) return;
+  try {
+    btnEulaConfirm.disabled = true;
+    btnEulaConfirm.textContent = 'Recording Digital Signature…';
+    const status = await window.api.eula.accept(signee);
+    modalEula?.classList.add('hidden');
+    modalEula?.style.setProperty('display', 'none', 'important');
+    updateEulaStatusCard(status);
+  } catch (err) {
+    alert('Failed to record EULA acceptance: ' + err.message);
+    btnEulaConfirm.disabled = false;
+    btnEulaConfirm.textContent = 'Sign & Continue →';
+  }
+});
+
+// Reopen in review mode from Settings
+btnReopenEula?.addEventListener('click', async () => {
+  const status = await window.api.eula.getStatus();
+  if (modalEula) {
+    modalEula.classList.remove('hidden');
+    modalEula.style.setProperty('display', 'flex', 'important');
+  }
+  if (btnEulaClose) btnEulaClose.classList.remove('hidden');
+  if (eulaGatewayForm) eulaGatewayForm.classList.add('hidden');
+  if (eulaReviewFooter) eulaReviewFooter.classList.remove('hidden');
+  if (eulaReviewMeta) {
+    eulaReviewMeta.textContent = `${status?.signee || 'Clinician'} on ${status?.timestamp ? new Date(status.timestamp).toLocaleString() : 'N/A'}`;
+  }
+});
+
+function closeEulaReviewModal() {
+  modalEula?.classList.add('hidden');
+  modalEula?.style.setProperty('display', 'none', 'important');
+}
+
+btnEulaClose?.addEventListener('click', closeEulaReviewModal);
+btnEulaDismissRev?.addEventListener('click', closeEulaReviewModal);
+
+// Download Signed Medico-Legal & GDPR Declaration PDF
+const btnDownloadSignedDec = $('btn-download-signed-declaration');
+btnDownloadSignedDec?.addEventListener('click', async () => {
+  try {
+    btnDownloadSignedDec.disabled = true;
+    const origHtml = btnDownloadSignedDec.innerHTML;
+    btnDownloadSignedDec.innerHTML = `
+      <svg class="w-4 h-4 animate-spin pointer-events-none" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <span class="pointer-events-none">Generating Declaration PDF...</span>
+    `;
+    const res = await (window.api?.legal?.downloadSignedDeclaration
+      ? window.api.legal.downloadSignedDeclaration()
+      : window.api?.eula?.downloadSignedDeclaration());
+    btnDownloadSignedDec.disabled = false;
+    btnDownloadSignedDec.innerHTML = origHtml;
+  } catch (err) {
+    console.error('[Legal] Failed to export signed declaration:', err);
+    alert('Failed to generate declaration PDF: ' + (err.message || err));
+    if (btnDownloadSignedDec) {
+      btnDownloadSignedDec.disabled = false;
+      btnDownloadSignedDec.innerHTML = `
+        <svg class="w-4 h-4 pointer-events-none shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span class="pointer-events-none">Download Signed Declaration PDF</span>
+      `;
+    }
+  }
+});
+
+// ── Universal Offline Data Backups (Exercises, Research, Smart Phrases) ──────
+$('btn-export-exercises-backup')?.addEventListener('click', async () => {
+  try {
+    const res = await window.api.rehab.exportBackup();
+    if (res?.canceled) return;
+    if (res?.success) {
+      alert(`Exercise Library & Protocols Backup created successfully!\nSaved to: ${res.filePath}`);
+    }
+  } catch (err) {
+    alert('Failed to export Exercise Library backup: ' + err.message);
+  }
+});
+
+$('btn-import-exercises-backup')?.addEventListener('click', async () => {
+  try {
+    const res = await window.api.rehab.importBackup();
+    if (res?.canceled) return;
+    if (res?.success) {
+      alert(`Exercise Library & Protocols restored successfully!\nImported/Updated ${res.exCount || 0} exercises and ${res.protoCount || 0} protocols.`);
+      await populateExerciseCategoryDropdowns();
+      if (typeof loadExerciseLibraryHub === 'function') await loadExerciseLibraryHub();
+    }
+  } catch (err) {
+    alert('Failed to import Exercise Library backup: ' + err.message);
+  }
+});
+
+$('btn-export-research-backup')?.addEventListener('click', async () => {
+  try {
+    const res = await window.api.research.exportBackup();
+    if (res?.canceled) return;
+    if (res?.success) {
+      alert(`Research Library Metadata Backup created successfully!\nSaved to: ${res.filePath}`);
+    }
+  } catch (err) {
+    alert('Failed to export Research Library backup: ' + err.message);
+  }
+});
+
+$('btn-import-research-backup')?.addEventListener('click', async () => {
+  try {
+    const res = await window.api.research.importBackup();
+    if (res?.canceled) return;
+    if (res?.success) {
+      alert(`Research Library Metadata restored successfully!\nImported/Updated ${res.paperCount || 0} research papers.`);
+      if (window.ResearchLibrary?.loadPapers) await window.ResearchLibrary.loadPapers();
+    }
+  } catch (err) {
+    alert('Failed to import Research Library backup: ' + err.message);
+  }
+});
+
+// ── Smart Phrases Backup & Import Engine ─────────────────────────────────────
+$('btn-export-smartphrases-backup')?.addEventListener('click', async () => {
+  try {
+    const backup = await window.api.smartPhrases.exportBackup();
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmartPhrases_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const phraseCount = backup.smart_phrases?.length ?? backup.phrases?.length ?? 0;
+    const catCount = backup.trigger_categories?.length ?? backup.categories?.length ?? 0;
+    alert(`Successfully exported ${phraseCount} smart phrases and ${catCount} categories.`);
+  } catch (err) {
+    alert('Failed to export Smart Phrases backup: ' + err.message);
+  }
+});
+
+$('btn-import-smartphrases-backup')?.addEventListener('click', () => {
+  $('input-import-smartphrases-backup')?.click();
+});
+
+$('input-import-smartphrases-backup')?.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const backupData = JSON.parse(text);
+    const res = await window.api.smartPhrases.importBackup(backupData);
+    await loadTriggerCategories();
+    await loadSmartPhrasesCache();
+    renderSmartPhrasesList();
+    alert(`Successfully restored backup! Imported ${res.phrasesImported || 0} smart phrases and ${res.categoriesImported || 0} categories.`);
+  } catch (err) {
+    alert('Failed to import Smart Phrases backup: ' + (err.message || 'Invalid JSON file'));
+  } finally {
+    e.target.value = '';
+  }
+});
+
+// ── Citation Copy Delegation Listener ───────────────────────────────────────
+document.addEventListener('click', async (e) => {
+  const copyBtn = e.target.closest('.btn-copy-rf-citation');
+  if (copyBtn) {
+    const citation = copyBtn.dataset.citation;
+    if (citation) {
+      try {
+        await navigator.clipboard.writeText(citation);
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied! ✓';
+        copyBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy citation:', err);
+      }
+    }
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GLOBAL EVENT DELEGATION LISTENER (ROUTER, TABS, MODALS, HITBOXES)
@@ -4590,3 +5456,4 @@ closeNewProtocolModal();
 closeEditExerciseModal();
 closeInvoiceDrawer();
 switchView('dashboard');
+checkEulaStatusOnStartup();

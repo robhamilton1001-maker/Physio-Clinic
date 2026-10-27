@@ -129,6 +129,9 @@ contextBridge.exposeInMainWorld('api', {
     update:         (id, data)        => ipcRenderer.invoke('smartPhrases:update', id, data),
     delete:         (id)              => ipcRenderer.invoke('smartPhrases:delete', id),
     importPdfLocal: ()                => ipcRenderer.invoke('smartphrases:importPdfLocal'),
+    exportBackup:   ()                => ipcRenderer.invoke('smartPhrases:exportBackup'),
+    importBackup:   ()                => ipcRenderer.invoke('smartPhrases:importBackup'),
+    updateCategory: (prefix, label)   => ipcRenderer.invoke('smartPhrases:updateCategory', { prefix, label }),
   },
 
   // ── Domain: Trigger Categories ────────────────────────────────────────
@@ -141,6 +144,7 @@ contextBridge.exposeInMainWorld('api', {
   // ── Domain: Phased S&C and Rehab Builder (Phase 7) ──────────────────────
   rehab: {
     listExercises:  (category, search) => ipcRenderer.invoke('rehab:listExercises', category, search),
+    getCategories:  ()                 => ipcRenderer.invoke('rehab:getCategories'),
     createExercise: (data)             => ipcRenderer.invoke('rehab:createExercise', data),
     updateExercise: (id, data)         => ipcRenderer.invoke('rehab:updateExercise', id, data),
     deleteExercise: (id)               => ipcRenderer.invoke('rehab:deleteExercise', id),
@@ -153,6 +157,8 @@ contextBridge.exposeInMainWorld('api', {
     saveProgram:    (data)             => ipcRenderer.invoke('rehab:saveProgram', data),
     deleteProgram:  (id)               => ipcRenderer.invoke('rehab:deleteProgram', id),
     exportPdf:      (htmlContent, defaultFilename) => ipcRenderer.invoke('rehab:exportPdf', { htmlContent, defaultFilename }),
+    exportBackup:   ()                 => ipcRenderer.invoke('rehab:exportBackup'),
+    importBackup:   ()                 => ipcRenderer.invoke('rehab:importBackup'),
   },
 
   // ── Domain: Clinic Settings & Configuration (Phase 8) ───────────────────
@@ -161,6 +167,17 @@ contextBridge.exposeInMainWorld('api', {
     get:    (key)      => ipcRenderer.invoke('settings:get', key),
     set:    (key, val) => ipcRenderer.invoke('settings:set', key, val),
     save:   (data)     => ipcRenderer.invoke('settings:save', data),
+  },
+
+  // ── Domain: Legal Disclaimer & Medico-Legal EULA ────────────────────────
+  eula: {
+    getStatus: ()       => ipcRenderer.invoke('eula:getStatus'),
+    accept:    (signee) => ipcRenderer.invoke('eula:accept', signee),
+    downloadSignedDeclaration: () => ipcRenderer.invoke('legal:downloadSignedDeclaration'),
+  },
+
+  legal: {
+    downloadSignedDeclaration: () => ipcRenderer.invoke('legal:downloadSignedDeclaration'),
   },
 
   // ── Domain: Invoicing & Billing (Phase 8) ───────────────────────────────
@@ -181,6 +198,27 @@ contextBridge.exposeInMainWorld('api', {
   // ── Domain: Offline System Integration ─────────────────────────────────────
   system: {
     openEmailClient: (data) => ipcRenderer.invoke('system:openEmailClient', data),
+  },
+
+  // ── Domain: Research Paper Library ──────────────────────────────────────────
+  research: {
+    list:           (filters)  => ipcRenderer.invoke('research:list', filters),
+    getById:        (id)       => ipcRenderer.invoke('research:getById', id),
+    getGroups:      ()         => ipcRenderer.invoke('research:getGroups'),
+    addGroup:       (name)     => ipcRenderer.invoke('research:addGroup', name),
+    exportBackup:   ()         => ipcRenderer.invoke('research:exportBackup'),
+    importBackup:   ()         => ipcRenderer.invoke('research:importBackup'),
+    getFavoriteCount: ()        => ipcRenderer.invoke('research:getFavoriteCount'),
+    getCounts:      ()         => ipcRenderer.invoke('research:getCounts'),
+    toggleFavorite: (id)       => ipcRenderer.invoke('research:toggleFavorite', id),
+    setFavorite:    (id, isFav)=> ipcRenderer.invoke('research:setFavorite', { id, isFavorite: isFav }),
+    update:         (id, data) => ipcRenderer.invoke('research:update', id, data),
+    delete:         (id)       => ipcRenderer.invoke('research:delete', id),
+    selectPdf:      ()         => ipcRenderer.invoke('research:selectPdf'),
+    parseMetadata:  (filePath) => ipcRenderer.invoke('research:parseMetadata', filePath),
+    savePaper:      (data)     => ipcRenderer.invoke('research:savePaper', data),
+    openPdf:        (filePath) => ipcRenderer.invoke('research:openPdf', filePath),
+    showInFolder:   (filePath) => ipcRenderer.invoke('research:showInFolder', filePath),
   },
 
 });

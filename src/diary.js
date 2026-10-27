@@ -41,6 +41,7 @@ window.Diary = (() => {
   let weekDays         = 5;
   let anchor           = new Date();       // pivot date for navigation
   let events           = [];               // loaded from SQLite
+  let activeBookingContext = null;         // Pre-filled booking context (e.g. from patient profile)
   let inited           = false;
   let drawState        = null;             // drag-to-draw
   let moveState        = null;             // drag existing block
@@ -397,11 +398,14 @@ window.Diary = (() => {
         const finalStart = startMin;
         const finalEnd   = moved ? endMin : Math.min(DAY_END * 60, startMin + 30);
 
+        const ctx = activeBookingContext || {};
         openEventDrawer({
           date:     isoDate(day),
           startMin: finalStart,
           endMin:   finalEnd,
+          ...ctx
         });
+        activeBookingContext = null;
       };
 
       document.addEventListener('mousemove', onMove, { passive: true });
@@ -1154,6 +1158,9 @@ window.Diary = (() => {
     openEventDrawer,
     updateScheduleConfig,
     getNextAvailableTime,
+    setBookingContext: (ctx) => { activeBookingContext = ctx ? { ...ctx } : null; },
+    getBookingContext: () => activeBookingContext,
+    clearBookingContext: () => { activeBookingContext = null; },
   };
 
 })();

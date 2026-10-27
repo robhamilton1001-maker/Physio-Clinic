@@ -12,17 +12,26 @@ window.RehabBuilder = (() => {
 
   // ── Days of the Week & Categories ───────────────────────────────────────────
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const CATEGORIES = [
+  let CATEGORIES = [
     'All',
-    'Knee & Quadriceps',
-    'Hamstrings & Posterior Chain',
-    'Glute & Hip',
-    'Foot, Ankle & Calf',
-    'Shoulder & Scapula',
-    'Chest & Triceps',
     'Back & Biceps',
+    'Calisthenics & Bodyweight',
+    'Chest & Triceps',
+    'Clinical Pilates & Motor Control',
+    'CrossFit & Conditioning',
+    'Foot, Ankle & Calf',
+    'Glute & Hip',
+    'Hamstring & Posterior Chain',
+    'Hand Therapy & Intrinsic Drills',
+    'Knee & Quad',
+    'Olympic Weightlifting',
+    'Plyometrics & RFD',
+    'Post-Op Hip (THR)',
+    'Post-Op Knee (TKR)',
+    'Powerlifting & SBD',
+    'Shoulder & Scapula',
     'Spine & Core',
-    'Custom Rehab'
+    'Yoga & Mobility'
   ];
 
   // ── State ───────────────────────────────────────────────────────────────────
@@ -359,19 +368,27 @@ window.RehabBuilder = (() => {
       });
     }
 
-    // Populate Patients dropdown
-    const patSelect = document.getElementById('rb-patient-select');
-    if (patSelect) {
-      patSelect.innerHTML = '<option value="">None (Standalone)</option>';
-      patients.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.last_name}, ${p.first_name} (ID #${p.id})`;
-        if (program.patient_id && Number(program.patient_id) === Number(p.id)) {
-          opt.selected = true;
+    // Populate / Sync Patient Fuzzy Search Box
+    const patSearch = document.getElementById('rb-patient-search');
+    const patId = document.getElementById('rb-patient-id');
+    const patClear = document.getElementById('rb-patient-clear');
+    if (patSearch && patId) {
+      if (program.patient_id) {
+        const p = patients.find(pt => Number(pt.id) === Number(program.patient_id));
+        if (p) {
+          patSearch.value = `${p.last_name}, ${p.first_name} (#${p.id})`;
+          patId.value = p.id;
+          patClear?.classList.remove('hidden');
+        } else {
+          patSearch.value = '';
+          patId.value = '';
+          patClear?.classList.add('hidden');
         }
-        patSelect.appendChild(opt);
-      });
+      } else {
+        patSearch.value = '';
+        patId.value = '';
+        patClear?.classList.add('hidden');
+      }
     }
   }
 
@@ -1191,9 +1208,69 @@ window.RehabBuilder = (() => {
       }
     });
 
-    // Patient select dropdown
-    document.getElementById('rb-patient-select')?.addEventListener('change', (e) => {
-      program.patient_id = e.target.value ? Number(e.target.value) : null;
+    // Patient fuzzy combobox
+    const patSearch = document.getElementById('rb-patient-search');
+    const patId = document.getElementById('rb-patient-id');
+    const patClear = document.getElementById('rb-patient-clear');
+    const patDropdown = document.getElementById('rb-patient-dropdown');
+
+    function renderPatientDropdown(filterText = '') {
+      if (!patDropdown) return;
+      const term = (filterText || '').toLowerCase().trim();
+      const filtered = patients.filter(p => {
+        const full = `${p.first_name} ${p.last_name} ${p.last_name} ${p.first_name} ${p.phone || ''} ${p.id}`.toLowerCase();
+        return full.includes(term);
+      });
+      if (filtered.length === 0) {
+        patDropdown.innerHTML = '<div class="px-3 py-2 text-slate-400 text-xs">No matching patients</div>';
+      } else {
+        patDropdown.innerHTML = filtered.map(p => `
+          <div class="px-3 py-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 cursor-pointer flex items-center justify-between transition-colors rb-patient-item" data-id="${p.id}" data-name="${p.last_name}, ${p.first_name}">
+            <span class="font-medium text-slate-800 dark:text-slate-200">${p.last_name}, ${p.first_name}</span>
+            <span class="text-[10px] text-slate-400 font-mono">#${p.id}</span>
+          </div>
+        `).join('');
+      }
+      patDropdown.classList.remove('hidden');
+    }
+
+    patSearch?.addEventListener('focus', () => {
+      renderPatientDropdown(patSearch.value);
+    });
+
+    patSearch?.addEventListener('input', (e) => {
+      renderPatientDropdown(e.target.value);
+      if (patClear) {
+        if (e.target.value) patClear.classList.remove('hidden');
+        else patClear.classList.add('hidden');
+      }
+    });
+
+    patDropdown?.addEventListener('click', (e) => {
+      const item = e.target.closest('.rb-patient-item');
+      if (item) {
+        const id = Number(item.dataset.id);
+        const name = item.dataset.name;
+        program.patient_id = id;
+        if (patId) patId.value = id;
+        if (patSearch) patSearch.value = `${name} (#${id})`;
+        patDropdown.classList.add('hidden');
+        patClear?.classList.remove('hidden');
+      }
+    });
+
+    patClear?.addEventListener('click', () => {
+      program.patient_id = null;
+      if (patId) patId.value = '';
+      if (patSearch) patSearch.value = '';
+      patClear.classList.add('hidden');
+      patDropdown?.classList.add('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#rb-patient-search') && !e.target.closest('#rb-patient-dropdown')) {
+        patDropdown?.classList.add('hidden');
+      }
     });
 
     // Duplicate Week button
@@ -1272,9 +1349,8 @@ window.RehabBuilder = (() => {
     // Assign to Patient button
     document.getElementById('rb-btn-assign-patient')?.addEventListener('click', async () => {
       if (!program.patient_id) {
-        const patSelect = document.getElementById('rb-patient-select');
-        alert('Please select a patient from the "Patient" dropdown to assign this program.');
-        patSelect?.focus();
+        alert('Please search and select a patient to assign this program.');
+        document.getElementById('rb-patient-search')?.focus();
         return;
       }
 
@@ -1353,6 +1429,17 @@ window.RehabBuilder = (() => {
       exercises = await window.api.rehab.listExercises();
       templates = await window.api.rehab.listTemplates();
       patients = await window.api.patients.search('');
+
+      if (window.api?.rehab?.getCategories) {
+        try {
+          const dbCats = await window.api.rehab.getCategories();
+          if (dbCats && dbCats.length > 0) {
+            CATEGORIES = ['All', ...dbCats];
+          }
+        } catch (e) {
+          console.warn('[RehabBuilder] Could not fetch DB categories:', e);
+        }
+      }
 
       // 2. Setup program if opening for specific patient
       if (patientIdToLoad) {

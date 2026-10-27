@@ -136,6 +136,16 @@
         Invoicing
       </a>
 
+      <!-- Research Paper Library -->
+      <a href="#" data-view="research-library" class="nav-item" id="nav-research-library">
+        <svg class="h-[17px] w-[17px] shrink-0" fill="none" viewBox="0 0 24 24"
+             stroke-width="1.7" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        Research Library
+      </a>
+
       <!-- Settings -->
       <a href="#" data-view="settings" class="nav-item" id="nav-settings">
         <svg class="h-[17px] w-[17px] shrink-0" fill="none" viewBox="0 0 24 24"
@@ -313,14 +323,28 @@
                       px-5 py-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Daily Schedule</h2>
-              <p id="schedule-date" class="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">—</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <p id="schedule-date" class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">—</p>
+                <!-- Day Navigation Controls -->
+                <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-md p-0.5 border border-slate-200 dark:border-slate-700/60">
+                  <button id="btn-schedule-prev" type="button" class="h-4.5 w-5 flex items-center justify-center rounded hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer select-none" title="Previous Day">
+                    <span class="pointer-events-none text-xs leading-none">‹</span>
+                  </button>
+                  <button id="btn-schedule-today" type="button" class="px-1.5 py-0.5 rounded text-[10px] font-semibold hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer select-none" title="Jump to Today">
+                    <span class="pointer-events-none">Today</span>
+                  </button>
+                  <button id="btn-schedule-next" type="button" class="h-4.5 w-5 flex items-center justify-center rounded hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer select-none" title="Next Day">
+                    <span class="pointer-events-none text-xs leading-none">›</span>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="flex items-center gap-2">
               <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium
                            bg-indigo-50 dark:bg-indigo-500/10
                            text-indigo-700 dark:text-indigo-400
                            ring-1 ring-inset ring-indigo-200/60 dark:ring-indigo-500/20">
-                <span id="appt-count">0</span>&thinsp;today
+                <span id="appt-count">0</span>&thinsp;<span id="schedule-count-label">today</span>
               </span>
             </div>
           </div>
@@ -370,35 +394,133 @@
                       placeholder="Quick clinical notes, call-backs, reminders…"></textarea>
           </div>
 
-          <!-- Red Flags mini card -->
-          <div class="card p-4 flex-none animate-slide-up" style="animation-delay:180ms">
-            <div class="flex items-center justify-between mb-3">
-              <p class="section-label">Red Flags</p>
-              <button id="btn-red-flags-2"
-                      class="text-[10px] font-semibold text-red-400 hover:text-red-300
-                             transition-colors duration-150">
-                View all →
+          <!-- Red Flags Guideline-Aligned Screening Widget -->
+          <div id="dash-redflags-widget" class="card p-4 flex-none animate-slide-up space-y-3" style="animation-delay:180ms">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-500 ring-1 ring-inset ring-red-500/20">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" />
+                  </svg>
+                </span>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100">Red Flags Screening</h3>
+                  <span class="text-[9px] font-medium text-slate-400">NICE · CSP · BMJ · IFOMPT</span>
+                </div>
+              </div>
+              <button id="btn-red-flags-2" type="button"
+                      class="text-[11px] font-semibold text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer">
+                <span>Protocols</span>
+                <span>→</span>
               </button>
             </div>
-            <div class="space-y-2">
-              <div class="flex items-start gap-2">
-                <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0 mt-1"></span>
-                <span class="text-[11px] leading-snug text-slate-500 dark:text-slate-500">
-                  CES — bilateral radiculopathy, saddle numbness, bladder dysfunction
-                </span>
+
+            <!-- 6 Guideline-Aligned Conditions List -->
+            <div class="space-y-2 text-xs" id="dash-rf-list">
+              <!-- 1. CES -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="ces">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-red-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">CES (Cauda Equina)</span>
+                      <span class="text-[9px] font-mono text-red-500/80">NICE NG59</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Saddle numbness, bladder/bowel changes, bilateral neuro</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
               </div>
-              <div class="flex items-start gap-2">
-                <span class="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0 mt-1"></span>
-                <span class="text-[11px] leading-snug text-slate-500 dark:text-slate-500">
-                  Myelopathy — bilateral UL paraesthesia, hand clumsiness, ataxia
-                </span>
+
+              <!-- 2. CSM -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="csm">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-orange-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">Myelopathy (CSM)</span>
+                      <span class="text-[9px] font-mono text-orange-500/80">BMJ / NICE</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Gait ataxia, bilateral hand clumsiness, +Hoffman's/Babinski</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
               </div>
-              <div class="flex items-start gap-2">
-                <span class="h-1.5 w-1.5 rounded-full bg-violet-500 shrink-0 mt-1"></span>
-                <span class="text-[11px] leading-snug text-slate-500 dark:text-slate-500">
-                  Vascular — 5&thinsp;Ds &amp; 3&thinsp;Ns (VBI / CAD)
-                </span>
+
+              <!-- 3. Spinal Malignancy -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="malig">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-amber-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">Spinal Malignancy</span>
+                      <span class="text-[9px] font-mono text-amber-500/80">NICE NG12</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Age &gt;50, cancer history, weight loss, non-mechanical night pain</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
               </div>
+
+              <!-- 4. Spinal Infection -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="infect">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-yellow-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">Spinal Infection</span>
+                      <span class="text-[9px] font-mono text-yellow-600/80 dark:text-yellow-400/80">NICE / BMJ</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Fever, chills, rigors, recent spinal procedure, IV drug use</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
+              </div>
+
+              <!-- 5. Spinal Fracture -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="fracture">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">Spinal Fracture</span>
+                      <span class="text-[9px] font-mono text-blue-500/80">WHO / NICE</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Major trauma, osteoporosis / steroid fall, acute focal tenderness</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
+              </div>
+
+              <!-- 6. Vascular CAD -->
+              <div class="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-rf-key="cad">
+                <div class="flex items-start gap-2 overflow-hidden">
+                  <span class="h-2 w-2 rounded-full bg-violet-500 shrink-0 mt-1"></span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-semibold text-[11px] text-slate-800 dark:text-slate-200">Vascular (CAD / VBI)</span>
+                      <span class="text-[9px] font-mono text-violet-500/80">IFOMPT</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">5 Ds &amp; 3 Ns: Dizziness, diplopia, dysarthria, nausea, numbness</p>
+                  </div>
+                </div>
+                <button type="button" class="dash-rf-chip px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 transition-all select-none cursor-pointer bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20" data-status="clear">Clear</button>
+              </div>
+            </div>
+
+            <!-- Dynamic Escalation Guidance Box (Shown if any condition is flagged/escalated) -->
+            <div id="dash-rf-alert-box" class="hidden p-2.5 rounded-lg border text-[11px] space-y-1">
+              <!-- Content populated dynamically -->
+            </div>
+
+            <!-- Widget Actions -->
+            <div class="flex items-center justify-between pt-1 text-[11px]">
+              <button id="dash-rf-btn-clear-all" type="button" class="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium">
+                Reset All to Clear
+              </button>
+              <button id="dash-rf-btn-full-guide" type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
+                Open Red Flags Panel
+              </button>
             </div>
           </div>
 
@@ -756,7 +878,7 @@
         <div id="view-programs" class="view-container relative hidden flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
       <!-- ── TIER 1: Header, Template Selection & Program Actions ──────────── -->
-      <header class="flex-none px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 z-10 shadow-sm">
+      <header id="rb-header-toolbar" class="pt-programs-toolbar flex-none px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 z-30 shadow-sm relative overflow-visible" style="position: relative; z-index: 30; overflow: visible;">
         <!-- Left: Program Title & Template Loader -->
         <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[320px]">
           <div class="flex items-center gap-2">
@@ -799,12 +921,13 @@
 
         <!-- Right: Patient Link & Primary Actions -->
         <div class="flex items-center gap-2.5">
-          <!-- Patient Selector -->
-          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1">
+          <!-- Patient Fuzzy Combobox -->
+          <div class="relative flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1">
             <span class="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">Patient:</span>
-            <select id="rb-patient-select" class="bg-transparent text-xs text-indigo-600 dark:text-indigo-300 font-medium border-0 focus:outline-none cursor-pointer max-w-[150px] truncate">
-              <option value="">None (Standalone)</option>
-            </select>
+            <input id="rb-patient-search" type="text" autocomplete="off" class="bg-transparent text-xs text-indigo-600 dark:text-indigo-300 font-medium border-0 focus:outline-none w-[170px] truncate" placeholder="Search patient..." />
+            <input id="rb-patient-id" type="hidden" value="" />
+            <button id="rb-patient-clear" type="button" class="hidden text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs leading-none">&times;</button>
+            <div id="rb-patient-dropdown" class="patient-search-dropdown-menu hidden absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 text-xs py-1" style="z-index: 50;"></div>
           </div>
 
           <!-- Action Buttons -->
@@ -855,7 +978,7 @@
       </header>
 
       <!-- ── TIER 2: Timeline Navigation (Weeks & Days) ─────────────────────── -->
-      <div class="flex-none bg-slate-100/90 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 z-10">
+      <div class="pt-programs-periodization-bar flex-none bg-slate-100/90 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 z-10 relative" style="position: relative; z-index: 10;">
         <!-- Week Tabs -->
         <div class="flex items-center gap-2 overflow-x-auto py-0.5">
           <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mr-1">Periodization:</span>
@@ -1012,16 +1135,7 @@
               </svg>
             </div>
             <select id="exlib-cat" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none">
-              <option value="All">All Categories (250+)</option>
-              <option value="Knee & Quad">Knee &amp; Quad</option>
-              <option value="Hamstring & Posterior Chain">Hamstring &amp; Posterior Chain</option>
-              <option value="Glute & Hip">Glute &amp; Hip</option>
-              <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
-              <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
-              <option value="Chest & Triceps">Chest &amp; Triceps</option>
-              <option value="Back & Biceps">Back &amp; Biceps</option>
-              <option value="Spine & Core">Spine &amp; Core</option>
-              <option value="General Rehab">General Rehab</option>
+              <option value="All">All Categories</option>
             </select>
             <span id="exlib-count-badge" class="text-xs text-slate-500 font-medium">260+ exercises</span>
           </div>
@@ -1228,31 +1342,31 @@
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Name</label>
               <input id="set-clinic-name" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="Antigravity Sports &amp; Orthopaedic Physiotherapy" />
+                     value="" placeholder="e.g. Movement Physiotherapy Clinic" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Phone</label>
               <input id="set-clinic-phone" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="+61 (02) 9876 5432" />
+                     placeholder="+44 20 7946 0912" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Email</label>
               <input id="set-clinic-email" type="email"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="reception@antigravityphysio.com.au" />
+                     placeholder="reception@clinic.co.uk" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">ABN / Practice Tax ID</label>
               <input id="set-clinic-abn" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="ABN 88 123 456 789" />
+                     placeholder="Tax / Registration ID" />
             </div>
             <div class="sm:col-span-2">
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Clinic Address &amp; Suite</label>
               <input id="set-clinic-address" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="Suite 402, 100 Medical Centre Way, Sydney NSW 2000" />
+                     placeholder="Practice street address and city" />
             </div>
           </div>
         </div>
@@ -1261,32 +1375,32 @@
         <div class="card p-5 space-y-4">
           <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practitioner Profile &amp; Registration</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and Medicare compliance.</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and clinical compliance.</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Practitioner Full Name &amp; Suffix</label>
               <input id="set-practitioner-name" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="Dr. Sarah Jenkins, PT, DPT, OCS" />
+                     value="" placeholder="e.g. Jane Doe, MCSP" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Professional Clinical Title</label>
               <input id="set-practitioner-title" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     value="Senior Orthopaedic Physiotherapist" />
+                     value="" placeholder="e.g. Chartered Physiotherapist" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Health Provider Number</label>
               <input id="set-provider-number" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="PRV-8829103A" />
+                     placeholder="Provider Number" />
             </div>
             <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Professional Registration # (AHPRA / HCPC)</label>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Professional Registration # (HCPC / AHPRA)</label>
               <input id="set-reg-number" type="text"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-                     placeholder="AHPRA-PHY00019283" />
+                     placeholder="Registration Number" />
             </div>
           </div>
         </div>
@@ -1393,33 +1507,161 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
             <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Consult Fee ($)</label>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Consult Fee</label>
               <input id="set-fee-initial" type="number" min="0" step="5"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                     value="140.00" />
+                     value="0.00" />
             </div>
             <div>
-              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Follow-up Fee ($)</label>
+              <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Follow-up Fee</label>
               <input id="set-fee-followup" type="number" min="0" step="5"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                     value="95.00" />
+                     value="0.00" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Tax / GST Rate (%)</label>
               <input id="set-tax-rate" type="number" min="0" max="100" step="0.5"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                     value="10.0" />
+                     value="0.0" />
             </div>
             <div>
               <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Currency Symbol</label>
               <input id="set-currency-symbol" type="text" maxlength="3"
                      class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                     value="$" />
+                     value="£" />
             </div>
           </div>
         </div>
 
-        <!-- 5. Medico-Legal Audit Compliance Notice -->
+        <!-- 5. Clinical Governance & EULA Status -->
+        <div class="card p-5 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Clinical Governance &amp; Medico-Legal EULA</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">First-run statutory clinical declaration and indemnity status.</p>
+            </div>
+            <span id="set-eula-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+              Accepted
+            </span>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+            <div>
+              <p id="set-eula-details">Signed by: <span id="set-eula-signee" class="font-medium text-slate-800 dark:text-slate-200">—</span> on <span id="set-eula-date" class="font-mono text-slate-700 dark:text-slate-300">—</span></p>
+            </div>
+            <button id="btn-download-signed-declaration" type="button" class="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer select-none shadow-sm">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              <span class="pointer-events-none">Download Signed Declaration PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6. Universal Offline Data Management & Portability Engine -->
+        <div class="card p-5 space-y-5">
+          <div class="pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Universal Offline Data Backups &amp; Portability</h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500">Export formatted offline JSON archives of your clinical resources or restore previous backups with safe, non-destructive merging.</p>
+          </div>
+
+          <!-- A. Exercise Library & Protocols -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 8v8m2-10v12m12-12v12m2-10v8M6 12h12" />
+                    </svg>
+                  </span>
+                  <span>Exercise Library &amp; Periodized Protocols</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">All atomic exercise movements, cues, sets/reps, and multi-week rehabilitation protocol templates.</p>
+              </div>
+              <span id="backup-exercises-feedback" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium hidden"></span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <button id="btn-export-exercises-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                </svg>
+                <span class="pointer-events-none">Export Exercise Library &amp; Protocols</span>
+              </button>
+              <button id="btn-import-exercises-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <span class="pointer-events-none">Import Exercise Library &amp; Protocols</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- B. Research Library Metadata -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                    </svg>
+                  </span>
+                  <span>Research Paper Library Metadata</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Paper titles, authors, citations, clinical groups, takeaways, and practitioner study notes.</p>
+              </div>
+              <span id="backup-research-feedback" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium hidden"></span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <button id="btn-export-research-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                </svg>
+                <span class="pointer-events-none">Export Research Library Metadata</span>
+              </button>
+              <button id="btn-import-research-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <span class="pointer-events-none">Import Research Library Metadata</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- C. Smart Phrases & Trigger Backup Engine -->
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span class="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                    </svg>
+                  </span>
+                  <span>Smart Phrases, Outcome Measures &amp; Triggers</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Customized outcome measures, shorthand triggers, and clinical SOAP assessments.</p>
+              </div>
+              <span id="backup-status-feedback" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium hidden"></span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <button id="btn-export-smartphrases-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                </svg>
+                <span class="pointer-events-none">Export Smart Phrases Backup (JSON)</span>
+              </button>
+              <button id="btn-import-smartphrases-backup" type="button" class="btn-ghost text-xs py-2 px-3.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 cursor-pointer select-none">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <span class="pointer-events-none">Import Backup (JSON)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Medico-Legal Audit Compliance Notice -->
         <div class="card p-5 space-y-3 border-l-4 border-l-indigo-500">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
@@ -1444,6 +1686,235 @@
           </button>
         </div>
       </div>
+    </div>
+
+
+    <!-- ── RESEARCH LIBRARY VIEW (Bookshelf UI + Dedicated Detail View) ────── -->
+    <div id="view-research-library" class="view-container relative hidden flex-col h-full overflow-hidden">
+
+      <!-- ── [A] Bookshelf Grid View ────────────────────────────────────────── -->
+      <div id="research-bookshelf-view" class="flex flex-col h-full overflow-hidden">
+        <!-- Header Toolbar -->
+        <div class="flex-none flex items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base font-bold text-slate-900 dark:text-slate-100">Research Paper Library</h1>
+                <span id="research-count-badge" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">0 papers</span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">100% offline peer-reviewed clinical evidence repository with auto-metadata extraction.</p>
+            </div>
+          </div>
+
+          <!-- Right actions -->
+          <div class="flex items-center gap-3">
+            <!-- Search input -->
+            <div class="relative w-64">
+              <svg class="h-4 w-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <input id="research-search" type="text" placeholder="Search title, author, group..."
+                     class="library-search-bar w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-7 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              <button id="research-search-clear" type="button" class="absolute right-2 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs cursor-pointer">✕</button>
+            </div>
+
+            <!-- Sort select -->
+            <select id="research-sort" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-indigo-500">
+              <option value="date_uploaded_desc">Date Added (Newest)</option>
+              <option value="pub_year_desc">Publication Year (Newest)</option>
+              <option value="pub_year_asc">Publication Year (Oldest)</option>
+              <option value="title_asc">Title (A - Z)</option>
+              <option value="authors_asc">Authors (A - Z)</option>
+            </select>
+
+            <!-- Upload button -->
+            <button id="btn-research-upload" type="button" class="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3.5 shadow-sm cursor-pointer" data-action="upload-paper">
+              <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span class="pointer-events-none">Upload Paper</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Clinical Group Filter Chips Bar -->
+        <div id="research-chips-bar" class="flex-none px-6 py-2.5 bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 overflow-x-auto relative z-20" style="pointer-events: auto !important; position: relative; z-index: 20;">
+          <div id="research-chips-container" class="flex items-center gap-1.5 min-w-max" style="pointer-events: auto !important;">
+            <!-- Chips injected dynamically by researchLibrary.js -->
+          </div>
+        </div>
+
+        <!-- Bookshelf Grid Container (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-100/50 dark:bg-slate-950/40">
+          <div id="research-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+            <!-- Cards injected dynamically by researchLibrary.js -->
+          </div>
+
+          <!-- Empty state -->
+          <div id="research-empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="h-16 w-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">No research papers found</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-4">No papers match your active filter or search query. Upload a PDF paper or reset your filter.</p>
+            <div class="flex items-center gap-2">
+              <button id="research-btn-reset" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 cursor-pointer">Reset Filters</button>
+              <button id="btn-research-empty-upload" type="button" class="btn-primary text-xs py-1.5 px-3.5 cursor-pointer">+ Upload Paper</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /research-bookshelf-view -->
+    </div><!-- /view-research-library -->
+
+    <!-- ── DEDICATED SINGLE-PAPER DETAIL VIEW ───────────────────────────────── -->
+    <div id="view-paper-detail" class="view-container relative hidden h-full overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <div id="research-detail-view" class="flex flex-col h-full bg-slate-50 dark:bg-slate-950 overflow-hidden text-slate-900 dark:text-slate-100">
+        <!-- Top Navigation Bar -->
+        <div class="flex-none flex items-center justify-between gap-4 px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10">
+          <div class="flex items-center gap-3">
+            <button id="btn-paper-back-to-bookshelf" type="button"
+                    class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer select-none">
+              <span class="pointer-events-none font-bold">←</span>
+              <span class="pointer-events-none font-medium">Back to Bookshelf</span>
+            </button>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 truncate max-w-md sm:max-w-lg">
+              <span>Library</span>
+              <span>/</span>
+              <span id="paper-detail-breadcrumb" class="font-semibold text-slate-800 dark:text-slate-200 truncate">Paper Details</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5">
+            <button id="btn-paper-top-open" type="button" class="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer select-none">
+              <svg class="w-3.5 h-3.5 pointer-events-none shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span class="pointer-events-none">Open PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Detail Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-8">
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+
+            <!-- Left Column: Cover Preview & PDF Launchers -->
+            <div class="md:col-span-4 lg:col-span-4 flex flex-col items-center gap-4">
+              <div id="paper-detail-cover-box"
+                   class="w-full max-w-[280px] aspect-[1/1.38] rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl relative select-none">
+                <!-- Cover preview populated dynamically -->
+              </div>
+
+              <!-- Expansive Open PDF Button -->
+              <button id="btn-paper-open-pdf" type="button"
+                      class="w-full max-w-[280px] btn-primary py-3 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold shadow-md shadow-indigo-950/20 cursor-pointer select-none">
+                <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+                <span class="pointer-events-none">Open PDF in Default Viewer</span>
+              </button>
+
+              <button id="btn-paper-reveal-file" type="button"
+                      class="w-full max-w-[280px] btn-ghost py-1.5 px-3 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5 cursor-pointer select-none">
+                <svg class="w-3.5 h-3.5 pointer-events-none shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                </svg>
+                <span class="pointer-events-none">Reveal in File Explorer</span>
+              </button>
+            </div>
+
+            <!-- Right Column: Title, Metadata, Favorites, Group & Notes -->
+            <div class="md:col-span-8 lg:col-span-8 flex flex-col gap-6">
+
+              <!-- Title Input (Editable on click) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="paper-detail-title-input" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Document Title (Editable)
+                  </label>
+                  <span id="paper-detail-title-status" class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 opacity-0 transition-opacity">Saved</span>
+                </div>
+                <textarea id="paper-detail-title-input" rows="2"
+                          placeholder="Paper Title..."
+                          class="w-full text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl p-3.5 outline-none resize-none transition-all leading-snug"></textarea>
+              </div>
+
+              <!-- Metadata 3-box Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Authors</span>
+                  <span id="paper-detail-authors" class="font-medium text-slate-800 dark:text-slate-200 line-clamp-2 leading-relaxed">—</span>
+                </div>
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Publication Date</span>
+                  <span id="paper-detail-pubdate" class="font-medium text-slate-800 dark:text-slate-200 font-mono block">—</span>
+                </div>
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block mb-1">Date Added</span>
+                  <span id="paper-detail-uploaded" class="font-medium text-slate-800 dark:text-slate-200 font-mono block">—</span>
+                </div>
+              </div>
+
+              <!-- Actions & Category Bar -->
+              <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <!-- Favorite Toggle Button -->
+                <button id="btn-paper-detail-fav" type="button"
+                        class="btn-ghost py-2 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 flex items-center gap-2 text-xs font-semibold cursor-pointer select-none transition-all">
+                  <span id="paper-detail-fav-star" class="pointer-events-none flex items-center justify-center">
+                    <svg class="w-4 h-4 pointer-events-none stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </span>
+                  <span id="paper-detail-fav-label" class="pointer-events-none">Add to Favorites</span>
+                </button>
+
+                <!-- Category / Group Selector + Add New Group -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <div class="flex items-center gap-1.5">
+                    <label for="paper-detail-group-select" class="text-xs font-semibold text-slate-600 dark:text-slate-400 shrink-0">Group:</label>
+                    <select id="paper-detail-group-select" class="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 font-medium max-w-[190px] truncate">
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <input id="paper-detail-new-group-input" type="text" placeholder="+ New group..."
+                           class="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 w-28" />
+                    <button id="btn-paper-detail-add-group" type="button" class="btn-ghost py-1.5 px-2.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer select-none">
+                      <span class="pointer-events-none">Add</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Practitioner Clinical Notes Field (Auto-saving) -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="paper-detail-notes" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-400 pointer-events-none shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                    <span>Clinical Notes &amp; Key Findings</span>
+                  </label>
+                  <span id="paper-detail-notes-status" class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 opacity-0 transition-opacity duration-300">Saved</span>
+                </div>
+                <textarea id="paper-detail-notes" rows="6"
+                          placeholder="Enter key clinical takeaways, biomechanical mechanisms, dosage guidelines, contraindications, or treatment protocols..."
+                          class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y leading-relaxed font-sans shadow-sm"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div><!-- /research-detail-view -->
+    </div><!-- /view-paper-detail -->
+
     </div>
 
 </div><!-- /main content container -->
@@ -1532,7 +2003,7 @@
   </div>
 
   <aside id="rf-drawer"
-         class="hidden fixed inset-y-0 right-0 z-40 w-[440px] flex flex-col overflow-hidden
+         class="hidden fixed inset-y-0 right-0 z-40 w-[480px] max-w-full flex flex-col overflow-hidden
                 bg-white dark:bg-slate-900
                 border-l border-slate-200 dark:border-slate-800/80
                 shadow-2xl shadow-slate-950/40
@@ -1543,8 +2014,8 @@
                 border-b border-slate-100 dark:border-slate-800">
       <div class="flex items-center gap-3">
         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
-                     bg-red-500/10 ring-1 ring-inset ring-red-500/20">
-          <svg class="h-4 w-4 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                     bg-red-500/10 ring-1 ring-inset ring-red-500/20 text-red-500">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" clip-rule="evenodd"
                   d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17
                      2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10
@@ -1553,9 +2024,9 @@
           </svg>
         </span>
         <div>
-          <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Clinical Red Flags</h2>
-          <p class="text-[10px] text-slate-400 dark:text-slate-600 mt-0.5">
-            Emergency screening criteria — refer immediately if present
+          <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">Clinical Red Flags Protocol</h2>
+          <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            UK &amp; International Consensus (NICE NG59 · CSP · BMJ · IFOMPT CAD)
           </p>
         </div>
       </div>
@@ -1567,95 +2038,218 @@
     </div>
 
     <!-- Scrollable content -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-3">
-      <!-- 1. Cauda Equina Syndrome -->
-      <div class="rf-category border-red-500/15 dark:border-red-500/10">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="rf-badge bg-red-500/12 text-red-400 ring-red-500/25">CRITICAL</span>
-          <h3 class="text-xs font-semibold text-red-400">Cauda Equina Syndrome (CES)</h3>
+    <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs" id="rf-drawer-content">
+
+      <!-- 1. Cauda Equina Syndrome (CES) -->
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-red-500/20 dark:border-red-500/15 bg-red-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-red-500/15 text-red-500 border border-red-500/30">CRITICAL · SAME-DAY ED</span>
+            <span class="text-[10px] font-mono text-slate-400">NICE NG59 / CSP</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-red-500"></span>
         </div>
-        <ul class="space-y-1.5">
-          <li class="rf-item"><span class="rf-bullet bg-red-500"></span>Bilateral radiculopathy</li>
-          <li class="rf-item"><span class="rf-bullet bg-red-500"></span>Saddle / perianal numbness</li>
-          <li class="rf-item"><span class="rf-bullet bg-red-500"></span>Urinary retention or overflow incontinence</li>
-          <li class="rf-item"><span class="rf-bullet bg-red-500"></span>Loss of anal sphincter tone</li>
-          <li class="rf-item"><span class="rf-bullet bg-red-500"></span>Bowel dysfunction / faecal incontinence</li>
-        </ul>
+        <div>
+          <h3 class="text-xs font-bold text-red-500 dark:text-red-400">1. Cauda Equina Syndrome (CES)</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Loss of bladder control (urinary retention or overflow incontinence), loss of bowel sphincter control / faecal incontinence, saddle or perianal sensory loss (S2-S5), progressive bilateral lower limb motor weakness / foot drop, bilateral radiculopathy.
+          </p>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Bladder scan post-void residual volume &gt; 200ml; absent anal sphincter tone on DRE; S2-S5 dermatomal numbness (perineum/genitals); bilateral myotomal deficit (L4-S1).</p>
+        </div>
+        <div class="p-2 rounded-lg bg-red-500/10 border border-red-500/25 text-[11px] text-red-600 dark:text-red-400 font-medium">
+          <strong>Escalation Pathway:</strong> Immediate same-day emergency transfer to Emergency Department for emergency MRI spine within &lt; 4 hours. Do NOT wait for routine outpatient imaging.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> Lavy, C., et al. (2009) 'Cauda equina syndrome: local provider survey and review of clinical practice', <em>BMJ</em>, 338:b936. NICE (2020) 'Low back pain and sciatica in over 16s: assessment and management' (NG59). CSP (2020) 'Cauda Equina Syndrome: Clinical Decision Making'.
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="Lavy, C., et al. (2009) 'Cauda equina syndrome: local provider survey and review of clinical practice', BMJ, 338:b936. NICE (2020) 'Low back pain and sciatica in over 16s: assessment and management' (NG59). CSP (2020) 'Cauda Equina Syndrome: Clinical Decision Making'.">
+            Copy Citation
+          </button>
+        </div>
       </div>
 
-      <!-- 2. Cervical Spondylotic Myelopathy -->
-      <div class="rf-category border-orange-500/15 dark:border-orange-500/10">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="rf-badge bg-orange-500/12 text-orange-400 ring-orange-500/25">URGENT</span>
-          <h3 class="text-xs font-semibold text-orange-400">Cervical Spondylotic Myelopathy</h3>
+      <!-- 2. Cervical Spondylotic Myelopathy (CSM) -->
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-orange-500/20 dark:border-orange-500/15 bg-orange-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-orange-500/15 text-orange-500 border border-orange-500/30">URGENT SPINAL SURGERY</span>
+            <span class="text-[10px] font-mono text-slate-400">BMJ / NICE</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-orange-500"></span>
         </div>
-        <ul class="space-y-1.5">
-          <li class="rf-item"><span class="rf-bullet bg-orange-500"></span>Bilateral upper limb paraesthesias</li>
-          <li class="rf-item"><span class="rf-bullet bg-orange-500"></span>Hand clumsiness / loss of dexterity</li>
-          <li class="rf-item"><span class="rf-bullet bg-orange-500"></span>Gait ataxia or unsteadiness</li>
-          <li class="rf-item"><span class="rf-bullet bg-orange-500"></span>Positive Hoffman's sign</li>
-          <li class="rf-item"><span class="rf-bullet bg-orange-500"></span>Inverted supinator / Babinski reflex</li>
-        </ul>
+        <div>
+          <h3 class="text-xs font-bold text-orange-500 dark:text-orange-400">2. Cervical Spondylotic Myelopathy (CSM)</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Progressive bilateral upper limb paraesthesia, bilateral hand clumsiness (dropping cups, struggling with buttons/zippers), spastic gait unsteadiness or ataxia, Lhermitte's electric shock sensation on neck flexion.
+          </p>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Positive Hoffman's sign, Inverted supinator reflex (brachioradialis finger flexion), +Babinski response, ankle clonus (&gt;3 beats), positive Romberg's test, finger escape sign, 10-sec grip &amp; release test (&lt; 20 cycles).</p>
+        </div>
+        <div class="p-2 rounded-lg bg-orange-500/10 border border-orange-500/25 text-[11px] text-orange-600 dark:text-orange-400 font-medium">
+          <strong>Escalation Pathway:</strong> Urgent neurosurgical or orthopaedic spinal surgery referral. Contraindication: zero high-velocity cervical manipulation.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> Davies, B.M., et al. (2018) 'Cervical spondylotic myelopathy: a guide for physical therapists and general practitioners', <em>BMJ</em>, 360:k186. NICE (2021) 'Suspected neurological conditions: recognition and referral' (NG127).
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="Davies, B.M., et al. (2018) 'Cervical spondylotic myelopathy: a guide for physical therapists and general practitioners', BMJ, 360:k186. NICE (2021) 'Suspected neurological conditions: recognition and referral' (NG127).">
+            Copy Citation
+          </button>
+        </div>
       </div>
 
       <!-- 3. Spinal Malignancy -->
-      <div class="rf-category border-amber-500/15 dark:border-amber-500/10">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="rf-badge bg-amber-500/12 text-amber-400 ring-amber-500/25">ALERT</span>
-          <h3 class="text-xs font-semibold text-amber-400">Spinal Malignancy</h3>
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-amber-500/20 dark:border-amber-500/15 bg-amber-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30">URGENT 2-WEEK CANCER</span>
+            <span class="text-[10px] font-mono text-slate-400">NICE NG12 / CSP</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-amber-500"></span>
         </div>
-        <ul class="space-y-1.5">
-          <li class="rf-item"><span class="rf-bullet bg-amber-500"></span>Age &gt; 50</li>
-          <li class="rf-item"><span class="rf-bullet bg-amber-500"></span>Personal history of cancer</li>
-          <li class="rf-item"><span class="rf-bullet bg-amber-500"></span>Unexplained / progressive weight loss</li>
-          <li class="rf-item"><span class="rf-bullet bg-amber-500"></span>Constant, non-mechanical night pain (not posture-dependent)</li>
-          <li class="rf-item"><span class="rf-bullet bg-amber-500"></span>Thoracic spine localised percussion tenderness</li>
-        </ul>
+        <div>
+          <h3 class="text-xs font-bold text-amber-500 dark:text-amber-400">3. Spinal Malignancy / Metastatic Bone Disease</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Age &gt; 50 presenting with new unprovoked back pain, personal history of primary cancer (prostate, breast, lung, kidney, thyroid, myeloma), unexplained progressive weight loss (&gt;5% in 6 months), severe constant non-mechanical pain worsening at night unalleviated by lying flat.
+          </p>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Localized thoracic/lumbar spinous process percussion tenderness, constitutional cachexia, palpable lymphadenopathy.</p>
+        </div>
+        <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+          <strong>Escalation Pathway:</strong> Urgent primary care GP suspected cancer pathway referral (2-week wait) for FBC, ESR/CRP, serum/urine protein electrophoresis, and urgent whole-spine MRI.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> NICE (2021) 'Suspected cancer: recognition and referral' (NG12). Finucane, L.M., et al. (2020) 'International Framework for Red Flags for Potential Serious Spinal Pathologies', <em>JOSPT</em>, 50(7), pp. 350-372.
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="NICE (2021) 'Suspected cancer: recognition and referral' (NG12). Finucane, L.M., et al. (2020) 'International Framework for Red Flags for Potential Serious Spinal Pathologies', JOSPT, 50(7), pp. 350-372.">
+            Copy Citation
+          </button>
+        </div>
       </div>
 
       <!-- 4. Spinal Infection -->
-      <div class="rf-category border-yellow-500/15 dark:border-yellow-500/10">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="rf-badge bg-yellow-500/12 text-yellow-400 ring-yellow-500/25">ALERT</span>
-          <h3 class="text-xs font-semibold text-yellow-400">Spinal Infection</h3>
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-yellow-500/20 dark:border-yellow-500/15 bg-yellow-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30">SAME-DAY ED</span>
+            <span class="text-[10px] font-mono text-slate-400">NICE / BMJ</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-yellow-500"></span>
         </div>
-        <ul class="space-y-1.5">
-          <li class="rf-item"><span class="rf-bullet bg-yellow-500"></span>Fever / chills / rigors</li>
-          <li class="rf-item"><span class="rf-bullet bg-yellow-500"></span>Recent spinal surgery or injection</li>
-          <li class="rf-item"><span class="rf-bullet bg-yellow-500"></span>History of IV drug use</li>
-          <li class="rf-item"><span class="rf-bullet bg-yellow-500"></span>Systemic illness / immunosuppression</li>
-        </ul>
+        <div>
+          <h3 class="text-xs font-bold text-yellow-600 dark:text-yellow-400">4. Spinal Infection (Discitis / Vertebral Osteomyelitis)</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Fever, night sweats, rigors, chills; severe localized constant back or neck pain with marked muscle splinting; recent spinal surgery, epidural/facet injection, indwelling catheter, or history of IV drug use; immunosuppression (diabetes, chemotherapy, chronic steroids).
+          </p>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Exquisite tenderness to gentle spinal percussion; severe involuntary paravertebral muscle spasm; elevated temperature &gt; 38°C.</p>
+        </div>
+        <div class="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/25 text-[11px] text-yellow-700 dark:text-yellow-400 font-medium">
+          <strong>Escalation Pathway:</strong> Same-day Emergency Department transfer for blood cultures, ESR/CRP, and contrast-enhanced MRI spine.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> Berbari, E.F., et al. (2015) '2015 IDSA Clinical Practice Guidelines for Native Vertebral Osteomyelitis in Adults', <em>Clin Infect Dis</em>, 61(6), pp. e26-e46. BMJ Best Practice (2023) 'Vertebral osteomyelitis and discitis'.
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="Berbari, E.F., et al. (2015) '2015 IDSA Clinical Practice Guidelines for Native Vertebral Osteomyelitis in Adults', Clin Infect Dis, 61(6), pp. e26-e46. BMJ Best Practice (2023) 'Vertebral osteomyelitis and discitis'.">
+            Copy Citation
+          </button>
+        </div>
       </div>
 
-      <!-- 5. Vascular — CAD / VBI -->
-      <div class="rf-category border-violet-500/15 dark:border-violet-500/10">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="rf-badge bg-violet-500/12 text-violet-400 ring-violet-500/25">VASCULAR</span>
-          <h3 class="text-xs font-semibold text-violet-400">Vascular — CAD / VBI</h3>
+      <!-- 5. Spinal Fracture -->
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-blue-500/20 dark:border-blue-500/15 bg-blue-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-500 border border-blue-500/30">URGENT IMAGING</span>
+            <span class="text-[10px] font-mono text-slate-400">NICE / WHO MSK</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-blue-500"></span>
         </div>
-        <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-violet-500/60 mb-1.5">5 Ds</p>
-        <ul class="space-y-1.5 mb-3">
-          <li class="rf-item"><span class="rf-bullet bg-violet-500"></span>Dizziness (vertigo / dysequilibrium)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-500"></span>Diplopia (double vision)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-500"></span>Dysarthria (slurred speech)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-500"></span>Dysphagia (difficulty swallowing)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-500"></span>Drop attacks (sudden loss of tone)</li>
-        </ul>
-        <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-violet-500/60 mb-1.5">3 Ns</p>
-        <ul class="space-y-1.5">
-          <li class="rf-item"><span class="rf-bullet bg-violet-400"></span>Nausea (sudden onset)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-400"></span>Numbness (face or upper limb)</li>
-          <li class="rf-item"><span class="rf-bullet bg-violet-400"></span>Nystagmus</li>
-        </ul>
+        <div>
+          <h3 class="text-xs font-bold text-blue-500 dark:text-blue-400">5. Spinal Fracture (Trauma &amp; Osteoporotic Fragility)</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Significant high-energy trauma (MVA, fall from height &gt; 1m) OR minor low-energy trauma/fall in patient with known osteoporosis, female age &gt; 65, prolonged oral corticosteroid use; acute focal midline spinal pain made worse by axial load or turning in bed.
+          </p>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Point tenderness directly over spinous process; visible or palpable step deformity / gibbus; protective guarding.</p>
+        </div>
+        <div class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/25 text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+          <strong>Escalation Pathway:</strong> Urgent plain radiography or CT imaging. Strict spinal precautions; immobilize; strictly avoid manual spinal manipulation.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> NICE (2016) 'Spinal injury: assessment and initial management' (NG41). Royal College of Physicians (2021) 'National Hip and Fragility Fracture Database: clinical guidance on vertebral compression fractures'.
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="NICE (2016) 'Spinal injury: assessment and initial management' (NG41). Royal College of Physicians (2021) 'National Hip and Fragility Fracture Database: clinical guidance on vertebral compression fractures'.">
+            Copy Citation
+          </button>
+        </div>
       </div>
+
+      <!-- 6. Cervical Artery Dysfunction (CAD / VBI) -->
+      <div class="rf-category border rounded-xl p-3.5 space-y-2.5 border-violet-500/20 dark:border-violet-500/15 bg-violet-500/[0.02]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-violet-500/15 text-violet-500 border border-violet-500/30">EMERGENCY 999 · STROKE</span>
+            <span class="text-[10px] font-mono text-slate-400">IFOMPT CAD CONSENSUS</span>
+          </div>
+          <span class="h-2 w-2 rounded-full bg-violet-500"></span>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-violet-500 dark:text-violet-400">6. Cervical Artery Dysfunction (CAD / VBI / Dissection)</h3>
+          <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+            <strong>Key Indicators:</strong> Sudden onset severe atypical unilateral neck or occipital headache ("thunderclap" or unlike previous migraines).
+          </p>
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <div class="bg-violet-500/10 rounded p-1.5 text-[10px] text-slate-700 dark:text-slate-300">
+              <span class="font-bold text-violet-600 dark:text-violet-400 block mb-0.5">5 Ds:</span>
+              Dizziness (vertigo), Diplopia, Dysarthria, Dysphagia, Drop attacks
+            </div>
+            <div class="bg-violet-500/10 rounded p-1.5 text-[10px] text-slate-700 dark:text-slate-300">
+              <span class="font-bold text-violet-600 dark:text-violet-400 block mb-0.5">3 Ns &amp; Others:</span>
+              Nausea, Numbness (facial/hemi-sensory), Nystagmus, Horner's syndrome
+            </div>
+          </div>
+        </div>
+        <div class="text-[11px] bg-slate-50 dark:bg-slate-800/60 rounded-lg p-2 text-slate-600 dark:text-slate-300 space-y-1">
+          <p><strong>Physical Signs:</strong> Cranial nerve palsies (CN IX-XII), Horner's sign (ptosis, miosis, anhidrosis), ataxia, asymmetry in upper extremity pulses/blood pressure.</p>
+        </div>
+        <div class="p-2 rounded-lg bg-violet-500/10 border border-violet-500/25 text-[11px] text-violet-600 dark:text-violet-400 font-medium">
+          <strong>Escalation Pathway:</strong> Immediate 999 emergency call / hyper-acute stroke pathway. Keep patient seated or supine; do NOT move or manipulate the cervical spine.
+        </div>
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Citation:</span> Rushton, A., et al. (2020) 'International framework for examination of the cervical region for potential of vascular pathologies of the neck prior to orthopaedic manual therapy (OMT) intervention: International IFOMPT CAD Framework', <em>JOSPT</em> / IFOMPT.
+          </div>
+          <button type="button" class="btn-copy-rf-citation shrink-0 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded px-2 py-1 cursor-pointer select-none transition-colors" data-citation="Rushton, A., et al. (2020) 'International framework for examination of the cervical region for potential of vascular pathologies of the neck prior to orthopaedic manual therapy (OMT) intervention: International IFOMPT CAD Framework', JOSPT / IFOMPT.">
+            Copy Citation
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- Drawer footer -->
     <div class="flex-none px-5 py-3.5 border-t border-slate-100 dark:border-slate-800
-                bg-slate-50/50 dark:bg-slate-900/50">
-      <p class="text-[10px] text-slate-400 dark:text-slate-600 leading-snug">
-        Immediate onward referral is required if any red flag is identified. Document all findings clearly.
-      </p>
+                bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between gap-3">
+      <button id="rf-btn-copy-note" type="button" class="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-sm cursor-pointer">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span>Copy Red Flags Note</span>
+      </button>
+      <span class="text-[10px] text-slate-400 dark:text-slate-500 leading-tight text-right">
+        Document all screening in patient notes.
+      </span>
     </div>
   </aside>
 
@@ -1748,6 +2342,28 @@
             <input id="np-dob" name="dob" type="date" class="form-input" />
           </div>
           <div>
+            <label for="np-national-id" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              NHS ID / National Health #
+            </label>
+            <input id="np-national-id" name="national_id" type="text" class="form-input" placeholder="e.g. 943 476 5919" />
+          </div>
+        </div>
+
+        <div>
+          <label for="np-diagnosis" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+            Primary Clinical Diagnosis
+          </label>
+          <input id="np-diagnosis" name="primary_diagnosis" type="text" class="form-input" placeholder="e.g. Cervical Radiculopathy / Subacromial Pain Syndrome" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="np-address" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              Address
+            </label>
+            <input id="np-address" name="address" type="text" class="form-input" placeholder="Street, City, Postcode" />
+          </div>
+          <div>
             <label for="np-emergency" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
               Emergency Contact
             </label>
@@ -1772,6 +2388,8 @@
       </div>
     </div>
   </div>
+
+
 
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -2135,9 +2753,30 @@
         <div class="lg:col-span-2 card p-5 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
             <p class="section-label">Patient Demographics &amp; Contact</p>
-            <span id="profile-since-badge" class="text-[11px] text-slate-400 dark:text-slate-500">
-              Patient since <span id="profile-since" class="font-medium text-slate-700 dark:text-slate-300">—</span>
-            </span>
+            <div class="flex items-center gap-3">
+              <span id="profile-since-badge" class="text-[11px] text-slate-400 dark:text-slate-500">
+                Patient since <span id="profile-since" class="font-medium text-slate-700 dark:text-slate-300">—</span>
+              </span>
+              <button id="btn-edit-patient-details" type="button" class="btn-ghost text-xs py-1 px-2.5 border border-slate-300 dark:border-slate-700 hover:text-indigo-600 flex items-center gap-1 cursor-pointer select-none">
+                <svg class="h-3 w-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                </svg>
+                <span class="pointer-events-none">Edit Details</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Prominent Primary Clinical Diagnosis Banner -->
+          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-400">
+                Primary Clinical Diagnosis
+              </span>
+              <span class="text-[10px] text-slate-400">ICD-11 / Working Clinical Impression</span>
+            </div>
+            <p id="profile-diagnosis-display" class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              No diagnosis recorded
+            </p>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2150,18 +2789,28 @@
               <p id="profile-dob" class="text-sm font-medium text-slate-700 dark:text-slate-300">—</p>
             </div>
             <div>
+              <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">NHS ID / National #</p>
+              <p id="profile-national-id" class="text-sm font-medium text-slate-700 dark:text-slate-300 font-mono">—</p>
+            </div>
+            <div>
               <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Phone</p>
               <p id="profile-phone" class="text-sm font-medium text-slate-700 dark:text-slate-300 font-mono">—</p>
             </div>
-            <div>
-              <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Email</p>
-              <p id="profile-email" class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">—</p>
-            </div>
           </div>
 
-          <div class="pt-2 border-t border-slate-100 dark:border-slate-800/60">
-            <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Emergency Contact</p>
-            <p id="profile-emergency" class="text-xs font-medium text-slate-700 dark:text-slate-300 leading-snug">—</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+            <div>
+              <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Email</p>
+              <p id="profile-email" class="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">—</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Emergency Contact</p>
+              <p id="profile-emergency" class="text-xs font-medium text-slate-700 dark:text-slate-300 leading-snug">—</p>
+            </div>
+            <div class="sm:col-span-2">
+              <p class="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600 mb-0.5">Residential Address</p>
+              <p id="profile-address" class="text-xs font-medium text-slate-700 dark:text-slate-300">—</p>
+            </div>
           </div>
         </div>
 
@@ -2225,12 +2874,6 @@
 
           <!-- Quick formatting toolbar -->
           <div class="flex flex-wrap items-center gap-1.5">
-            <button id="btn-insert-soap" type="button"
-                    class="px-2.5 py-1 text-xs font-semibold rounded-md
-                           bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400
-                           hover:bg-indigo-100 dark:hover:bg-indigo-500/25 transition-colors">
-              SOAP Note Template
-            </button>
             <button id="btn-insert-table" type="button"
                     class="px-2.5 py-1 text-xs font-semibold rounded-md
                            border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400
@@ -2261,26 +2904,74 @@
           </div>
         </div>
 
-        <!-- Note writing field -->
-        <div class="relative">
-          <div id="note-content-editor"
-               contenteditable="true"
-               class="rich-editor w-full min-h-[220px] max-h-[500px] overflow-y-auto p-4 rounded-xl text-sm font-sans leading-relaxed
-                      bg-white dark:bg-slate-900/80
-                      border border-slate-200 dark:border-slate-700/70
-                      text-slate-900 dark:text-slate-100
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400
-                      transition-all"
-               data-placeholder="Enter clinical examination notes, patient history, assessment, or click '+ SOAP Template' above…"></div>
-          <textarea id="note-content-input" class="hidden"></textarea>
+        <!-- Note writing field with Safety Screening Co-Pilot -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
+          <div class="lg:col-span-3 space-y-4">
+            <div class="relative">
+              <div id="note-content-editor"
+                   contenteditable="true"
+                   class="rich-editor w-full min-h-[220px] max-h-[500px] overflow-y-auto p-4 rounded-xl text-sm font-sans leading-relaxed
+                          bg-white dark:bg-slate-900/80
+                          border border-slate-200 dark:border-slate-700/70
+                          text-slate-900 dark:text-slate-100
+                          focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400
+                          transition-all"
+                   data-placeholder="Enter clinical examination notes, patient history, assessment, or type '#' for assessment tables, '!' for outcome measures, '@' for smart phrases…"></div>
+              <textarea id="note-content-input" class="hidden"></textarea>
 
-          <!-- Live Preview Pane -->
-          <div id="note-preview-pane"
-               class="hidden w-full h-56 p-4 rounded-xl text-sm leading-relaxed overflow-y-auto
-                      bg-slate-50 dark:bg-slate-800/40
-                      border border-slate-200 dark:border-slate-700/70
-                      note-prose">
-            <p class="text-xs italic text-slate-400">Preview will render formatted markdown here.</p>
+              <!-- Live Preview Pane -->
+              <div id="note-preview-pane"
+                   class="hidden w-full h-56 p-4 rounded-xl text-sm leading-relaxed overflow-y-auto
+                          bg-slate-50 dark:bg-slate-800/40
+                          border border-slate-200 dark:border-slate-700/70
+                          note-prose">
+                <p class="text-xs italic text-slate-400">Preview will render formatted markdown here.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Red Flags & Safety Screening Co-Pilot Sidebar -->
+          <div id="note-rf-copilot" class="lg:col-span-1 rounded-xl p-3.5 bg-red-50/50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-900/40 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-bold text-[11px] uppercase tracking-wider">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+                </svg>
+                <span>Safety Co-Pilot</span>
+              </div>
+              <button id="btn-toggle-note-rf-copilot" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-[10px] font-semibold cursor-pointer select-none">
+                Hide
+              </button>
+            </div>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+              Click any cluster to screen &amp; stamp guideline-cleared exclusion into note:
+            </p>
+            <div id="note-rf-copilot-chips" class="space-y-1.5">
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="ces">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Cauda Equina (CES)</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen saddle anesthesia, retention</span>
+              </button>
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="csm">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Cervical Myelopathy (CSM)</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen ataxia, Hoffman, clumsiness</span>
+              </button>
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="cad">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Cervical Artery (CAD)</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen 5Ds, 3Ns, thunderclap pain</span>
+              </button>
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="malig">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Spinal Malignancy</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen cancer history, night pain</span>
+              </button>
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="fracture">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Spinal Fracture</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen major trauma, osteoporosis</span>
+              </button>
+              <button type="button" class="btn-copilot-stamp w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-red-300 transition-colors cursor-pointer select-none" data-rf-type="infect">
+                <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200 block">Spinal Infection</span>
+                <span class="text-[9px] text-slate-400 block truncate">Screen fever, rigors, IV drug use</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2366,6 +3057,7 @@
   <script src="./renderer.js"></script>
   <script src="./diary.js"></script>
   <script src="./rehabBuilder.js"></script>
+  <script src="./researchLibrary.js"></script>
 
   <!-- ── MODAL: Save as Protocol Template (Phase 7) ────────────────────────── -->
   <div id="modal-save-template"
@@ -2522,19 +3214,29 @@
                  placeholder="e.g., Copenhagen Plank" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
-          <select id="edit-ex-cat" required
-                  class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="Knee & Quad">Knee &amp; Quad</option>
-            <option value="Hamstring & Posterior Chain">Hamstring &amp; Posterior Chain</option>
-            <option value="Glute & Hip">Glute &amp; Hip</option>
-            <option value="Foot, Ankle & Calf">Foot, Ankle &amp; Calf</option>
-            <option value="Shoulder & Scapula">Shoulder &amp; Scapula</option>
-            <option value="Chest & Triceps">Chest &amp; Triceps</option>
-            <option value="Back & Biceps">Back &amp; Biceps</option>
-            <option value="Spine & Core">Spine &amp; Core</option>
-            <option value="General Rehab">General Rehab</option>
-          </select>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">Category *</label>
+            <button type="button" id="btn-toggle-new-ex-cat" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer select-none">
+              + New Category
+            </button>
+          </div>
+          <div id="edit-ex-cat-select-wrap">
+            <select id="edit-ex-cat"
+                    class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
+              <!-- Dynamically populated from database categories -->
+            </select>
+          </div>
+          <div id="edit-ex-cat-custom-wrap" class="hidden mt-1.5 space-y-1">
+            <div class="flex items-center gap-1.5">
+              <input type="text" id="edit-ex-custom-cat"
+                     class="flex-1 bg-slate-50 dark:bg-slate-800 border border-indigo-400 dark:border-indigo-500 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                     placeholder="e.g. Post-Op Spinal Fusion, Youth Agility..." />
+              <button type="button" id="btn-cancel-custom-ex-cat" class="btn-ghost py-2 px-2.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">
+                Existing
+              </button>
+            </div>
+            <p class="text-[10px] text-slate-400">Type a new custom category name to save and add to library filters.</p>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -2737,6 +3439,344 @@
         <button id="btn-submit-invoice" type="submit" class="btn-primary py-2 px-5 cursor-pointer">Save &amp; Generate Invoice</button>
       </div>
     </form>
+  </div>
+
+
+  <!-- ── MODAL: Research Paper Review & Pre-Save ────────────────────────────── -->
+  <div id="modal-paper-backdrop"
+       class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm pointer-events-auto"
+       aria-modal="true" role="dialog"></div>
+
+  <div id="modal-paper-review"
+       class="hidden fixed inset-0 z-[51] flex items-center justify-center p-4 pointer-events-auto"
+       aria-modal="true" role="dialog">
+    <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto max-h-[90vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="h-7 w-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center text-indigo-500">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Review &amp; Add Paper to Library</h2>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Auto-extracted metadata from PDF document</p>
+          </div>
+        </div>
+        <button id="rev-btn-close" type="button" class="btn-icon">✕</button>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div id="rev-loading-state" class="p-10 flex flex-col items-center justify-center text-center space-y-3">
+        <div class="h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-xs font-medium text-slate-600 dark:text-slate-300">Analyzing PDF text and rendering page 1 cover thumbnail…</p>
+      </div>
+
+      <!-- Form Content (2 Columns: Left Cover Preview, Right Metadata Fields) -->
+      <div id="rev-form-state" class="hidden p-6 overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Left: Cover preview -->
+          <div class="sm:col-span-1 flex flex-col items-center">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 w-full text-center">First Page Cover</label>
+            <div id="rev-thumb-preview" class="w-full aspect-[1/1.4] bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-inner flex items-center justify-center">
+              <!-- thumbnail image rendered here -->
+            </div>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-2">Rendered from local PDF Page 1</p>
+          </div>
+
+          <!-- Right: Editable Metadata -->
+          <div class="sm:col-span-2 space-y-3.5">
+            <div>
+              <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Paper Title</label>
+              <textarea id="rev-title" rows="2" class="form-input text-xs font-medium leading-relaxed" placeholder="e.g. Tendinopathy load progression and isometric analgesia"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Authors</label>
+                <input id="rev-authors" type="text" class="form-input text-xs" placeholder="e.g. Rio E, Kidgell D, Moseley L" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Publication Year</label>
+                <input id="rev-date" type="text" class="form-input text-xs font-mono" placeholder="YYYY" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Clinical Group / Specialty</label>
+              <select id="rev-group-select" class="form-input text-xs">
+                <!-- Injected dynamically -->
+              </select>
+            </div>
+
+            <div id="rev-group-custom-wrap" class="hidden">
+              <label class="block text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">New Clinical Group Name</label>
+              <input id="rev-group-custom" type="text" class="form-input text-xs border-indigo-400" placeholder="e.g. Pediatric MSK, Post-Op Neuro" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Clinical Key Takeaways &amp; Notes</label>
+              <textarea id="rev-notes" rows="2" class="form-input text-xs" placeholder="Quick clinical takeaway, dosage protocols, evidence summary..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <button id="rev-btn-cancel" type="button" class="btn-ghost text-xs py-2 px-4 cursor-pointer">Cancel</button>
+        <button id="rev-btn-save" type="button" class="btn-primary text-xs py-2 px-5 cursor-pointer shadow-sm">Save to Library</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MEDICO-LEGAL DISCLAIMER & FIRST-RUN EULA GATEWAY (z-[1000])
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="modal-eula-gateway" class="hidden fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+    <div class="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+      
+      <!-- Header -->
+      <div class="flex-none px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <svg class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">Clinical Governance &amp; Medico-Legal Indemnity Agreement</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Statutory UK GDPR Data Protection &amp; Clinician Professional Liability Framework</p>
+          </div>
+        </div>
+        <button id="btn-eula-close" type="button" class="hidden btn-icon" title="Close review">✕</button>
+      </div>
+
+      <!-- Agreement Body (Scrollable) -->
+      <div id="eula-text-content" class="flex-1 overflow-y-auto p-6 space-y-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed divide-y divide-slate-100 dark:divide-slate-800/60">
+        
+        <div class="pb-3 space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">1. Sole Statutory Data Controller (UK GDPR &amp; DPA 2018)</h3>
+          <p>
+            The operating clinician, physical therapy practitioner, and/or practice organization ("The User") acts as the sole and exclusive <strong>Data Controller</strong> under the UK General Data Protection Regulation (UK GDPR), the Data Protection Act 2018, and all applicable international data privacy statutory regimes.
+          </p>
+          <p>
+            This application operates entirely in an <strong>offline, standalone, local execution environment</strong>. No patient health records (PHI), identifiable data, clinical notes, appointment details, or diagnostic assessments are ever transmitted, backed up, synched, or processed by any external cloud server, developer network, or third-party telemetry system. All database records reside exclusively on the local workstation host filesystem.
+          </p>
+        </div>
+
+        <div class="pt-3 pb-3 space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">2. Complete Developer Disclaimer &amp; Software Indemnity</h3>
+          <p>
+            The software developers, authors, contributors, and distributors bear <strong>zero legal, clinical, diagnostic, regulatory, or financial liability</strong> for any adverse clinical event, diagnostic error, misinterpretation of outcome measures, treatment complication, patient injury, or legal dispute arising directly or indirectly from the use of this software suite.
+          </p>
+          <p>
+            The software, including all outcome score calculators, smart phrases, safety screening checklists, red flag references, and exercise databases, is provided strictly <em>"as is"</em> without warranty of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular clinical purpose, or non-infringement.
+          </p>
+        </div>
+
+        <div class="pt-3 pb-3 space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">3. Clinical Autonomy &amp; Non-Medical Device Notice</h3>
+          <p>
+            This application is an administrative recording, exercise documentation, and clinical note authoring platform. It is <strong>NOT</strong> an approved medical device, autonomous diagnostic software, or artificial intelligence clinical decision engine (under MHRA, FDA, or EU MDR definitions).
+          </p>
+          <p>
+            Outcome calculators, questionnaires, and smart phrase suggestions are non-binding clinical aids. <strong>Autonomous professional clinical judgment, comprehensive in-person objective examination, and statutory clinical standards strictly supersede all software prompts and template outputs at all times.</strong> The clinician assumes 100% responsibility for validating contraindications, dosing rehabilitation exercises, and escalating urgent medical emergencies.
+          </p>
+        </div>
+
+        <div class="pt-3 pb-3 space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">4. Workstation Security &amp; Local Backup Responsibilities</h3>
+          <p>
+            As the sole custodian of the physical machine and SQLite database file, the clinician and practice management are exclusively responsible for implementing adequate physical security, full-disk encryption (e.g., Windows BitLocker / macOS FileVault), multi-factor OS authentication, and compliant off-site encrypted backup rotations. The developers cannot recover lost records, decrypted files, or corrupted local databases.
+          </p>
+        </div>
+
+        <div class="pt-3 space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100">5. Informed Consent &amp; Professional Code of Conduct</h3>
+          <p>
+            The practitioner affirms that they are appropriately licensed, registered (e.g., HCPC, CSP, AHPRA, or state licensing board), and legally authorized to deliver physical therapy / physiotherapy interventions, and that all informed consent, chaperoning, and patient record-keeping requirements will be strictly adhered to in accordance with applicable professional codes of conduct.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Acceptance & Signature Form (First-run Gateway) -->
+      <div id="eula-gateway-form" class="flex-none p-5 sm:p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 space-y-4">
+        
+        <!-- Checkbox -->
+        <label class="flex items-start gap-3 cursor-pointer select-none">
+          <input id="eula-check-accept" type="checkbox" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+          <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+            I accept the Medico-Legal Terms, GDPR Data Controller responsibilities, and Software Indemnity Agreement.
+          </span>
+        </label>
+
+        <!-- Digital Signature -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+              Clinician Full Name &amp; Professional Title (Digital Signature)
+            </label>
+            <input id="eula-input-signee" type="text" placeholder="e.g. Dr. Jane Smith, MCSP / HCPC Reg PH123456" 
+                   class="w-full text-xs px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-medium" />
+          </div>
+          <div class="sm:col-span-1 sm:pt-4">
+            <button id="btn-eula-confirm" type="button" disabled
+                    class="w-full btn-primary text-xs py-2 px-4 font-semibold disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all cursor-pointer">
+              Sign &amp; Continue →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Review Mode Footer (when reopened from Settings) -->
+      <div id="eula-gateway-review-footer" class="hidden flex-none p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+        <div class="text-slate-500 dark:text-slate-400">
+          <span class="font-medium text-slate-700 dark:text-slate-300">Signed record:</span> 
+          <span id="eula-review-meta">—</span>
+        </div>
+        <button id="btn-eula-dismiss-review" type="button" class="btn-primary text-xs py-1.5 px-4 cursor-pointer">
+          Close Declaration
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       EDIT PATIENT DEMOGRAPHICS MODAL — Top-Level Stacking z-[100]
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="ep-backdrop"
+       class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] opacity-0 pointer-events-none transition-opacity duration-250"
+       style="z-index: 99;">
+  </div>
+
+  <div id="modal-edit-patient"
+       class="hidden fixed inset-0 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-250"
+       style="z-index: 100; pointer-events: auto;"
+       role="dialog" aria-modal="true" aria-labelledby="ep-title">
+
+    <div class="w-full max-w-lg bg-white dark:bg-slate-900
+                rounded-2xl shadow-2xl shadow-slate-950/50
+                border border-slate-200 dark:border-slate-800
+                flex flex-col overflow-hidden
+                translate-y-4 transition-transform duration-250 relative z-[101]"
+         id="ep-panel">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5
+                  border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h2 id="ep-title"
+              class="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Edit Patient Demographics
+          </h2>
+          <p class="text-xs text-slate-400 dark:text-slate-600 mt-0.5">
+            Update clinical diagnosis, contact info, and registration details.
+          </p>
+        </div>
+        <button id="ep-close" type="button" class="btn-icon shrink-0 cursor-pointer select-none" title="Close (Esc)">
+          <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form id="ep-form" novalidate class="px-6 py-5 space-y-4">
+        <div id="ep-error"
+             class="hidden flex items-start gap-2.5 rounded-lg px-3.5 py-3
+                    bg-red-50 dark:bg-red-500/10
+                    ring-1 ring-inset ring-red-200 dark:ring-red-500/20">
+          <p id="ep-error-text" class="text-xs text-red-600 dark:text-red-400 leading-snug"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="ep-first-name" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              First Name <span class="text-red-500">*</span>
+            </label>
+            <input id="ep-first-name" type="text" class="form-input" required />
+          </div>
+          <div>
+            <label for="ep-last-name" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              Last Name <span class="text-red-500">*</span>
+            </label>
+            <input id="ep-last-name" type="text" class="form-input" required />
+          </div>
+        </div>
+
+        <div>
+          <label for="ep-diagnosis" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+            Primary Clinical Diagnosis
+          </label>
+          <input id="ep-diagnosis" type="text" class="form-input font-medium" placeholder="e.g. Cervical Radiculopathy C6-C7 / Subacromial Pain Syndrome" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="ep-national-id" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              NHS ID / National Health #
+            </label>
+            <input id="ep-national-id" type="text" class="form-input" placeholder="e.g. 943 476 5919" />
+          </div>
+          <div>
+            <label for="ep-dob" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              Date of Birth
+            </label>
+            <input id="ep-dob" type="date" class="form-input" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="ep-phone" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              Phone
+            </label>
+            <input id="ep-phone" type="tel" class="form-input" />
+          </div>
+          <div>
+            <label for="ep-email" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+              Email
+            </label>
+            <input id="ep-email" type="email" class="form-input" />
+          </div>
+        </div>
+
+        <div>
+          <label for="ep-address" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+            Address
+          </label>
+          <input id="ep-address" type="text" class="form-input" placeholder="Street address, city, postcode" />
+        </div>
+
+        <div>
+          <label for="ep-emergency" class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+            Emergency Contact
+          </label>
+          <input id="ep-emergency" type="text" class="form-input" placeholder="Name — Relation — Phone" />
+        </div>
+      </form>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4
+                  border-t border-slate-100 dark:border-slate-800
+                  bg-slate-50/50 dark:bg-slate-900/50">
+        <button id="ep-cancel" type="button" class="btn-ghost cursor-pointer select-none">
+          <span class="pointer-events-none">Cancel</span>
+        </button>
+        <button id="ep-submit" type="submit" form="ep-form" class="btn-primary">
+          <svg id="ep-spinner" class="hidden h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span id="ep-submit-label">Save Changes</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 </body>

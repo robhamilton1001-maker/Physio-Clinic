@@ -40,17 +40,18 @@ db.transaction(() => {
       address           TEXT,
       emergency_contact TEXT,                   -- Free-text: "Name — Relationship — Phone"
       notes             TEXT,
+      primary_diagnosis TEXT,
+      national_id       TEXT,
       created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
       updated_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
       deleted_at        TEXT                    -- NULL = active, set = soft-deleted
     );
   `);
 
-  // Add emergency_contact to any existing DB that predates this column
-  // (safe no-op if the column already exists — SQLite throws, we catch)
-  try {
-    db.exec(`ALTER TABLE patients ADD COLUMN emergency_contact TEXT;`);
-  } catch (_) { /* column already exists — ignore */ }
+  // Add columns to any existing DB that predates them
+  try { db.exec(`ALTER TABLE patients ADD COLUMN emergency_contact TEXT;`); } catch (_) { /* ignore */ }
+  try { db.exec(`ALTER TABLE patients ADD COLUMN primary_diagnosis TEXT;`); } catch (_) { /* ignore */ }
+  try { db.exec(`ALTER TABLE patients ADD COLUMN national_id TEXT;`); } catch (_) { /* ignore */ }
 
   // -- Appointments ---------------------------------------------------------
   db.exec(`
@@ -137,6 +138,8 @@ db.transaction(() => {
       cues            TEXT
     );
 
+    CREATE VIEW IF NOT EXISTS exercises AS SELECT * FROM exercise_library;
+
     CREATE TABLE IF NOT EXISTS pt_programs (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       patient_id      INTEGER REFERENCES patients(id) ON DELETE SET NULL,
@@ -153,6 +156,8 @@ db.transaction(() => {
       duration_weeks  INTEGER DEFAULT 4,
       protocol_json   TEXT    NOT NULL
     );
+
+    CREATE VIEW IF NOT EXISTS protocols AS SELECT * FROM pt_templates;
 
     -- Phase 8: Clinic Settings & Invoicing ---------------------------------
     CREATE TABLE IF NOT EXISTS clinic_settings (
@@ -185,7 +190,36 @@ db.transaction(() => {
       unit_price  REAL    NOT NULL DEFAULT 0.0,
       total       REAL    NOT NULL DEFAULT 0.0
     );
+
+    CREATE TABLE IF NOT EXISTS research_papers (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      title             TEXT NOT NULL,
+      authors           TEXT,
+      publication_date  TEXT,
+      date_uploaded     DATETIME DEFAULT CURRENT_TIMESTAMP,
+      group_tag         TEXT DEFAULT 'General',
+      file_path         TEXT NOT NULL,
+      thumbnail_path    TEXT,
+      is_favorite       INTEGER DEFAULT 0,
+      notes             TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS research_groups (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+
+    -- Phase 9: Legal Disclaimer & First-Run EULA Gateway --------------------
+    CREATE TABLE IF NOT EXISTS settings (
+      id                      INTEGER PRIMARY KEY DEFAULT 1,
+      eula_accepted           INTEGER DEFAULT 0,
+      eula_accepted_timestamp TEXT,
+      eula_signee             TEXT
+    );
   `);
+
+  try { db.exec(`INSERT OR IGNORE INTO settings (id, eula_accepted) VALUES (1, 0);`); } catch (_) {}
 
   // -- Phase 3 columns & nullable patient_id migration ----------------------
   [
@@ -259,6 +293,9 @@ db.transaction(() => {
     CREATE INDEX IF NOT EXISTS idx_invoices_status       ON invoices(status);
     CREATE INDEX IF NOT EXISTS idx_invoices_date         ON invoices(issue_date);
     CREATE INDEX IF NOT EXISTS idx_inv_items_inv         ON invoice_items(invoice_id);
+    CREATE INDEX IF NOT EXISTS idx_research_group        ON research_papers(group_tag);
+    CREATE INDEX IF NOT EXISTS idx_research_fav          ON research_papers(is_favorite);
+    CREATE INDEX IF NOT EXISTS idx_research_date         ON research_papers(date_uploaded);
   `);
 
 })();
@@ -285,9 +322,12 @@ try {
   // Check if #ROM-CERVICAL and #CRANIAL-NERVES exist in DB and full library is seeded
   const sampleAssessment = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'ROM-CERVICAL' LIMIT 1").get();
   const sampleCranial = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'CRANIAL-NERVES' LIMIT 1").get();
+  const sampleCES = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'CES-SCREENING' LIMIT 1").get();
+  const sampleRedFlags = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '#' AND code = 'REDFLAGS-FULL' LIMIT 1").get();
   const sampleTh = db.prepare("SELECT content FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'DASH' LIMIT 1").get();
+  const samplePhq = db.prepare("SELECT id FROM smart_phrases WHERE trigger_prefix = '!' AND code = 'PHQ9' LIMIT 1").get();
   const currentCount = db.prepare('SELECT COUNT(*) AS count FROM smart_phrases').get()?.count || 0;
-  const needsReseed = !sampleAssessment || !sampleCranial || currentCount < 70 || (sampleTh && !sampleTh.content.includes('th-text'));
+  const needsReseed = !sampleAssessment || !sampleCranial || !sampleCES || !sampleRedFlags || !samplePhq || currentCount < SEED_SMART_PHRASES.length || (sampleTh && !sampleTh.content.includes('th-text'));
 
   if (needsReseed) {
     console.log('[DB] Synchronizing # Clinical Assessments and updated MSK smart phrases...');
@@ -320,7 +360,7 @@ try {
   db.exec('CREATE VIEW IF NOT EXISTS exercises AS SELECT * FROM exercise_library;');
 
   const exCount = db.prepare('SELECT COUNT(*) AS count FROM exercise_library').get();
-  if (!exCount || exCount.count < 370) {
+  if (!exCount || exCount.count < 400) {
     db.prepare('DELETE FROM exercise_library').run();
     const insertEx = db.prepare(`
       INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
@@ -362,40 +402,64 @@ try {
   console.warn('[DB] Rehab seed warning:', rehabSeedErr.message);
 }
 
-// ── Seed Practice Settings (Phase 8) ──────────────────────────────────────
+// ── Seed Practice Settings (Phase 8 - Clean Defaults) ─────────────────────
 try {
-  const settingsCount = db.prepare('SELECT COUNT(*) as count FROM clinic_settings').get();
-  if (!settingsCount || settingsCount.count === 0) {
-    const defaultSettings = [
-      ['clinic_name', 'Antigravity Sports & Orthopaedic Physiotherapy'],
-      ['practitioner_name', 'Dr. Sarah Jenkins, PT, DPT, OCS'],
-      ['practitioner_title', 'Senior Orthopaedic Physiotherapist'],
-      ['provider_number', 'PRV-8829103A'],
-      ['reg_number', 'AHPRA-PHY00019283'],
-      ['clinic_phone', '+61 (02) 9876 5432'],
-      ['clinic_email', 'reception@antigravityphysio.com.au'],
-      ['clinic_address', 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000'],
-      ['clinic_abn', 'ABN 88 123 456 789'],
-      ['work_start', '08:30'],
-      ['work_end', '17:30'],
-      ['slot_duration', '30'],
-      ['active_days', '["Mon","Tue","Wed","Thu","Fri"]'],
-      ['lunch_enabled', '1'],
-      ['lunch_start', '12:30'],
-      ['lunch_duration', '60'],
-      ['fee_initial', '140.00'],
-      ['fee_followup', '95.00'],
-      ['tax_rate', '10.0'],
-      ['currency_symbol', '$']
-    ];
-    const insertSetting = db.prepare('INSERT OR IGNORE INTO clinic_settings (key, value) VALUES (?, ?)');
-    for (const [k, v] of defaultSettings) {
-      insertSetting.run(k, v);
-    }
-    console.log('[DB] Seeded practice settings.');
+  const defaultSettings = [
+    ['clinic_name', ''],
+    ['practitioner_name', ''],
+    ['practitioner_title', ''],
+    ['provider_number', ''],
+    ['reg_number', ''],
+    ['clinic_phone', ''],
+    ['clinic_email', ''],
+    ['clinic_address', ''],
+    ['clinic_abn', ''],
+    ['work_start', '08:30'],
+    ['work_end', '17:30'],
+    ['slot_duration', '30'],
+    ['active_days', '["Mon","Tue","Wed","Thu","Fri"]'],
+    ['lunch_enabled', '1'],
+    ['lunch_start', '12:30'],
+    ['lunch_duration', '60'],
+    ['fee_initial', '0.00'],
+    ['fee_followup', '0.00'],
+    ['tax_rate', '0.0'],
+    ['currency_symbol', '£']
+  ];
+  const insertSetting = db.prepare('INSERT OR IGNORE INTO clinic_settings (key, value) VALUES (?, ?)');
+  for (const [k, v] of defaultSettings) {
+    insertSetting.run(k, v);
   }
+
+  // Purge legacy mock/dummy clinician data from existing installations
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'practitioner_name' AND value LIKE '%Sarah Jenkins%'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'practitioner_title' AND value = 'Senior Orthopaedic Physiotherapist'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_name' AND value LIKE '%Antigravity Sports%'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_address' AND value LIKE '%Medical Centre Way%'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'provider_number' AND value = 'PRV-8829103A'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'reg_number' AND value = 'AHPRA-PHY00019283'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_phone' AND value = '+61 (02) 9876 5432'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_email' AND value = 'reception@antigravityphysio.com.au'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_abn' AND value = 'ABN 88 123 456 789'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '0.00' WHERE key = 'fee_initial' AND value = '140.00'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '0.00' WHERE key = 'fee_followup' AND value = '95.00'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '0.0' WHERE key = 'tax_rate' AND value = '10.0'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '£' WHERE key = 'currency_symbol' AND value = '$'`).run();
 } catch (setErr) {
   console.warn('[DB] Settings seed warning:', setErr.message);
+}
+
+// Seed clinical patients if missing (e.g. Emma Rodriguez id:3)
+try {
+  const insertPat = db.prepare(`
+    INSERT OR IGNORE INTO patients (id, first_name, last_name, dob, phone, email, address, emergency_contact, primary_diagnosis, national_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  insertPat.run(1, 'Jon', 'Doe', '1988-03-14', '07700 900123', 'jon.doe@example.com', '14 Victoria Road, London', 'David Doe (Brother) — 07700 900124', 'L4-L5 Lumbar Disc Herniation with Radiculopathy', '943 476 5919');
+  insertPat.run(2, 'Jom', 'Doughnut', '1975-08-22', '07700 900456', 'jom.doughnut@example.com', '82 High Street, Manchester', 'Claire Doughnut (Wife) — 07700 900457', 'Post-Op Right ACL Reconstruction (Hamstring Graft)', '842 195 4421');
+  insertPat.run(3, 'Emma', 'Rodriguez', '1992-11-05', '07700 900789', 'emma.rodriguez@example.com', '27 Park Lane, Bristol', 'Carlos Rodriguez (Brother) — 07700 900790', 'Cervicogenic Headache & Upper Trapezius Trigger Points', '731 884 1092');
+} catch (pErr) {
+  console.warn('[DB] Patient seed warning:', pErr.message);
 }
 
 // ── Prepared statements ───────────────────────────────────────────────────
@@ -404,12 +468,12 @@ try {
 const stmts = {
   // Patients
   patientCreate: db.prepare(`
-    INSERT INTO patients (first_name, last_name, dob, phone, email, emergency_contact, notes)
-    VALUES (@first_name, @last_name, @dob, @phone, @email, @emergency_contact, @notes)
+    INSERT INTO patients (first_name, last_name, dob, phone, email, address, emergency_contact, notes, primary_diagnosis, national_id)
+    VALUES (@first_name, @last_name, @dob, @phone, @email, @address, @emergency_contact, @notes, @primary_diagnosis, @national_id)
   `),
 
   patientSearch: db.prepare(`
-    SELECT id, first_name, last_name, phone, email, dob, created_at
+    SELECT id, first_name, last_name, phone, email, dob, address, emergency_contact, primary_diagnosis, national_id, created_at
     FROM   patients
     WHERE  deleted_at IS NULL
       AND  (
@@ -418,6 +482,8 @@ const stmts = {
          OR (first_name || ' ' || last_name) LIKE @q
          OR phone             LIKE @q
          OR email             LIKE @q
+         OR national_id       LIKE @q
+         OR primary_diagnosis LIKE @q
            )
     ORDER  BY last_name, first_name
     LIMIT  20
@@ -434,8 +500,11 @@ const stmts = {
            dob               = @dob,
            phone             = @phone,
            email             = @email,
+           address           = @address,
            emergency_contact = @emergency_contact,
            notes             = @notes,
+           primary_diagnosis = @primary_diagnosis,
+           national_id       = @national_id,
            updated_at        = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
     WHERE  id = @id AND deleted_at IS NULL
   `),
@@ -509,7 +578,7 @@ const stmts = {
   countPatients: db.prepare(`SELECT COUNT(*) AS n FROM patients WHERE deleted_at IS NULL`),
   countTodayAppts: db.prepare(`
     SELECT COUNT(*) AS n FROM appointments
-    WHERE  date(scheduled_at) = ? AND status != 'cancelled'
+    WHERE (date(scheduled_at) = ? OR substr(scheduled_at, 1, 10) = ?) AND status != 'cancelled'
   `),
   countNotes: db.prepare(`SELECT ((SELECT COUNT(*) FROM notes) + (SELECT COUNT(*) FROM clinical_notes)) AS n`),
 };
@@ -534,8 +603,11 @@ const patients = {
       dob:               (data.dob               || '').trim() || null,
       phone:             (data.phone             || '').trim() || null,
       email:             (data.email             || '').trim().toLowerCase() || null,
+      address:           (data.address           || '').trim() || null,
       emergency_contact: (data.emergency_contact || '').trim() || null,
       notes:             (data.notes             || '').trim() || null,
+      primary_diagnosis: (data.primary_diagnosis || '').trim() || null,
+      national_id:       (data.national_id       || '').trim() || null,
     });
 
     return stmts.patientById.get(info.lastInsertRowid);
@@ -587,7 +659,24 @@ const patients = {
   },
 
   list()           { return stmts.patientList.all(); },
-  update(id, data) { return stmts.patientUpdate.run({ ...data, id }); },
+  update(id, data) {
+    const existing = stmts.patientById.get(id);
+    if (!existing) throw new Error(`Patient not found: ${id}`);
+    stmts.patientUpdate.run({
+      id: Number(id),
+      first_name:        data.first_name !== undefined ? (data.first_name || '').trim() : existing.first_name,
+      last_name:         data.last_name !== undefined ? (data.last_name || '').trim() : existing.last_name,
+      dob:               data.dob !== undefined ? ((data.dob || '').trim() || null) : existing.dob,
+      phone:             data.phone !== undefined ? ((data.phone || '').trim() || null) : existing.phone,
+      email:             data.email !== undefined ? ((data.email || '').trim().toLowerCase() || null) : existing.email,
+      address:           data.address !== undefined ? ((data.address || '').trim() || null) : existing.address,
+      emergency_contact: data.emergency_contact !== undefined ? ((data.emergency_contact || '').trim() || null) : existing.emergency_contact,
+      notes:             data.notes !== undefined ? ((data.notes || '').trim() || null) : existing.notes,
+      primary_diagnosis: data.primary_diagnosis !== undefined ? ((data.primary_diagnosis || '').trim() || null) : existing.primary_diagnosis,
+      national_id:       data.national_id !== undefined ? ((data.national_id || '').trim() || null) : existing.national_id,
+    });
+    return stmts.patientById.get(id);
+  },
   delete(id)       { return stmts.patientSoftDelete.run(id); },
 };
 
@@ -748,10 +837,20 @@ const notes = {
 
 const stats = {
   dashboard(todayISO) {
+    const activeRow = db.prepare(`
+      SELECT COUNT(DISTINCT patient_id) AS activeCount
+      FROM appointments
+      WHERE (date(scheduled_at) = ? OR substr(scheduled_at, 1, 10) = ?)
+        AND is_clinical = 1
+        AND status != 'cancelled'
+        AND patient_id IS NOT NULL
+    `).get(todayISO, todayISO);
+
     return {
-      totalPatients: stmts.countPatients.get().n,
-      todayAppts:    stmts.countTodayAppts.get(todayISO).n,
-      totalNotes:    stmts.countNotes.get().n,
+      activePatients: activeRow ? activeRow.activeCount : 0,
+      totalPatients:  stmts.countPatients.get().n,
+      todayAppts:     stmts.countTodayAppts.get(todayISO, todayISO).n,
+      totalNotes:     stmts.countNotes.get().n,
     };
   },
 };
@@ -849,6 +948,60 @@ const smartPhrases = {
 
   delete(id) {
     return db.prepare('DELETE FROM smart_phrases WHERE id = ?').run(id);
+  },
+
+  exportBackup() {
+    return {
+      exported_at: new Date().toISOString(),
+      app_version: '1.0.0',
+      trigger_categories: triggerCategories.list(),
+      smart_phrases: this.list()
+    };
+  },
+
+  importBackup(backupData) {
+    const phrases = backupData?.smart_phrases || backupData?.phrases;
+    const categories = backupData?.trigger_categories || backupData?.categories;
+    if (!backupData || !Array.isArray(phrases)) {
+      throw new Error('Invalid backup file format: missing smart_phrases array.');
+    }
+    const importTx = db.transaction(() => {
+      if (Array.isArray(categories)) {
+        const catStmt = db.prepare(`
+          INSERT INTO trigger_categories (prefix, label) VALUES (?, ?)
+          ON CONFLICT(prefix) DO UPDATE SET label = excluded.label
+        `);
+        for (const cat of categories) {
+          if (cat.prefix && cat.label) {
+            catStmt.run(cat.prefix.trim(), cat.label.trim());
+          }
+        }
+      }
+      const spStmt = db.prepare(`
+        INSERT INTO smart_phrases (trigger_prefix, code, title, content, category)
+        VALUES (@trigger_prefix, @code, @title, @content, @category)
+        ON CONFLICT(full_trigger) DO UPDATE SET
+          title = excluded.title,
+          content = excluded.content,
+          category = excluded.category,
+          updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+      `);
+      let count = 0;
+      for (const sp of phrases) {
+        if (sp.trigger_prefix && sp.code && sp.title) {
+          spStmt.run({
+            trigger_prefix: sp.trigger_prefix.trim(),
+            code: sp.code.trim().toUpperCase(),
+            title: sp.title.trim(),
+            content: sp.content || '',
+            category: sp.category || 'general'
+          });
+          count++;
+        }
+      }
+      return { success: true, count, phrasesImported: count, categoriesImported: Array.isArray(categories) ? categories.length : 0 };
+    });
+    return importTx();
   }
 };
 
@@ -882,6 +1035,11 @@ const triggerCategories = {
 // ── Domain: Phased S&C and Rehab Builder (Phase 7) ────────────────────────
 const rehab = {
   // Exercise Library
+  getCategories() {
+    const rows = db.prepare("SELECT DISTINCT category FROM exercises WHERE category IS NOT NULL AND trim(category) != '' ORDER BY category ASC").all();
+    return rows.map(r => r.category);
+  },
+
   listExercises(category, search) {
     let sql = 'SELECT * FROM exercise_library';
     const params = [];
@@ -1043,6 +1201,92 @@ const rehab = {
 
   deleteProgram(id) {
     return db.prepare('DELETE FROM pt_programs WHERE id = ?').run(Number(id));
+  },
+
+  exportBackup() {
+    const exercises = db.prepare('SELECT id, name, category, default_sets, default_reps, thumbnail_path, cues FROM exercise_library ORDER BY category ASC, name ASC').all();
+    const protocols = db.prepare('SELECT id, name, category, duration_weeks, protocol_json FROM pt_templates ORDER BY name ASC').all();
+    return {
+      exported_at: new Date().toISOString(),
+      app_version: '1.0.0',
+      exercises,
+      protocols
+    };
+  },
+
+  importBackup(backupData) {
+    const exercises = backupData?.exercises || [];
+    const protocols = backupData?.protocols || [];
+    if (!Array.isArray(exercises) && !Array.isArray(protocols)) {
+      throw new Error('Invalid backup format: expected exercises or protocols array.');
+    }
+    let exCount = 0;
+    let protoCount = 0;
+    const checkEx = db.prepare('SELECT id FROM exercise_library WHERE LOWER(name) = LOWER(?) LIMIT 1');
+    const insertEx = db.prepare(`
+      INSERT INTO exercise_library (name, category, default_sets, default_reps, thumbnail_path, cues)
+      VALUES (@name, @category, @default_sets, @default_reps, @thumbnail_path, @cues)
+    `);
+    const updateEx = db.prepare(`
+      UPDATE exercise_library
+      SET category = @category, default_sets = @default_sets, default_reps = @default_reps, cues = @cues
+      WHERE id = @id
+    `);
+
+    const checkProto = db.prepare('SELECT id FROM pt_templates WHERE LOWER(name) = LOWER(?) LIMIT 1');
+    const insertProto = db.prepare(`
+      INSERT INTO pt_templates (name, category, duration_weeks, protocol_json)
+      VALUES (@name, @category, @duration_weeks, @protocol_json)
+    `);
+    const updateProto = db.prepare(`
+      UPDATE pt_templates
+      SET category = @category, duration_weeks = @duration_weeks, protocol_json = @protocol_json
+      WHERE id = @id
+    `);
+
+    const tx = db.transaction(() => {
+      for (const ex of exercises) {
+        if (!ex.name) continue;
+        const existing = checkEx.get(ex.name);
+        const payload = {
+          id: existing?.id,
+          name: ex.name,
+          category: ex.category || 'General',
+          default_sets: ex.default_sets || 3,
+          default_reps: String(ex.default_reps || '10'),
+          thumbnail_path: ex.thumbnail_path || null,
+          cues: ex.cues || ''
+        };
+        if (existing) {
+          updateEx.run(payload);
+        } else {
+          insertEx.run(payload);
+        }
+        exCount++;
+      }
+
+      for (const pr of protocols) {
+        if (!pr.name) continue;
+        const existing = checkProto.get(pr.name);
+        const pJson = typeof pr.protocol_json === 'string' ? pr.protocol_json : JSON.stringify(pr.protocol_json || {});
+        const payload = {
+          id: existing?.id,
+          name: pr.name,
+          category: pr.category || 'Rehab',
+          duration_weeks: pr.duration_weeks || 4,
+          protocol_json: pJson
+        };
+        if (existing) {
+          updateProto.run(payload);
+        } else {
+          insertProto.run(payload);
+        }
+        protoCount++;
+      }
+    });
+
+    tx();
+    return { exCount, protoCount };
   }
 };
 
@@ -1266,6 +1510,248 @@ try {
   console.warn('[DB] Invoices seed warning:', invErr.message);
 }
 
+// ── Research Papers Module ────────────────────────────────────────────────
+const researchPapers = {
+  getAll({ group, search, favoriteOnly, sortBy } = {}) {
+    let sql = 'SELECT * FROM research_papers WHERE 1=1';
+    const params = [];
+
+    if (group && group !== 'All') {
+      sql += ' AND group_tag = ?';
+      params.push(group);
+    }
+
+    if (favoriteOnly) {
+      sql += ' AND is_favorite = 1';
+    }
+
+    if (search && search.trim()) {
+      const q = `%${search.trim()}%`;
+      sql += ' AND (title LIKE ? OR authors LIKE ? OR group_tag LIKE ? OR notes LIKE ?)';
+      params.push(q, q, q, q);
+    }
+
+    switch (sortBy) {
+      case 'date_uploaded_asc':
+        sql += ' ORDER BY date_uploaded ASC';
+        break;
+      case 'pub_year_desc':
+        sql += ' ORDER BY publication_date DESC, id DESC';
+        break;
+      case 'pub_year_asc':
+        sql += ' ORDER BY publication_date ASC, id ASC';
+        break;
+      case 'title_asc':
+        sql += ' ORDER BY title COLLATE NOCASE ASC';
+        break;
+      case 'title_desc':
+        sql += ' ORDER BY title COLLATE NOCASE DESC';
+        break;
+      case 'authors_asc':
+        sql += ' ORDER BY authors COLLATE NOCASE ASC';
+        break;
+      case 'date_uploaded_desc':
+      default:
+        sql += ' ORDER BY date_uploaded DESC, id DESC';
+        break;
+    }
+
+    return db.prepare(sql).all(...params);
+  },
+
+  getById(id) {
+    return db.prepare('SELECT * FROM research_papers WHERE id = ?').get(Number(id));
+  },
+
+  create(data) {
+    const info = db.prepare(`
+      INSERT INTO research_papers (title, authors, publication_date, group_tag, file_path, thumbnail_path, is_favorite, notes)
+      VALUES (@title, @authors, @publication_date, @group_tag, @file_path, @thumbnail_path, @is_favorite, @notes)
+    `).run({
+      title: data.title,
+      authors: data.authors || null,
+      publication_date: data.publication_date || null,
+      group_tag: data.group_tag || 'General',
+      file_path: data.file_path,
+      thumbnail_path: data.thumbnail_path || null,
+      is_favorite: data.is_favorite ? 1 : 0,
+      notes: data.notes || null,
+    });
+    return this.getById(info.lastInsertRowid);
+  },
+
+  update(id, data) {
+    const ALLOWED = ['title', 'authors', 'publication_date', 'group_tag', 'file_path', 'thumbnail_path', 'is_favorite', 'notes'];
+    const sets = [];
+    const values = [];
+    ALLOWED.forEach(k => {
+      if (Object.prototype.hasOwnProperty.call(data, k)) {
+        sets.push(`${k} = ?`);
+        values.push(data[k]);
+      }
+    });
+    if (!sets.length) return this.getById(id);
+    db.prepare(`UPDATE research_papers SET ${sets.join(', ')} WHERE id = ?`).run([...values, Number(id)]);
+    return this.getById(id);
+  },
+
+  toggleFavorite(id) {
+    db.prepare('UPDATE research_papers SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END WHERE id = ?').run(Number(id));
+    return this.getById(id);
+  },
+
+  setFavorite(id, isFav) {
+    db.prepare('UPDATE research_papers SET is_favorite = ? WHERE id = ?').run(isFav ? 1 : 0, Number(id));
+    return this.getById(id);
+  },
+
+  delete(id) {
+    const paper = this.getById(id);
+    db.prepare('DELETE FROM research_papers WHERE id = ?').run(Number(id));
+    return paper;
+  },
+
+  getFavoriteCount() {
+    const row = db.prepare('SELECT COUNT(*) AS favCount FROM research_papers WHERE is_favorite = 1').get();
+    return row?.favCount || 0;
+  },
+
+  getCounts() {
+    const row = db.prepare(`
+      SELECT 
+        COUNT(*) AS totalCount,
+        COALESCE(SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END), 0) AS favCount
+      FROM research_papers
+    `).get();
+    return {
+      total: row?.totalCount || 0,
+      favorites: row?.favCount || 0
+    };
+  },
+
+  getGroups() {
+    const fromPapers = db.prepare("SELECT DISTINCT group_tag AS name FROM research_papers WHERE group_tag IS NOT NULL AND trim(group_tag) != ''").all().map(r => r.name);
+    let fromGroups = [];
+    try {
+      fromGroups = db.prepare("SELECT name FROM research_groups ORDER BY name ASC").all().map(r => r.name);
+    } catch (_) {}
+    const defaultList = ['Spine / Lumbar', 'Knee / ACL', 'Shoulder', 'Tendon / Tendinopathy', 'Pain Science', 'S&C / Periodization', 'Hip & Pelvis', 'Foot & Ankle', 'General / MSK'];
+    const all = Array.from(new Set([...defaultList, ...fromPapers, ...fromGroups])).filter(Boolean).sort();
+    return all;
+  },
+
+  addGroup(name) {
+    const clean = (name || '').trim();
+    if (!clean) return this.getGroups();
+    try {
+      db.prepare("INSERT OR IGNORE INTO research_groups (name) VALUES (?)").run(clean);
+    } catch (_) {}
+    return this.getGroups();
+  },
+
+  exportBackup() {
+    const papers = db.prepare('SELECT title, authors, publication_date, date_uploaded, group_tag, file_path, thumbnail_path, is_favorite, notes FROM research_papers ORDER BY id ASC').all();
+    const groups = this.getGroups();
+    return {
+      exported_at: new Date().toISOString(),
+      app_version: '1.0.0',
+      groups,
+      papers
+    };
+  },
+
+  importBackup(backupData) {
+    const papers = backupData?.papers || [];
+    const groups = backupData?.groups || [];
+    if (!Array.isArray(papers)) {
+      throw new Error('Invalid backup format: missing papers array.');
+    }
+    let paperCount = 0;
+    const checkPaper = db.prepare('SELECT id FROM research_papers WHERE LOWER(title) = LOWER(?) LIMIT 1');
+    const insertPaper = db.prepare(`
+      INSERT INTO research_papers (title, authors, publication_date, group_tag, file_path, thumbnail_path, is_favorite, notes)
+      VALUES (@title, @authors, @publication_date, @group_tag, @file_path, @thumbnail_path, @is_favorite, @notes)
+    `);
+    const updatePaper = db.prepare(`
+      UPDATE research_papers
+      SET authors = @authors, publication_date = @publication_date, group_tag = @group_tag,
+          thumbnail_path = COALESCE(@thumbnail_path, thumbnail_path), is_favorite = @is_favorite, notes = @notes
+      WHERE id = @id
+    `);
+
+    const tx = db.transaction(() => {
+      if (Array.isArray(groups)) {
+        for (const g of groups) {
+          if (typeof g === 'string' && g.trim()) {
+            this.addGroup(g.trim());
+          }
+        }
+      }
+
+      for (const p of papers) {
+        if (!p.title) continue;
+        const existing = checkPaper.get(p.title);
+        const payload = {
+          id: existing?.id,
+          title: p.title,
+          authors: p.authors || null,
+          publication_date: p.publication_date || null,
+          group_tag: p.group_tag || 'General / MSK',
+          file_path: p.file_path || 'internal://imported',
+          thumbnail_path: p.thumbnail_path || null,
+          is_favorite: p.is_favorite ? 1 : 0,
+          notes: p.notes || null
+        };
+        if (existing) {
+          updatePaper.run(payload);
+        } else {
+          insertPaper.run(payload);
+        }
+        paperCount++;
+      }
+    });
+
+    tx();
+    return { paperCount };
+  }
+};
+
+// Purge any benchmark research papers so library starts 100% empty for user uploads
+try {
+  db.prepare("DELETE FROM research_papers WHERE file_path LIKE 'internal://seeded%'").run();
+} catch (err) {
+  console.warn('[DB] Research papers cleanup error:', err.message);
+}
+
+// ── Domain: Legal Disclaimer & EULA Gateway ────────────────────────────────
+const eula = {
+  getStatus() {
+    try {
+      const row = db.prepare('SELECT eula_accepted, eula_accepted_timestamp, eula_signee FROM settings WHERE id = 1').get();
+      return {
+        accepted: row ? Boolean(row.eula_accepted) : false,
+        timestamp: row ? row.eula_accepted_timestamp : null,
+        signee: row ? row.eula_signee : null
+      };
+    } catch (_) {
+      return { accepted: false, timestamp: null, signee: null };
+    }
+  },
+  accept(signee) {
+    const timestamp = new Date().toISOString();
+    const cleanSignee = (signee || 'Licensed Clinician').trim();
+    db.prepare(`
+      INSERT INTO settings (id, eula_accepted, eula_accepted_timestamp, eula_signee)
+      VALUES (1, 1, @timestamp, @signee)
+      ON CONFLICT(id) DO UPDATE SET
+        eula_accepted = 1,
+        eula_accepted_timestamp = @timestamp,
+        eula_signee = @signee
+    `).run({ timestamp, signee: cleanSignee });
+    return { success: true, timestamp, signee: cleanSignee };
+  }
+};
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -1281,8 +1767,11 @@ module.exports = {
   smartPhrases,
   triggerCategories,
   rehab,
+  exercises: rehab,
   settings,
+  eula,
   invoices,
+  researchPapers,
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {

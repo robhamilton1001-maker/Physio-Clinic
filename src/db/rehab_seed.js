@@ -2624,6 +2624,252 @@ const SEED_EXERCISES = [
     "default_reps": "12-15 reps each dir",
     "cues": "Elbow bent to 90° tucked at ribs, hold hammer or off-center dumbbell by bottom of handle, rotate slowly into full pronation and supination."
   }
+,
+{
+  "name": "Barbell Power Clean (Floor to Front Rack)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "3-5 reps",
+  "cues": "Triple extension through ankles, knees, and hips. Pull bar close to body and quickly rotate elbows under into a quarter squat front rack."
+},
+{
+  "name": "Hang Power Clean (Above Knee)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "3-5 reps",
+  "cues": "Hinge to above patella, jump and shrug aggressively, snap elbows through into solid front rack catch."
+},
+{
+  "name": "Push Press (Dip & Drive)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 4,
+  "default_reps": "5 reps",
+  "cues": "Vertical torso dip of 2-3 inches, explosive leg drive through heels, punch bar directly overhead into locked-out thoracic extension."
+},
+{
+  "name": "Split Jerk (Barbell Overhead Catch)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "2-3 reps",
+  "cues": "Dip and drive vertically, drop quickly underneath into front/back split foot position, back knee bent, bar locked overhead behind ears."
+},
+{
+  "name": "Hang Power Snatch (Wide Grip Hip Extension)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 4,
+  "default_reps": "3 reps",
+  "cues": "Wide hook grip, hinge from hips above knees, explosive vertical hip extension, catch in quarter squat overhead with active shoulders."
+},
+{
+  "name": "Overhead Squat (Barbell Wide Grip)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "5 reps",
+  "cues": "Press bar overhead with wide snatch grip, push up into bar to engage serratus and traps, descend into full deep squat keeping bar over midfoot."
+},
+{
+  "name": "Snatch High Pull (Triple Extension)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "3-5 reps",
+  "cues": "Violent extension of hips and knees, shrug shoulders up to ears, elbows high and outside while keeping bar close to chest."
+},
+{
+  "name": "Clean High Pull (Power Position)",
+  "category": "Olympic Weightlifting",
+  "default_sets": 3,
+  "default_reps": "3-5 reps",
+  "cues": "Explosive triple extension from the power position, guide barbell vertically with high elbows, maintaining upright posture without leaning back."
+},
+{
+  "name": "Kettlebell Swing (Russian / Eye-Level)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "15-20 reps",
+  "cues": "Hip hinge dominant, snap glutes to standing plank, let bell float weightless to eye level without using shoulders to lift."
+},
+{
+  "name": "Kettlebell Swing (American / Overhead)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "15 reps",
+  "cues": "Hinge deeply, generate violent hip drive to carry kettlebell directly overhead in line with spine, arms fully extended at top."
+},
+{
+  "name": "Wall Ball Shot (Target at 9/10 ft)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "15-20 reps",
+  "cues": "Hold medicine ball at chest, descend into full hip crease below parallel squat, explode upward and throw ball to wall target on extension."
+},
+{
+  "name": "Box Jump with Step Down",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "10-12 reps",
+  "cues": "Two-foot explosive takeoff, land softly with knees tracking over toes, stand to full hip extension, step down one foot at a time to protect Achilles."
+},
+{
+  "name": "Thruster (Front Squat into Overhead Press)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "8-10 reps",
+  "cues": "Full depth front squat, explode out of hole transferring leg drive directly into fluid overhead lockout in one continuous movement."
+},
+{
+  "name": "Toes-to-Bar (Hanging Kip or Strict)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 3,
+  "default_reps": "8-12 reps",
+  "cues": "Hang from pull-up bar, initiate hollow-to-arch tension, compress core and kick both feet together until toes contact bar between hands."
+},
+{
+  "name": "Kettlebell Farmer's Walk (Heavy Bilateral Carry)",
+  "category": "CrossFit & Conditioning",
+  "default_sets": 4,
+  "default_reps": "30-40 meters",
+  "cues": "Deadlift heavy kettlebells at sides, brace core with tall neutral spine, walk with short deliberate heel-to-toe strides without swaying."
+},
+{
+  "name": "Depth Jump / Drop Jump (Fast Stretch-Shortening Cycle)",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "5 reps",
+  "cues": "Step off 30cm box, land on balls of feet with minimal ground contact time (<0.2s), explode immediately upward into maximum vertical jump."
+},
+{
+  "name": "Broad Jump (Horizontal Power & Deceleration)",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "5-6 reps",
+  "cues": "Load hips and swing arms back, leap forward horizontally for maximum distance, land softly in stable bilateral quarter squat sticking the landing."
+},
+{
+  "name": "Lateral Bounds / Skater Hops (Frontal Plane RFD)",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "6-8 reps / side",
+  "cues": "Push off single leg sideways, fly laterally through air, land softly on opposite leg absorbing force through hip and knee, stick each landing for 1s."
+},
+{
+  "name": "Rotational Medicine Ball Scoop Slam",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "8 reps / side",
+  "cues": "Pivot rear foot and rotate hips, whip non-bouncing slam ball across torso and spike into wall or floor with maximum rotational velocity."
+},
+{
+  "name": "Overhead Medicine Ball Slam (Triple Flexion Power)",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "10 reps",
+  "cues": "Reach tall onto toes with ball overhead, aggressively pull down with lats and abdominals, slamming ball into ground directly ahead of feet."
+},
+{
+  "name": "Continuous Hurdle Hops (Linear Reactivity)",
+  "category": "Plyometrics & RFD",
+  "default_sets": 3,
+  "default_reps": "5 hurdles",
+  "cues": "Jump cleanly over mini hurdles with rapid ground contact, keeping stiff ankles and knees tracking straight ahead."
+},
+{
+  "name": "Strict Pull-Up (Overhand Grip)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "6-10 reps",
+  "cues": "Full dead hang with engaged scaps, pull chest to bar with elbows driving down to back pockets, lower smoothly under control to full extension."
+},
+{
+  "name": "Strict Dip (Parallel Bars)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "8-12 reps",
+  "cues": "Support on bars with locked elbows, lower torso with forward lean until shoulders are below elbows, press back up to lockout."
+},
+{
+  "name": "Push-Up (Strict Military Form)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "15-20 reps",
+  "cues": "Rigid plank line from crown to heels, tuck elbows to 45 degrees, lower chest until touching floor, push ground away into full scapular protraction."
+},
+{
+  "name": "Inverted Row / Bodyweight Row (Rings or Bar)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "10-12 reps",
+  "cues": "Hang horizontally beneath bar, maintain tight glutes and abs, retract shoulder blades and pull chest to bar, pause 1s at top."
+},
+{
+  "name": "Pistol Squat (Single-Leg Full Squat)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "5 reps / leg",
+  "cues": "Stand on one leg with opposite leg extended forward horizontally, descend into deep single-leg squat with heel flat on floor, drive up through midfoot."
+},
+{
+  "name": "Hollow Body Hold (Gymnastic Abdominal Hollow)",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "30-45 sec hold",
+  "cues": "Lie supine, press lumbar spine flat against ground, lift legs 6 inches and reach arms overhead by ears, hold rigid banana shape without arching back."
+},
+{
+  "name": "L-Sit on Parallel Bars / Floor",
+  "category": "Calisthenics & Bodyweight",
+  "default_sets": 3,
+  "default_reps": "15-20 sec hold",
+  "cues": "Depress scapulae actively into bars, lift legs straight out at 90 degrees parallel to ground, engage quads and hip flexors."
+},
+{
+  "name": "Downward-Facing Dog (Adho Mukha Svanasana)",
+  "category": "Yoga & Mobility",
+  "default_sets": 3,
+  "default_reps": "30-60 sec hold",
+  "cues": "Press firmly through hands and fingers, lift hips high and back into inverted V shape, pedal heels toward floor, lengthen spine."
+},
+{
+  "name": "Upward-Facing Dog / Cobra (Bhujangasana)",
+  "category": "Yoga & Mobility",
+  "default_sets": 3,
+  "default_reps": "5 breaths",
+  "cues": "Press tops of feet and palms into floor, extend elbows and lift chest upward, roll shoulders back and down away from ears."
+},
+{
+  "name": "Pigeon Pose (Eka Pada Rajakapotasana - Piriformis / Hip Opener)",
+  "category": "Yoga & Mobility",
+  "default_sets": 2,
+  "default_reps": "60-90 sec / side",
+  "cues": "Bring one shin forward across mat, extend rear leg straight back, square hips toward floor, fold forward over front shin as tolerated."
+},
+{
+  "name": "Child's Pose with Lateral Lat Reach (Balasana)",
+  "category": "Yoga & Mobility",
+  "default_sets": 2,
+  "default_reps": "60 sec hold",
+  "cues": "Knees wide, big toes touching, sit hips back onto heels, reach arms far forward, walk hands to one side to open opposite lat and rib cage."
+},
+{
+  "name": "Warrior II (Virabhadrasana II - Hip Strength & Mobility)",
+  "category": "Yoga & Mobility",
+  "default_sets": 3,
+  "default_reps": "30-45 sec / side",
+  "cues": "Wide stance, front knee bent 90 degrees directly over ankle, back leg straight and grounded, reach arms parallel to floor, gaze over front fingers."
+},
+{
+  "name": "Cat-Cow Segmental Spinal Articulation",
+  "category": "Yoga & Mobility",
+  "default_sets": 2,
+  "default_reps": "10-12 cycles",
+  "cues": "Hands under shoulders, knees under hips. Inhale to drop belly and lift chest (Cow), exhale to round spine up towards ceiling tucking chin and pelvis (Cat)."
+},
+{
+  "name": "Thread the Needle (Thoracic Rotation & Posterior Shoulder Stretch)",
+  "category": "Yoga & Mobility",
+  "default_sets": 2,
+  "default_reps": "8-10 reps / side",
+  "cues": "From quadruped, reach one arm under torso across opposite side resting back of shoulder and temple on floor, hold or pulse dynamically."
+}
 ];
 
 // Pre-loaded multi-week protocols strictly omitted per workflow architecture
