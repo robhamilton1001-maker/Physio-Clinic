@@ -38,8 +38,10 @@ window.Diary = (() => {
 
   // ── State ───────────────────────────────────────────────────────────────────
   let view             = 'week';
-  let weekDays         = 5;
+  let weekDays         = 7;                // Universal 7-day week (Monday – Sunday)
+  let activePracticeDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; // Configured active practice days
   let anchor           = new Date();       // pivot date for navigation
+  let pickerMonth      = new Date();       // month currently navigated in the date picker dropdown
   let events           = [];               // loaded from SQLite
   let activeBookingContext = null;         // Pre-filled booking context (e.g. from patient profile)
   let inited           = false;
@@ -104,8 +106,9 @@ window.Diary = (() => {
     if (view === 'day') return [new Date(anchor)];
     const d = new Date(anchor);
     const dow = d.getDay();
-    d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1)); // Monday
-    return Array.from({length: weekDays}, (_, i) => {
+    d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1)); // Always start on Monday
+    // Force universal 7-day week (Monday – Sunday)
+    return Array.from({length: 7}, (_, i) => {
       const x = new Date(d);
       x.setDate(d.getDate() + i);
       return x;
@@ -128,8 +131,11 @@ window.Diary = (() => {
     hdrEl.innerHTML = days.map(d => {
       const iso = isoDate(d);
       const isT = iso === today;
+      const dowShort = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const isActiveDay = activePracticeDays.includes(dowShort);
+      const nonActiveHdrCls = !isActiveDay ? ' diary-col-hdr-nonactive' : '';
       return `
-        <div class="diary-col-hdr${isT ? ' is-today' : ''}" data-date="${iso}">
+        <div class="diary-col-hdr${isT ? ' is-today' : ''}${nonActiveHdrCls}" data-date="${iso}">
           <span class="diary-dow">${d.toLocaleDateString('en-AU',{weekday:'short'})}</span>
           <span class="diary-dnum${isT ? ' today-num' : ''}">${d.getDate()}</span>
         </div>`;
@@ -161,6 +167,12 @@ window.Diary = (() => {
       col.className = 'diary-col';
       col.dataset.date   = isoDate(day);
       col.dataset.colIdx = String(ci);
+
+      const dowShort = day.toLocaleDateString('en-US', { weekday: 'short' });
+      const isActiveDay = activePracticeDays.includes(dowShort);
+      if (!isActiveDay) {
+        col.classList.add('diary-col-nonactive');
+      }
 
       // Background grid lines (distinct hour, dashed half-hour, dotted quarter-hour)
       for (let h = DAY_START; h < DAY_END; h++) {
@@ -569,7 +581,7 @@ window.Diary = (() => {
 
   function navigate(delta) {
     const d = new Date(anchor);
-    d.setDate(d.getDate() + delta * (view === 'day' ? 1 : weekDays));
+    d.setDate(d.getDate() + delta * (view === 'day' ? 1 : 7));
     anchor = d;
     buildGrid();
     loadEvents();
@@ -577,6 +589,7 @@ window.Diary = (() => {
 
   function goToday() {
     anchor = new Date();
+    closeDatePicker();
     buildGrid();
     loadEvents();
   }
@@ -598,10 +611,120 @@ window.Diary = (() => {
       });
     } else {
       const a = days[0], b = days[days.length-1];
-      el.textContent = a.getMonth() === b.getMonth()
-        ? a.toLocaleDateString('en-AU', {month:'long', year:'numeric'})
-        : `${a.toLocaleDateString('en-AU',{month:'short'})} – ${b.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}`;
+      if (a.getMonth() === b.getMonth()) {
+        el.textContent = `${a.getDate()} – ${b.getDate()} ${a.toLocaleDateString('en-AU', {month:'short', year:'numeric'})}`;
+      } else {
+        el.textContent = `${a.getDate()} ${a.toLocaleDateString('en-AU',{month:'short'})} – ${b.getDate()} ${b.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}`;
+      }
     }
+  }
+
+  // ── Date Picker Popover Calendar Dropdown ────────────────────────────────────
+
+  function renderDatePicker() {
+    const popover = $('diary-datepicker-popover');
+    if (!popover) return;
+
+    const titleEl = $('diary-dp-month-title');
+    const gridEl = $('diary-dp-days-grid');
+    if (!titleEl || !gridEl) return;
+
+    const y = pickerMonth.getFullYear();
+    const m = pickerMonth.getMonth();
+
+    titleEl.textContent = pickerMonth.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+
+    // Monday-based first day of month (0 = Mon, ..., 6 = Sun)
+    const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const daysInPrevMonth = new Date(y, m, 0).getDate();
+
+    const todayIso = isoDate(new Date());
+    const anchorIso = isoDate(anchor || new Date());
+
+    let html = '';
+
+    // Leading days from previous month
+    for (let i = firstDow - 1; i >= 0; i--) {
+      const pDay = daysInPrevMonth - i;
+      const pDate = new Date(y, m - 1, pDay);
+      const pIso = isoDate(pDate);
+      html += `
+        <button type="button" class="diary-dp-cell h-8 w-8 text-[11px] rounded-lg text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer select-none" data-date="${pIso}">
+          ${pDay}
+        </button>
+      `;
+    }
+
+    // Days in current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cDate = new Date(y, m, d);
+      const cIso = isoDate(cDate);
+      const isToday = cIso === todayIso;
+      const isSelected = cIso === anchorIso;
+
+      let cellCls = 'diary-dp-cell h-8 w-8 text-[11px] font-medium rounded-lg transition-all flex items-center justify-center cursor-pointer select-none';
+      if (isSelected) {
+        cellCls += ' bg-indigo-600 text-white font-bold shadow-sm';
+      } else if (isToday) {
+        cellCls += ' border border-indigo-500 font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40';
+      } else {
+        cellCls += ' text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800';
+      }
+
+      html += `
+        <button type="button" class="${cellCls}" data-date="${cIso}">
+          ${d}
+        </button>
+      `;
+    }
+
+    // Trailing days from next month to fill out the grid
+    const totalCells = firstDow + daysInMonth;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let j = 1; j <= remaining; j++) {
+      const nDate = new Date(y, m + 1, j);
+      const nIso = isoDate(nDate);
+      html += `
+        <button type="button" class="diary-dp-cell h-8 w-8 text-[11px] rounded-lg text-slate-300 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer select-none" data-date="${nIso}">
+          ${j}
+        </button>
+      `;
+    }
+
+    gridEl.innerHTML = html;
+
+    // Attach click events on cells
+    gridEl.querySelectorAll('.diary-dp-cell').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const dateStr = btn.dataset.date;
+        if (dateStr) {
+          const parts = dateStr.split('-');
+          anchor = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+          buildGrid();
+          loadEvents();
+          closeDatePicker();
+        }
+      };
+    });
+  }
+
+  function toggleDatePicker() {
+    const popover = $('diary-datepicker-popover');
+    if (!popover) return;
+    const isHidden = popover.classList.contains('hidden');
+    if (isHidden) {
+      pickerMonth = new Date(anchor || new Date());
+      renderDatePicker();
+      popover.classList.remove('hidden');
+    } else {
+      popover.classList.add('hidden');
+    }
+  }
+
+  function closeDatePicker() {
+    $('diary-datepicker-popover')?.classList.add('hidden');
   }
 
   // ── Event Drawer (`#ev-drawer` & `#ev-backdrop`) ─────────────────────────────
@@ -1022,6 +1145,34 @@ window.Diary = (() => {
       });
     });
 
+    // Date picker trigger & controls
+    $('diary-calendar-trigger')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDatePicker();
+    });
+
+    $('diary-dp-prev-month')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pickerMonth.setMonth(pickerMonth.getMonth() - 1);
+      renderDatePicker();
+    });
+
+    $('diary-dp-next-month')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pickerMonth.setMonth(pickerMonth.getMonth() + 1);
+      renderDatePicker();
+    });
+
+    $('diary-dp-jump-today')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToday();
+    });
+
+    $('diary-dp-close')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeDatePicker();
+    });
+
     // Appointment preview card actions
     $('ap-close')?.addEventListener('click', closeApptPreview);
     $('ap-edit-btn')?.addEventListener('click', () => {
@@ -1042,9 +1193,13 @@ window.Diary = (() => {
     // Patient search in drawer
     initDrawerPatientSearch();
 
-    // Global Esc also closes drawer and preview
+    // Global Esc also closes drawer, preview, and date picker
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { closeEventDrawer(); closeApptPreview(); }
+      if (e.key === 'Escape') {
+        closeEventDrawer();
+        closeApptPreview();
+        closeDatePicker();
+      }
     });
 
     // Close preview on outside click
@@ -1052,6 +1207,14 @@ window.Diary = (() => {
       const card = $('appt-preview');
       if (card && !card.classList.contains('hidden') && !card.contains(e.target)) {
         closeApptPreview();
+      }
+
+      const popover = $('diary-datepicker-popover');
+      const trigger = $('diary-calendar-trigger');
+      if (popover && !popover.classList.contains('hidden')) {
+        if (!popover.contains(e.target) && !trigger?.contains(e.target)) {
+          closeDatePicker();
+        }
       }
     });
 
@@ -1093,7 +1256,7 @@ window.Diary = (() => {
       try {
         const days = typeof cfg.active_days === 'string' ? JSON.parse(cfg.active_days) : cfg.active_days;
         if (Array.isArray(days) && days.length > 0) {
-          weekDays = Math.max(1, Math.min(7, days.length));
+          activePracticeDays = days;
         }
       } catch (_) {}
     }
@@ -1137,7 +1300,7 @@ window.Diary = (() => {
             try {
               const days = typeof cfg.active_days === 'string' ? JSON.parse(cfg.active_days) : cfg.active_days;
               if (Array.isArray(days) && days.length > 0) {
-                weekDays = Math.max(1, Math.min(7, days.length));
+                activePracticeDays = days;
               }
             } catch (_) {}
           }

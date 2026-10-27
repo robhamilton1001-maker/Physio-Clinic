@@ -5006,7 +5006,7 @@ function updateBrandingUI(branding) {
     ? (currentBranding.logoBase64 || `file://${currentBranding.logoPath}?t=${Date.now()}`)
     : defaultMasterLogoSrc;
 
-  // 1. Sidebar Brand (Top-Left)
+  // 1. Sidebar Brand (Top-Left) - Sole Location for Global App Branding
   const elGlobalName = $('global-clinic-name');
   if (elGlobalName) elGlobalName.textContent = displayName;
 
@@ -5019,20 +5019,7 @@ function updateBrandingUI(branding) {
     elGlobalLogo.classList.remove('hidden');
   }
 
-  // 2. Top-Left Dashboard Branding
-  const elDashName = $('dashboard-clinic-name');
-  if (elDashName) elDashName.textContent = displayName;
-
-  const elDashSubtitle = $('dashboard-clinic-subtitle');
-  if (elDashSubtitle) elDashSubtitle.textContent = displaySubtitle;
-
-  const elDashLogo = $('dashboard-clinic-logo');
-  if (elDashLogo) {
-    elDashLogo.src = activeLogoSrc;
-    elDashLogo.classList.remove('hidden');
-  }
-
-  // 3. Settings Screen Preview & Remove Button
+  // 2. Settings Screen Preview & Remove Button
   const elPreview = $('settings-clinic-logo-preview');
   const elPlaceholder = $('settings-clinic-logo-placeholder');
   const btnRemove = $('btn-remove-clinic-logo');
@@ -5210,73 +5197,168 @@ function initSettingsView() {
     };
   }
 
-  // Save clinic preferences to SQLite
-  const btnSavePrefs = $('set-btn-save-prefs');
-  if (btnSavePrefs) {
-    btnSavePrefs.onclick = async () => {
-      const activeDays = [];
-      document.querySelectorAll('#set-active-days-container input[type="checkbox"]:checked').forEach(cb => {
-        activeDays.push(cb.value);
-      });
+  // Per-Card and Global Settings Saving Pipeline
+  function triggerButtonSaved(btn, text = 'Saved') {
+    if (!btn) return;
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = `
+      <svg class="h-3.5 w-3.5 text-emerald-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+      <span class="pointer-events-none text-emerald-600 dark:text-emerald-400 font-bold">✓ ${text}</span>
+    `;
+    btn.classList.add('ring-2', 'ring-emerald-500/60', 'bg-emerald-50', 'dark:bg-emerald-500/20');
+    setTimeout(() => {
+      btn.innerHTML = origHtml;
+      btn.classList.remove('ring-2', 'ring-emerald-500/60', 'bg-emerald-50', 'dark:bg-emerald-500/20');
+    }, 2500);
+  }
 
-      const prefs = {
+  async function saveSettingsSection(section, btn) {
+    let partial = {};
+    if (section === 'demographics') {
+      partial = {
         clinic_name: $('set-clinic-name')?.value?.trim() || '',
         clinic_phone: $('set-clinic-phone')?.value?.trim() || '',
         clinic_email: $('set-clinic-email')?.value?.trim() || '',
         clinic_address: $('set-clinic-address')?.value?.trim() || '',
-        clinic_abn: $('set-clinic-abn')?.value?.trim() || '',
-
+        clinic_abn: $('set-clinic-abn')?.value?.trim() || ''
+      };
+    } else if (section === 'practitioner') {
+      partial = {
         practitioner_name: $('set-practitioner-name')?.value?.trim() || '',
         practitioner_title: $('set-practitioner-title')?.value?.trim() || '',
         provider_number: $('set-provider-number')?.value?.trim() || '',
-        reg_number: $('set-reg-number')?.value?.trim() || '',
-
+        reg_number: $('set-reg-number')?.value?.trim() || ''
+      };
+    } else if (section === 'schedule') {
+      const activeDays = [];
+      document.querySelectorAll('#set-active-days-container input[type="checkbox"]:checked').forEach(cb => {
+        activeDays.push(cb.value);
+      });
+      partial = {
         work_start: $('set-work-start')?.value || '08:30',
         work_end: $('set-work-end')?.value || '17:30',
         slot_duration: $('set-slot-duration')?.value || '30',
         active_days: JSON.stringify(activeDays),
-
         lunch_enabled: $('set-lunch-enabled')?.checked ? '1' : '0',
         lunch_start: $('set-lunch-start')?.value || '12:30',
-        lunch_duration: $('set-lunch-duration')?.value || '60',
-
+        lunch_duration: $('set-lunch-duration')?.value || '60'
+      };
+    } else if (section === 'billing') {
+      partial = {
         fee_initial: $('set-fee-initial')?.value || '140.00',
         fee_followup: $('set-fee-followup')?.value || '95.00',
         tax_rate: $('set-tax-rate')?.value || '10.0',
         currency_symbol: $('set-currency-symbol')?.value || '$'
       };
+    }
 
-      try {
-        const saved = await window.api.settings.save(prefs);
-        clinicSettingsCache = saved || prefs;
+    try {
+      const saved = await window.api.settings.save(partial);
+      clinicSettingsCache = { ...(clinicSettingsCache || {}), ...partial };
 
-        // Dynamic update of top-left branding across the application
+      if (partial.clinic_name !== undefined || partial.practitioner_name !== undefined) {
         updateBrandingUI({
-          clinicName: prefs.clinic_name,
-          practitionerName: prefs.practitioner_name
+          clinicName: partial.clinic_name,
+          practitionerName: partial.practitioner_name
         });
-
-        // Synchronize calendar schedule dynamically
-        if (window.Diary?.updateScheduleConfig) {
-          window.Diary.updateScheduleConfig(prefs);
-        }
-
-        // Show success indicator
-        const feedback = $('set-save-feedback');
-        if (feedback) {
-          feedback.classList.remove('hidden');
-          setTimeout(() => feedback.classList.add('hidden'), 3500);
-        }
-
-        // Update fee labels in invoice drawer
-        if ($('label-fee-initial')) $('label-fee-initial').textContent = Number(prefs.fee_initial).toFixed(2);
-        if ($('label-fee-followup')) $('label-fee-followup').textContent = Number(prefs.fee_followup).toFixed(2);
-
-      } catch (err) {
-        alert('Failed to save settings: ' + err.message);
       }
-    };
+
+      if (section === 'schedule' && window.Diary?.updateScheduleConfig) {
+        window.Diary.updateScheduleConfig(partial);
+      }
+
+      if (section === 'billing') {
+        if ($('label-fee-initial') && partial.fee_initial) $('label-fee-initial').textContent = Number(partial.fee_initial).toFixed(2);
+        if ($('label-fee-followup') && partial.fee_followup) $('label-fee-followup').textContent = Number(partial.fee_followup).toFixed(2);
+      }
+
+      triggerButtonSaved(btn);
+    } catch (err) {
+      alert('Failed to save section: ' + err.message);
+    }
   }
+
+  // Bind per-card save buttons
+  document.querySelectorAll('.btn-save-card').forEach(btn => {
+    btn.onclick = () => saveSettingsSection(btn.dataset.card, btn);
+  });
+
+  // Master Save All Preferences (Top and Bottom)
+  async function saveAllPreferences(btns = []) {
+    const activeDays = [];
+    document.querySelectorAll('#set-active-days-container input[type="checkbox"]:checked').forEach(cb => {
+      activeDays.push(cb.value);
+    });
+
+    const prefs = {
+      clinic_name: $('set-clinic-name')?.value?.trim() || '',
+      clinic_phone: $('set-clinic-phone')?.value?.trim() || '',
+      clinic_email: $('set-clinic-email')?.value?.trim() || '',
+      clinic_address: $('set-clinic-address')?.value?.trim() || '',
+      clinic_abn: $('set-clinic-abn')?.value?.trim() || '',
+
+      practitioner_name: $('set-practitioner-name')?.value?.trim() || '',
+      practitioner_title: $('set-practitioner-title')?.value?.trim() || '',
+      provider_number: $('set-provider-number')?.value?.trim() || '',
+      reg_number: $('set-reg-number')?.value?.trim() || '',
+
+      work_start: $('set-work-start')?.value || '08:30',
+      work_end: $('set-work-end')?.value || '17:30',
+      slot_duration: $('set-slot-duration')?.value || '30',
+      active_days: JSON.stringify(activeDays),
+
+      lunch_enabled: $('set-lunch-enabled')?.checked ? '1' : '0',
+      lunch_start: $('set-lunch-start')?.value || '12:30',
+      lunch_duration: $('set-lunch-duration')?.value || '60',
+
+      fee_initial: $('set-fee-initial')?.value || '140.00',
+      fee_followup: $('set-fee-followup')?.value || '95.00',
+      tax_rate: $('set-tax-rate')?.value || '10.0',
+      currency_symbol: $('set-currency-symbol')?.value || '$'
+    };
+
+    try {
+      const saved = await window.api.settings.save(prefs);
+      clinicSettingsCache = saved || prefs;
+
+      // Dynamic update of top-left branding across the application
+      updateBrandingUI({
+        clinicName: prefs.clinic_name,
+        practitionerName: prefs.practitioner_name
+      });
+
+      // Synchronize calendar schedule dynamically
+      if (window.Diary?.updateScheduleConfig) {
+        window.Diary.updateScheduleConfig(prefs);
+      }
+
+      // Show success indicator
+      const feedback = $('set-save-feedback');
+      if (feedback) {
+        feedback.classList.remove('hidden');
+        setTimeout(() => feedback.classList.add('hidden'), 3500);
+      }
+
+      // Update fee labels in invoice drawer
+      if ($('label-fee-initial')) $('label-fee-initial').textContent = Number(prefs.fee_initial).toFixed(2);
+      if ($('label-fee-followup')) $('label-fee-followup').textContent = Number(prefs.fee_followup).toFixed(2);
+
+      btns.forEach(b => {
+        if (b) triggerButtonSaved(b, 'All Saved');
+      });
+    } catch (err) {
+      alert('Failed to save settings: ' + err.message);
+    }
+  }
+
+  const btnSavePrefs = $('set-btn-save-prefs');
+  const btnSavePrefsTop = $('set-btn-save-prefs-top');
+  const masterSaveBtns = [btnSavePrefs, btnSavePrefsTop].filter(Boolean);
+  masterSaveBtns.forEach(btn => {
+    btn.onclick = () => saveAllPreferences(masterSaveBtns);
+  });
 
   loadSettingsGeneralPreferences();
 }

@@ -267,6 +267,27 @@
   .diary-col:last-child { @apply border-r-0; }
   .diary-col.is-today-col { @apply bg-indigo-500/[0.025]; }
 
+  /* Subtle non-active practice day styling (universal 7-day grid) */
+  .diary-col.diary-col-nonactive {
+    background-color: rgba(248, 250, 252, 0.65);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(226, 232, 240, 0.4) 10px, rgba(226, 232, 240, 0.4) 20px);
+  }
+  .dark .diary-col.diary-col-nonactive,
+  [data-theme="dark"] .diary-col.diary-col-nonactive {
+    background-color: rgba(15, 23, 42, 0.45);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(30, 41, 59, 0.4) 10px, rgba(30, 41, 59, 0.4) 20px);
+  }
+  .diary-col-hdr.diary-col-hdr-nonactive {
+    background-color: rgba(248, 250, 252, 0.6);
+  }
+  .diary-col-hdr.diary-col-hdr-nonactive .diary-dow {
+    color: #94a3b8;
+  }
+  .dark .diary-col-hdr.diary-col-hdr-nonactive,
+  [data-theme="dark"] .diary-col-hdr.diary-col-hdr-nonactive {
+    background-color: rgba(15, 23, 42, 0.4);
+  }
+
   .diary-line-hour  {
     @apply absolute left-0 right-0 h-px bg-slate-200 dark:bg-slate-800;
     pointer-events: none !important;

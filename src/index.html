@@ -226,23 +226,12 @@
     <!-- ── DASHBOARD VIEW ────────────────────────────────────────────────── -->
     <div id="view-dashboard" class="view-container relative flex flex-col h-full overflow-hidden animate-fade-in">
 
-      <!-- Top header bar: Clinic Branding | Clock | Search | Red Flags | New Appointment -->
+      <!-- Top header bar: Clock | Search | Red Flags | New Appointment -->
       <header class="flex-none px-7 py-4
                      bg-white/95 dark:bg-slate-900/95
                      backdrop-blur-sm
                      border-b border-slate-200 dark:border-slate-800/80">
         <div class="flex items-center gap-5">
-
-          <!-- Top-left Dashboard Clinic Branding Badge -->
-          <div id="dashboard-clinic-branding" class="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-800 shrink-0">
-            <div id="dashboard-branding-logo-container" class="shrink-0 flex items-center justify-center">
-              <img id="dashboard-clinic-logo" src="../assets/logo.png" alt="SoloPhysio Logo" class="h-9 w-9 max-h-10 max-w-10 object-contain rounded-md" />
-            </div>
-            <div class="leading-tight max-w-[170px] sm:max-w-[210px]">
-              <h2 id="dashboard-clinic-name" class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">SoloPhysio</h2>
-              <p id="dashboard-clinic-subtitle" class="text-[10px] text-slate-400 dark:text-slate-500 truncate">v1.0.0</p>
-            </div>
-          </div>
 
           <!-- Clickable Clock -->
           <button id="clock-trigger"
@@ -546,10 +535,10 @@
       <div class="flex-none flex items-center justify-between gap-4 px-6 py-3
                   bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <!-- Date navigation -->
-        <div class="flex items-center gap-2">
+        <div class="relative flex items-center gap-2">
           <div class="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <button id="diary-prev" class="btn-icon rounded-none h-8 w-8" title="Previous period">
-              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
             </button>
@@ -558,19 +547,70 @@
                            text-slate-600 dark:text-slate-300
                            hover:bg-slate-50 dark:hover:bg-slate-800
                            border-x border-slate-200 dark:border-slate-700
-                           transition-colors">
+                           transition-colors cursor-pointer select-none"
+                    title="Jump to current date">
               Today
             </button>
             <button id="diary-next" class="btn-icon rounded-none h-8 w-8" title="Next period">
-              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </button>
           </div>
-          <span id="diary-date-label"
-                class="text-sm font-semibold text-slate-800 dark:text-slate-200 ml-1">
-            —
-          </span>
+
+          <!-- Interactive Date Range / Calendar Picker Trigger -->
+          <button id="diary-calendar-trigger" type="button"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700
+                         hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200
+                         transition-all cursor-pointer group shadow-sm select-none"
+                  title="Click to jump to date via calendar picker">
+            <svg class="h-4 w-4 text-indigo-500 group-hover:text-indigo-600 dark:text-indigo-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <span id="diary-date-label" class="text-sm font-semibold pointer-events-none">
+              —
+            </span>
+            <svg class="h-3 w-3 text-slate-400 group-hover:text-slate-600 dark:text-slate-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          <!-- Dropdown Monthly Calendar Picker Popover -->
+          <div id="diary-datepicker-popover"
+               class="hidden absolute left-0 top-full mt-2 z-50 w-72 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl animate-fade-in text-slate-900 dark:text-slate-100">
+            <!-- Popover Header: Month & Year + Navigation -->
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+              <button id="diary-dp-prev-month" type="button" class="btn-icon h-7 w-7 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none" title="Previous Month">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+              </button>
+              <span id="diary-dp-month-title" class="text-xs font-bold text-slate-800 dark:text-slate-200 select-none">
+                October 2026
+              </span>
+              <button id="diary-dp-next-month" type="button" class="btn-icon h-7 w-7 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none" title="Next Month">
+                <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+              </button>
+            </div>
+
+            <!-- Day of Week Headers -->
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400 dark:text-slate-500 mb-1 select-none">
+              <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+            </div>
+
+            <!-- Month Days Grid -->
+            <div id="diary-dp-days-grid" class="grid grid-cols-7 gap-1 text-xs">
+              <!-- Dynamically populated day cells -->
+            </div>
+
+            <!-- Footer: Quick Jump to Today & Close -->
+            <div class="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+              <button id="diary-dp-jump-today" type="button" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer select-none">
+                Jump to Today
+              </button>
+              <button id="diary-dp-close" type="button" class="font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer select-none">
+                Close
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- View mode & book action -->
@@ -1323,6 +1363,13 @@
             <p class="text-xs text-slate-400 dark:text-slate-500">Configure clinic hours, schedule bounds, practitioner credentials, and billing defaults.</p>
           </div>
           <div class="flex items-center gap-2">
+            <!-- Master Save All Button in Top Header -->
+            <button id="set-btn-save-prefs-top" type="button" class="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shadow-sm cursor-pointer select-none">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="pointer-events-none">Save All Preferences</span>
+            </button>
             <!-- Clean sub-navigation pills to jump to hubs -->
             <button id="set-jump-exlib" data-action="navigate" data-nav-view="exercise-library" type="button" class="btn-ghost text-xs py-1.5 px-3 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none">
               <svg class="h-3.5 w-3.5 text-indigo-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -1341,9 +1388,17 @@
 
         <!-- 1. Clinic Demographics & Letterhead -->
         <div class="settings-card space-y-4">
-          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Appears on official tax receipts, discharge summaries, and exercise handouts.</p>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Demographics &amp; Letterhead</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Appears on official tax receipts, discharge summaries, and exercise handouts.</p>
+            </div>
+            <button type="button" class="btn-save-card btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none shadow-sm" data-card="demographics">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="pointer-events-none">Save Demographics</span>
+            </button>
           </div>
 
           <!-- Custom Clinic Logo Management -->
@@ -1423,9 +1478,17 @@
 
         <!-- 2. Practitioner Profile & Numbers -->
         <div class="settings-card space-y-4">
-          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practitioner Profile &amp; Registration</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and clinical compliance.</p>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practitioner Profile &amp; Registration</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Provider numbers and registration details for private health insurer and clinical compliance.</p>
+            </div>
+            <button type="button" class="btn-save-card btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none shadow-sm" data-card="practitioner">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="pointer-events-none">Save Practitioner</span>
+            </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
@@ -1457,9 +1520,17 @@
 
         <!-- 3. Practice Working Hours & Calendar Schedule -->
         <div class="settings-card space-y-4">
-          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Hours &amp; Calendar Schedule</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Updating these bounds dynamically recalculates diary working hours and timeline grid lines.</p>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Practice Hours &amp; Calendar Schedule</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Updating these bounds dynamically recalculates diary working hours and timeline grid lines.</p>
+            </div>
+            <button type="button" class="btn-save-card btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none shadow-sm" data-card="schedule">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="pointer-events-none">Save Schedule</span>
+            </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
@@ -1551,9 +1622,17 @@
 
         <!-- 4. Financial & Invoicing Defaults -->
         <div class="settings-card space-y-4">
-          <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Financial &amp; Billing Defaults</h2>
-            <p class="text-xs text-slate-400 dark:text-slate-500">Standard fee presets auto-populate when creating new patient invoices.</p>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Financial &amp; Billing Defaults</h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">Standard fee presets auto-populate when creating new patient invoices.</p>
+            </div>
+            <button type="button" class="btn-save-card btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none shadow-sm" data-card="billing">
+              <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="pointer-events-none">Save Billing</span>
+            </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
             <div>
@@ -1732,7 +1811,7 @@
             <span>Practice preferences saved &amp; calendar schedule synchronized.</span>
           </div>
           <button id="set-btn-save-prefs" type="button" class="btn-primary text-xs py-2 px-5 shadow-sm ml-auto cursor-pointer select-none">
-            Save Clinic Preferences
+            Save All Preferences
           </button>
         </div>
       </div>
