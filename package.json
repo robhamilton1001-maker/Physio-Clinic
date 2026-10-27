@@ -1,7 +1,7 @@
 {
-  "name": "physio-clinic-app",
+  "name": "solopt",
   "version": "1.0.0",
-  "description": "Local-first physiotherapist clinic desktop application",
+  "description": "Local-first physical therapy clinic desktop application",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -10,14 +10,15 @@
     "build:win": "electron-builder --win --x64"
   },
   "build": {
-    "appId": "com.physioclinic.suite",
-    "productName": "PhysioClinic Suite",
+    "appId": "com.solopt.suite",
+    "productName": "SoloPT",
     "directories": {
       "output": "dist"
     },
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "artifactName": "SoloPT Setup ${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -25,7 +26,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "PhysioClinic Suite",
+      "shortcutName": "SoloPT",
+      "artifactName": "SoloPT Setup ${version}.${ext}",
       "runAfterFinish": true
     }
   },

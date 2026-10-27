@@ -4,6 +4,9 @@ const fs = require('fs');
 const crypto = require('crypto');
 const os = require('os');
 
+// Enforce canonical application identity & dedicated storage namespace
+app.setName('SoloPT');
+
 // Helper: XML/HTML entity escaping
 function escapeHtml(str) {
   if (!str) return '';
@@ -27,6 +30,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 function createWindow() {
   mainWindow = new BrowserWindow({
+    title: 'SoloPT',
     width: 1366,
     height: 850,
     minWidth: 1024,
@@ -230,7 +234,7 @@ ipcMain.handle('smartPhrases:delete', (_e, id) => {
 ipcMain.handle('smartPhrases:exportBackup', async () => {
   const saveResult = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Smart Phrases Backup',
-    defaultPath: `SmartPhrases_Backup_${new Date().toISOString().slice(0, 10)}.json`,
+    defaultPath: `SoloPT_SmartPhrases_Backup_${new Date().toISOString().slice(0, 10)}.json`,
     filters: [
       { name: 'JSON Backup (*.json)', extensions: ['json'] }
     ]
@@ -353,7 +357,7 @@ ipcMain.handle('rehab:deleteProgram', (_e, id) => {
 ipcMain.handle('rehab:exportBackup', async () => {
   const saveResult = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Exercise Library & Protocols Backup',
-    defaultPath: `PhysioClinic_Exercises_Backup_${new Date().toISOString().slice(0, 10)}.json`,
+    defaultPath: `SoloPT_Exercises_Backup_${new Date().toISOString().slice(0, 10)}.json`,
     filters: [
       { name: 'JSON Backup (*.json)', extensions: ['json'] }
     ]
@@ -462,8 +466,8 @@ ipcMain.handle('settings:save', (_e, data) => {
       mainWindow.webContents.send('branding:updated', {
         logoPath,
         logoBase64,
-        clinicName: data.clinic_name !== undefined ? data.clinic_name : (db.settings.get('clinic_name') || ''),
-        practitionerName: data.practitioner_name !== undefined ? data.practitioner_name : (db.settings.get('practitioner_name') || '')
+        clinicName: (data.clinic_name !== undefined ? data.clinic_name : (db.settings.get('clinic_name') || '')).trim() || 'SoloPT',
+        practitionerName: (data.practitioner_name !== undefined ? data.practitioner_name : (db.settings.get('practitioner_name') || '')).trim() || 'v1.0.0'
       });
     }
   }
@@ -500,8 +504,8 @@ ipcMain.handle('branding:get', async () => {
   }
 
   return {
-    clinicName: clinicName || db.settings.get('clinic_name') || '',
-    practitionerName,
+    clinicName: (clinicName || db.settings.get('clinic_name') || '').trim() || 'SoloPT',
+    practitionerName: (practitionerName || '').trim() || 'v1.0.0',
     logoPath,
     fileExists,
     logoBase64
@@ -542,8 +546,8 @@ ipcMain.handle('branding:uploadClinicLogo', async () => {
     logoBase64 = `data:image/png;base64,${buf.toString('base64')}`;
   } catch (_) {}
 
-  const clinicName = db.settings.get('clinic_name') || '';
-  const practitionerName = db.settings.get('practitioner_name') || '';
+  const clinicName = (db.settings.get('clinic_name') || '').trim() || 'SoloPT';
+  const practitionerName = (db.settings.get('practitioner_name') || '').trim() || 'v1.0.0';
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('branding:updated', {
@@ -580,8 +584,8 @@ ipcMain.handle('branding:removeClinicLogo', async () => {
     db.settings.set('logo_path', '');
   } catch (_) {}
 
-  const clinicName = db.settings.get('clinic_name') || '';
-  const practitionerName = db.settings.get('practitioner_name') || '';
+  const clinicName = (db.settings.get('clinic_name') || '').trim() || 'SoloPT';
+  const practitionerName = (db.settings.get('practitioner_name') || '').trim() || 'v1.0.0';
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('branding:updated', {
@@ -640,7 +644,7 @@ ipcMain.handle('legal:downloadSignedDeclaration', async () => {
   const clinicSettings = db.settings.getAll ? db.settings.getAll() : {};
 
   const signeeName = (eulaStatus && eulaStatus.signee) ? eulaStatus.signee : (clinicSettings.practitioner_name || 'Licensed Clinician');
-  const clinicName = clinicSettings.clinic_name || 'Physiotherapy & Sports Rehabilitation Clinic';
+  const clinicName = clinicSettings.clinic_name || 'SoloPT';
   const clinicAddress = clinicSettings.clinic_address || '';
   const clinicPhone = clinicSettings.clinic_phone || '';
   const clinicEmail = clinicSettings.clinic_email || '';
@@ -788,7 +792,7 @@ ipcMain.handle('legal:downloadSignedDeclaration', async () => {
   <table class="header-table">
     <tr>
       <td style="vertical-align: middle;">
-        <div class="header-title">MEDICO-LEGAL &amp; GDPR STATUTORY DECLARATION</div>
+        <div class="header-title">SoloPT MEDICO-LEGAL &amp; STATUTORY PRACTICE AGREEMENT</div>
         <div class="header-subtitle">Data Controller Responsibility &amp; Autonomous Clinical Indemnity</div>
       </td>
       <td class="clinic-meta" style="vertical-align: middle;">
@@ -863,7 +867,7 @@ ipcMain.handle('legal:downloadSignedDeclaration', async () => {
 
   <div class="footer-note">
     Official Medico-Legal Record — Retain this document in your clinical governance compliance archive.<br>
-    Generated offline on ${new Date().toLocaleDateString('en-GB')} via Physiotherapy &amp; Sports Clinic Practice Suite.
+    Generated offline on ${new Date().toLocaleDateString('en-GB')} via SoloPT Practice Suite.
   </div>
 </body>
 </html>`;
@@ -1012,7 +1016,7 @@ ipcMain.handle('research:addGroup', (_e, name) => {
 ipcMain.handle('research:exportBackup', async () => {
   const saveResult = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Research Library Metadata Backup',
-    defaultPath: `PhysioClinic_Research_Backup_${new Date().toISOString().slice(0, 10)}.json`,
+    defaultPath: `SoloPT_Research_Backup_${new Date().toISOString().slice(0, 10)}.json`,
     filters: [
       { name: 'JSON Backup (*.json)', extensions: ['json'] }
     ]

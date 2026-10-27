@@ -1,7 +1,7 @@
 'use strict';
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  PHYSIO CLINIC — MASTER DIARY  (diary.js)
+//  SOLOPT — MASTER DIARY  (diary.js)
 //  True-to-scale interactive calendar grid.
 //  Exposed as window.Diary — called by renderer.js when the diary view opens.
 // ══════════════════════════════════════════════════════════════════════════════

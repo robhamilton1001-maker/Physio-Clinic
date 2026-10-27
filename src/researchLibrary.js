@@ -1,7 +1,7 @@
 'use strict';
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  PHYSIO CLINIC — RESEARCH PAPER LIBRARY (researchLibrary.js)
+//  SOLOPT — RESEARCH PAPER LIBRARY (researchLibrary.js)
 //  Offline peer-reviewed paper repository, auto-metadata extraction & bookshelf UI.
 //  Exposed as window.ResearchLibrary — called by renderer.js.
 // ══════════════════════════════════════════════════════════════════════════════

@@ -2,7 +2,7 @@
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
- *  PHYSIO CLINIC — PHASED S&C AND REHAB BUILDER (rehabBuilder.js)
+ *  SOLOPT — PHASED S&C AND REHAB BUILDER (rehabBuilder.js)
  *  Open Sandbox Canvas, HTML5 Drag-and-Drop Day Swapping, Professional PDF Engine.
  *  Exposed as window.RehabBuilder — consumed by renderer.js.
  * ══════════════════════════════════════════════════════════════════════════════
@@ -177,7 +177,7 @@ window.RehabBuilder = (() => {
 
   // ── Helper: 100% Offline Patient Take-Home PDF Document Generator ───────────
   function generatePatientPdfHtml(prog, patientInfo = null, branding = null, settings = null) {
-    const clinicName = (branding?.clinicName || settings?.clinic_name || '').trim() || 'PhysioClinic Practice Suite';
+    const clinicName = (branding?.clinicName || settings?.clinic_name || '').trim() || 'SoloPT';
     const practitioner = settings?.practitioner_name ? `${settings.practitioner_name}${settings.practitioner_title ? ', ' + settings.practitioner_title : ''}` : 'Lead Musculoskeletal Physiotherapist, MCSP, HCPC';
     const logoBase64 = branding?.logoBase64 || null;
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -345,7 +345,7 @@ window.RehabBuilder = (() => {
 
   <!-- Footer -->
   <div style="margin-top: 24px; padding-top: 10px; border-top: 1px solid #cbd5e1; font-size: 9px; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
-    <span>PhysioClinic Practice Suite • 100% Offline Clinical Record &amp; Home Prescription</span>
+    <span>SoloPT • 100% Offline Clinical Record &amp; Home Prescription</span>
     <span>Page 1 • Strictly Confidential Medical Prescription</span>
   </div>
 </body>

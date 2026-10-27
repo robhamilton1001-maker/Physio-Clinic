@@ -1,4 +1,4 @@
-# Physio Clinic App - Architecture Rules
+# SoloPT App - Architecture Rules
 
 1. **Strictly 100% Offline / Local-Only:**
    - Zero cloud connections, zero external REST APIs, zero remote authentication.

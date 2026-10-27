@@ -90,9 +90,12 @@ const ALL_VIEWS = ['dashboard', 'diary', 'patients', 'smart-phrases', 'programs'
 function switchView(target) {
   if (target === 'pt-programs') target = 'programs';
 
-  // Ensure full-screen overlays (such as patient portfolio) are completely closed on view switch
+  // Ensure full-screen overlays (such as patient portfolio) and slide-over drawers are completely closed on view switch
   if (typeof closePatientProfile === 'function') {
     closePatientProfile();
+  }
+  if (typeof closeInvoiceDrawer === 'function') {
+    closeInvoiceDrawer();
   }
 
   // Strictly hide ALL view containers
@@ -1974,7 +1977,7 @@ if (btnSaveNote) {
       const settings = (await window.api.settings.getAll()) || {};
       const pName = (settings.practitioner_name || '').trim() || 'Practitioner';
       const pTitle = (settings.practitioner_title || '').trim();
-      const cName = (settings.clinic_name || '').trim() || 'Physiotherapy Clinic';
+      const cName = (settings.clinic_name || '').trim() || 'SoloPT';
       const signDate = new Date().toLocaleString();
       const sigLine = `Electronically Signed by: ${pName}${pTitle ? ', ' + pTitle : ''} | ${cName} | Date: ${signDate}`;
 
@@ -4150,7 +4153,7 @@ async function loadInvoicingLedger(filter = {}) {
       const dueFmt = formatDateLocal(inv.due_date);
 
       return `
-        <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+        <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors" data-invoice-id="${inv.id}">
           <td class="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
             ${escapeHtml(inv.invoice_number)}
           </td>
@@ -4180,33 +4183,33 @@ async function loadInvoicingLedger(filter = {}) {
           </td>
           <td class="py-3 px-4 text-right">
             <div class="inline-flex items-center justify-end gap-1.5">
-              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1 cursor-pointer"
-                      title="Export Official PDF Receipt" onclick="exportInvoiceReceipt(${inv.id})">
+              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 flex items-center gap-1 cursor-pointer pointer-events-auto"
+                      title="Export Official PDF Receipt" data-action="export-pdf" data-invoice-id="${inv.id}">
                 <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9Z" />
                 </svg>
                 <span class="pointer-events-none">PDF</span>
               </button>
-              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 flex items-center gap-1 cursor-pointer"
-                      title="Email Invoice to Patient" onclick="emailInvoiceReceipt(${inv.id})">
+              <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 flex items-center gap-1 cursor-pointer pointer-events-auto"
+                      title="Email Invoice to Patient" data-action="email-invoice" data-invoice-id="${inv.id}">
                 <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                 </svg>
                 <span class="pointer-events-none">Email</span>
               </button>
               ${inv.status !== 'Paid' ? `
-                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer"
-                        title="Mark Paid" onclick="updateInvoiceStatus(${inv.id}, 'Paid')">
+                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 cursor-pointer pointer-events-auto"
+                        title="Mark Paid" data-action="toggle-paid" data-status="Paid" data-invoice-id="${inv.id}">
                   ✓ Paid
                 </button>
               ` : `
-                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                        title="Mark Pending" onclick="updateInvoiceStatus(${inv.id}, 'Pending')">
+                <button type="button" class="btn-ghost text-xs py-1 px-2 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer pointer-events-auto"
+                        title="Mark Pending" data-action="toggle-paid" data-status="Pending" data-invoice-id="${inv.id}">
                   Revert
                 </button>
               `}
-              <button type="button" class="btn-ghost text-xs py-1 px-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded cursor-pointer"
-                      title="Delete Invoice" onclick="deleteInvoice(${inv.id})">
+              <button type="button" class="btn-ghost text-xs py-1 px-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded cursor-pointer pointer-events-auto"
+                      title="Delete Invoice" data-action="delete-invoice" data-invoice-id="${inv.id}">
                 <svg class="h-3.5 w-3.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                 </svg>
@@ -4260,12 +4263,40 @@ async function populateInvoicePatientSelect(selectedId = null) {
   }
 }
 
-function openInvoiceDrawer(presetPatientId = null) {
+function updateQuickAddLabels() {
+  const symbol = clinicSettingsCache.currency_symbol || '$';
+  const rawInit = clinicSettingsCache.fee_initial ?? clinicSettingsCache.initial_consult_fee;
+  const rawFup = clinicSettingsCache.fee_followup ?? clinicSettingsCache.followup_fee;
+  const initFee = (rawInit !== undefined && rawInit !== null && rawInit !== '' && !isNaN(parseFloat(rawInit)))
+    ? parseFloat(rawInit)
+    : 140.0;
+  const fupFee = (rawFup !== undefined && rawFup !== null && rawFup !== '' && !isNaN(parseFloat(rawFup)))
+    ? parseFloat(rawFup)
+    : 95.0;
+
+  const btnInitial = $('btn-quick-add-initial');
+  if (btnInitial) {
+    btnInitial.innerHTML = `+ Initial Consult (<span id="label-fee-initial">${symbol}${initFee.toFixed(2)}</span>)`;
+  }
+  const btnFollowup = $('btn-quick-add-followup');
+  if (btnFollowup) {
+    btnFollowup.innerHTML = `+ Follow-up (<span id="label-fee-followup">${symbol}${fupFee.toFixed(2)}</span>)`;
+  }
+}
+
+async function openInvoiceDrawer(presetPatientId = null) {
   const drawer = $('drawer-invoice');
   const backdrop = $('drawer-invoice-backdrop');
   if (!drawer || !backdrop) return;
 
-  populateInvoicePatientSelect(presetPatientId);
+  // Refresh settings cache to ensure fees, currency, and tax rate are up-to-date
+  if (window.api?.settings) {
+    try {
+      clinicSettingsCache = (await window.api.settings.getAll()) || {};
+    } catch (_) {}
+  }
+
+  await populateInvoicePatientSelect(presetPatientId);
 
   // Set default dates
   const today = new Date().toISOString().slice(0, 10);
@@ -4276,12 +4307,19 @@ function openInvoiceDrawer(presetPatientId = null) {
   if ($('inv-form-payment-method')) $('inv-form-payment-method').value = 'Credit/Debit Card';
   if ($('inv-form-notes')) $('inv-form-notes').value = '';
 
-  const initFee = parseFloat(clinicSettingsCache.fee_initial) || 140.0;
-  const taxRate = parseFloat(clinicSettingsCache.tax_rate) !== undefined ? parseFloat(clinicSettingsCache.tax_rate) : 10.0;
-  if ($('inv-form-tax-rate')) $('inv-form-tax-rate').value = taxRate;
+  const rawInit = clinicSettingsCache.fee_initial ?? clinicSettingsCache.initial_consult_fee;
+  const initFee = (rawInit !== undefined && rawInit !== null && rawInit !== '' && !isNaN(parseFloat(rawInit)))
+    ? parseFloat(rawInit)
+    : 140.0;
+  const taxRate = parseFloat(clinicSettingsCache.tax_rate);
+  const validTaxRate = !isNaN(taxRate) ? taxRate : 10.0;
+
+  if ($('inv-form-tax-rate')) $('inv-form-tax-rate').value = validTaxRate;
+
+  updateQuickAddLabels();
 
   currentInvoiceLineItems = [
-    { description: 'Initial Comprehensive MSK Assessment (60 min)', quantity: 1, unit_price: initFee }
+    { description: 'Initial Comprehensive MSK Assessment', quantity: 1, unit_price: initFee }
   ];
   renderInvoiceLineItems();
   recalculateInvoiceTotals();
@@ -4290,6 +4328,7 @@ function openInvoiceDrawer(presetPatientId = null) {
   backdrop.classList.remove('hidden');
   drawer.style.setProperty('display', 'flex', 'important');
   drawer.style.setProperty('pointer-events', 'auto', 'important');
+  drawer.style.transform = 'translateX(0)';
   backdrop.style.setProperty('display', 'block', 'important');
   backdrop.style.setProperty('pointer-events', 'auto', 'important');
 }
@@ -4298,6 +4337,7 @@ function closeInvoiceDrawer() {
   const drawer = $('drawer-invoice');
   const backdrop = $('drawer-invoice-backdrop');
   if (drawer) {
+    drawer.style.transform = 'translateX(100%)';
     drawer.classList.add('hidden');
     drawer.style.setProperty('display', 'none', 'important');
     drawer.style.setProperty('pointer-events', 'none', 'important');
@@ -4307,6 +4347,12 @@ function closeInvoiceDrawer() {
     backdrop.style.setProperty('display', 'none', 'important');
     backdrop.style.setProperty('pointer-events', 'none', 'important');
   }
+  // Reset the invoice form fields
+  const form = $('form-new-invoice');
+  if (form) form.reset();
+  currentInvoiceLineItems = [];
+  renderInvoiceLineItems();
+  recalculateInvoiceTotals();
 }
 
 window.openInvoiceDrawer = openInvoiceDrawer;
@@ -4326,27 +4372,27 @@ function renderInvoiceLineItems() {
   }
 
   container.innerHTML = currentInvoiceLineItems.map((item, idx) => `
-    <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700" data-line-index="${idx}">
       <div class="flex-1 min-w-0">
         <input type="text" placeholder="Service description..." value="${escapeHtml(item.description || '')}"
-               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
-               onchange="updateInvoiceLineItem(${idx}, 'description', this.value)" />
+               class="inv-item-desc w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+               data-index="${idx}" />
       </div>
       <div class="w-16">
         <input type="number" min="1" max="99" value="${item.quantity || 1}" title="Quantity"
-               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-center text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-               onchange="updateInvoiceLineItem(${idx}, 'quantity', this.value)" />
+               class="inv-item-qty w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-center text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+               data-index="${idx}" />
       </div>
       <div class="w-24">
-        <input type="number" min="0" step="1" value="${item.unit_price !== undefined ? item.unit_price : 0}" title="Unit Price ($)"
-               class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-right text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-               onchange="updateInvoiceLineItem(${idx}, 'unit_price', this.value)" />
+        <input type="number" min="0" step="1" value="${item.unit_price !== undefined ? item.unit_price : 0}" title="Unit Price"
+               class="inv-item-price w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-xs text-right text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+               data-index="${idx}" />
       </div>
       <div class="w-20 text-right font-mono font-semibold text-xs text-slate-800 dark:text-slate-200 select-none">
-        ${formatCurrency((Number(item.quantity) || 1) * (Number(item.unit_price) || 0))}
+        <span class="inv-item-row-total" data-index="${idx}">${formatCurrency((Number(item.quantity) || 1) * (Number(item.unit_price) || 0))}</span>
       </div>
-      <button type="button" class="btn-icon text-slate-400 hover:text-rose-500 cursor-pointer" title="Remove line item"
-              onclick="removeInvoiceLineItem(${idx})">
+      <button type="button" class="btn-icon text-slate-400 hover:text-rose-500 cursor-pointer pointer-events-auto"
+              title="Remove line item" data-action="remove-line-item" data-index="${idx}">
         <svg class="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -4409,17 +4455,33 @@ function initInvoicingLedger() {
     }, 250);
   });
 
-  // 3. New Invoice Drawer Triggers
-  $('btn-create-invoice')?.addEventListener('click', () => openInvoiceDrawer());
-  $('btn-close-invoice-drawer')?.addEventListener('click', closeInvoiceDrawer);
-  $('btn-cancel-invoice')?.addEventListener('click', closeInvoiceDrawer);
-  $('drawer-invoice-backdrop')?.addEventListener('click', closeInvoiceDrawer);
+  // 3. New Invoice Drawer Triggers & Direct Close Handlers
+  $('btn-create-invoice')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openInvoiceDrawer();
+  });
+  $('btn-close-invoice-drawer')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeInvoiceDrawer();
+  });
+  $('btn-cancel-invoice')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeInvoiceDrawer();
+  });
+  $('drawer-invoice-backdrop')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeInvoiceDrawer();
+  });
 
   // 4. Quick Fee Presets
-  $('btn-quick-add-initial')?.addEventListener('click', () => {
-    const fee = parseFloat(clinicSettingsCache.fee_initial) || 140.0;
+  $('btn-quick-add-initial')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rawInit = clinicSettingsCache.fee_initial ?? clinicSettingsCache.initial_consult_fee;
+    const fee = (rawInit !== undefined && rawInit !== null && rawInit !== '' && !isNaN(parseFloat(rawInit)))
+      ? parseFloat(rawInit)
+      : 140.0;
     currentInvoiceLineItems.push({
-      description: 'Initial Comprehensive MSK Assessment (60 min)',
+      description: 'Initial Comprehensive MSK Assessment',
       quantity: 1,
       unit_price: fee
     });
@@ -4427,10 +4489,14 @@ function initInvoicingLedger() {
     recalculateInvoiceTotals();
   });
 
-  $('btn-quick-add-followup')?.addEventListener('click', () => {
-    const fee = parseFloat(clinicSettingsCache.fee_followup) || 95.0;
+  $('btn-quick-add-followup')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rawFup = clinicSettingsCache.fee_followup ?? clinicSettingsCache.followup_fee;
+    const fee = (rawFup !== undefined && rawFup !== null && rawFup !== '' && !isNaN(parseFloat(rawFup)))
+      ? parseFloat(rawFup)
+      : 95.0;
     currentInvoiceLineItems.push({
-      description: 'Subsequent Treatment Consultation (30 min)',
+      description: 'Follow-up Rehabilitation & Treatment',
       quantity: 1,
       unit_price: fee
     });
@@ -4439,7 +4505,8 @@ function initInvoicingLedger() {
   });
 
   // 5. Add Line Item Button
-  $('btn-add-line-item')?.addEventListener('click', () => {
+  $('btn-add-line-item')?.addEventListener('click', (e) => {
+    e.preventDefault();
     currentInvoiceLineItems.push({
       description: '',
       quantity: 1,
@@ -4451,8 +4518,97 @@ function initInvoicingLedger() {
 
   // 6. Tax Rate Change
   $('inv-form-tax-rate')?.addEventListener('input', recalculateInvoiceTotals);
+  $('inv-form-tax-rate')?.addEventListener('change', recalculateInvoiceTotals);
 
-  // 7. Form Submit
+  // 7. Form Items Container Delegation (Inputs and Line Item Removal)
+  const itemsContainer = $('inv-form-items-container');
+  if (itemsContainer) {
+    itemsContainer.addEventListener('input', (e) => {
+      const idx = e.target.dataset?.index;
+      if (idx === undefined) return;
+      const i = Number(idx);
+      if (e.target.classList.contains('inv-item-desc')) {
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].description = e.target.value;
+      } else if (e.target.classList.contains('inv-item-qty')) {
+        const q = Math.max(1, parseInt(e.target.value) || 1);
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].quantity = q;
+        const rowTot = itemsContainer.querySelector(`.inv-item-row-total[data-index="${i}"]`);
+        if (rowTot) rowTot.textContent = formatCurrency(q * (currentInvoiceLineItems[i]?.unit_price || 0));
+        recalculateInvoiceTotals();
+      } else if (e.target.classList.contains('inv-item-price')) {
+        const p = Math.max(0, parseFloat(e.target.value) || 0);
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].unit_price = p;
+        const rowTot = itemsContainer.querySelector(`.inv-item-row-total[data-index="${i}"]`);
+        if (rowTot) rowTot.textContent = formatCurrency((currentInvoiceLineItems[i]?.quantity || 1) * p);
+        recalculateInvoiceTotals();
+      }
+    });
+
+    itemsContainer.addEventListener('change', (e) => {
+      const idx = e.target.dataset?.index;
+      if (idx === undefined) return;
+      const i = Number(idx);
+      if (e.target.classList.contains('inv-item-desc')) {
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].description = e.target.value;
+      } else if (e.target.classList.contains('inv-item-qty')) {
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].quantity = Math.max(1, parseInt(e.target.value) || 1);
+      } else if (e.target.classList.contains('inv-item-price')) {
+        if (currentInvoiceLineItems[i]) currentInvoiceLineItems[i].unit_price = Math.max(0, parseFloat(e.target.value) || 0);
+      }
+      renderInvoiceLineItems();
+      recalculateInvoiceTotals();
+    });
+
+    itemsContainer.addEventListener('click', (e) => {
+      const rmBtn = e.target.closest('[data-action="remove-line-item"]');
+      if (rmBtn) {
+        e.preventDefault();
+        const i = Number(rmBtn.dataset.index);
+        removeInvoiceLineItem(i);
+      }
+    });
+  }
+
+  // 8. Robust Table Ledger Event Delegation
+  document.querySelector('#invoicing-table-container')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button, [data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const invoiceId = btn.dataset.invoiceId || btn.closest('[data-invoice-id]')?.dataset.invoiceId;
+
+    if (action === 'export-pdf' && invoiceId) {
+      e.preventDefault();
+      exportInvoiceReceipt(Number(invoiceId));
+    } else if (action === 'email-invoice' && invoiceId) {
+      e.preventDefault();
+      emailInvoiceReceipt(Number(invoiceId));
+    } else if (action === 'toggle-paid' && invoiceId) {
+      e.preventDefault();
+      const newStatus = btn.dataset.status || 'Paid';
+      updateInvoiceStatus(Number(invoiceId), newStatus);
+    } else if (action === 'delete-invoice' && invoiceId) {
+      e.preventDefault();
+      deleteInvoice(Number(invoiceId));
+    }
+  });
+
+  // 9. Document-level Esc key & Backdrop / Close Fallback
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const drawer = $('drawer-invoice');
+      if (drawer && !drawer.classList.contains('hidden') && drawer.style.display !== 'none') {
+        closeInvoiceDrawer();
+      }
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-close-invoice-drawer, #btn-cancel-invoice, #drawer-invoice-backdrop, [data-action="close-invoice-drawer"]')) {
+      closeInvoiceDrawer();
+    }
+  });
+
+  // 10. Form Submit
   $('form-new-invoice')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const patId = $('inv-form-patient')?.value;
@@ -4494,6 +4650,8 @@ function initInvoicingLedger() {
       alert('Failed to create invoice: ' + err.message);
     }
   });
+
+  updateQuickAddLabels();
 }
 
 // ── Local PDF Export Engine (Phase 8) ───────────────────────────────────────
@@ -4511,16 +4669,16 @@ async function exportInvoiceReceipt(invoiceId) {
     } catch (_) {}
     const logoBase64 = branding?.logoBase64 || null;
 
-    const clinicName = escapeHtml(settings.clinic_name || 'Antigravity Sports & Orthopaedic Physiotherapy');
-    const clinicPhone = escapeHtml(settings.clinic_phone || '+61 (02) 9876 5432');
-    const clinicEmail = escapeHtml(settings.clinic_email || 'reception@antigravityphysio.com.au');
-    const clinicAddress = escapeHtml(settings.clinic_address || 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000');
-    const clinicAbn = escapeHtml(settings.clinic_abn || 'ABN 88 123 456 789');
+    const clinicName = escapeHtml(settings.clinic_name || 'SoloPT');
+    const clinicPhone = escapeHtml(settings.clinic_phone || '');
+    const clinicEmail = escapeHtml(settings.clinic_email || '');
+    const clinicAddress = escapeHtml(settings.clinic_address || '');
+    const clinicAbn = escapeHtml(settings.clinic_abn || '');
 
-    const pracName = escapeHtml(settings.practitioner_name || 'Dr. Sarah Jenkins, PT, DPT, OCS');
-    const pracTitle = escapeHtml(settings.practitioner_title || 'Senior Orthopaedic Physiotherapist');
-    const provNumber = escapeHtml(settings.provider_number || 'PRV-8829103A');
-    const regNumber = escapeHtml(settings.reg_number || 'AHPRA-PHY00019283');
+    const pracName = escapeHtml(settings.practitioner_name || '');
+    const pracTitle = escapeHtml(settings.practitioner_title || '');
+    const provNumber = escapeHtml(settings.provider_number || '');
+    const regNumber = escapeHtml(settings.reg_number || '');
 
     const patientName = `${escapeHtml(inv.first_name)} ${escapeHtml(inv.last_name)}`;
     const patientContact = escapeHtml(inv.phone || inv.email || '—');
@@ -4654,7 +4812,7 @@ async function exportInvoiceReceipt(invoiceId) {
 
         <div class="footer">
           <p>This medical invoice / receipt is valid for private health insurance fund claims (HICAPS), Medicare reimbursement, and tax deductions.</p>
-          <p>Generated locally &amp; securely offline by Antigravity Physiotherapy Suite.</p>
+          <p>Generated locally &amp; securely offline by SoloPT Practice Suite.</p>
         </div>
       </body>
       </html>
@@ -4696,8 +4854,8 @@ async function emailInvoiceReceipt(invoiceId) {
     const to = inv.email || '';
     const symbol = settings.currency_symbol || '$';
     const isPaid = inv.status === 'Paid';
-    const subject = `${isPaid ? 'Receipt' : 'Tax Invoice'} #${inv.invoice_number} - ${settings.clinic_name || 'Antigravity Physiotherapy'}`;
-    const body = `Dear ${inv.first_name || 'Patient'},\n\nPlease find attached your official ${isPaid ? 'tax receipt' : 'tax invoice'} (${inv.invoice_number}) from ${settings.clinic_name || 'Antigravity Physiotherapy'}.\n\nTotal Due: ${symbol}${Number(inv.total).toFixed(2)}\nPayment Status: ${inv.status}\n\nKind regards,\n${settings.clinic_name || 'Antigravity Physiotherapy'}\n${settings.clinic_phone || ''}`;
+    const subject = `${isPaid ? 'Receipt' : 'Tax Invoice'} #${inv.invoice_number} - ${settings.clinic_name || 'SoloPT'}`;
+    const body = `Dear ${inv.first_name || 'Patient'},\n\nPlease find attached your official ${isPaid ? 'tax receipt' : 'tax invoice'} (${inv.invoice_number}) from ${settings.clinic_name || 'SoloPT'}.\n\nTotal Due: ${symbol}${Number(inv.total).toFixed(2)}\nPayment Status: ${inv.status}\n\nKind regards,\n${settings.clinic_name || 'SoloPT'}\n${settings.clinic_phone || ''}`;
 
     if (window.api?.system?.openEmailClient) {
       await window.api.system.openEmailClient({ to, subject, body, filePath });
@@ -4727,16 +4885,16 @@ async function exportPatientDischargeSummary(patientId) {
     const programsList = data.programs || [];
     const appts = p.appointments || [];
 
-    const clinicName = escapeHtml(settings.clinic_name || 'Antigravity Sports & Orthopaedic Physiotherapy');
-    const clinicPhone = escapeHtml(settings.clinic_phone || '+61 (02) 9876 5432');
-    const clinicEmail = escapeHtml(settings.clinic_email || 'reception@antigravityphysio.com.au');
-    const clinicAddress = escapeHtml(settings.clinic_address || 'Suite 402, 100 Medical Centre Way, Sydney NSW 2000');
-    const clinicAbn = escapeHtml(settings.clinic_abn || 'ABN 88 123 456 789');
+    const clinicName = escapeHtml(settings.clinic_name || 'SoloPT');
+    const clinicPhone = escapeHtml(settings.clinic_phone || '');
+    const clinicEmail = escapeHtml(settings.clinic_email || '');
+    const clinicAddress = escapeHtml(settings.clinic_address || '');
+    const clinicAbn = escapeHtml(settings.clinic_abn || '');
 
-    const pracName = escapeHtml(settings.practitioner_name || 'Dr. Sarah Jenkins, PT, DPT, OCS');
-    const pracTitle = escapeHtml(settings.practitioner_title || 'Senior Orthopaedic Physiotherapist');
-    const provNumber = escapeHtml(settings.provider_number || 'PRV-8829103A');
-    const regNumber = escapeHtml(settings.reg_number || 'AHPRA-PHY00019283');
+    const pracName = escapeHtml(settings.practitioner_name || '');
+    const pracTitle = escapeHtml(settings.practitioner_title || '');
+    const provNumber = escapeHtml(settings.provider_number || '');
+    const regNumber = escapeHtml(settings.reg_number || '');
 
     const patientFullName = `${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}`;
     const initialDate = notesList[0]?.created_at || p.created_at;
@@ -4920,7 +5078,7 @@ async function exportPatientDischargeSummary(patientId) {
 
         <div class="footer">
           <p>Confidential Medical Record — Approved for Patient Records, Referrers, and Third-Party Payers.</p>
-          <p>Generated locally &amp; securely offline by Antigravity Physiotherapy Suite.</p>
+          <p>Generated locally &amp; securely offline by SoloPT Practice Suite.</p>
         </div>
       </body>
       </html>
@@ -4996,7 +5154,7 @@ function updateBrandingUI(branding) {
   if (branding.logoPath !== undefined) currentBranding.logoPath = branding.logoPath;
   if (branding.logoBase64 !== undefined) currentBranding.logoBase64 = branding.logoBase64;
 
-  const displayName = (currentBranding.clinicName || '').trim() || 'SoloPhysio';
+  const displayName = (currentBranding.clinicName || '').trim() || 'SoloPT';
   const displaySubtitle = (currentBranding.practitionerName || '').trim() || 'v1.0.0';
 
   // Default to the master software logo file assets/logo.png
@@ -5562,7 +5720,7 @@ $('btn-export-smartphrases-backup')?.addEventListener('click', async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `SmartPhrases_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `SoloPT_SmartPhrases_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

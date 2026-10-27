@@ -1,17 +1,27 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const { app } = require('electron');
 const Database = require('better-sqlite3');
 
+if (app && typeof app.setName === 'function') {
+  try { app.setName('SoloPT'); } catch (_) {}
+}
+
 // ── Resolve the path to the persistent DB file ────────────────────────────
 // app.getPath('userData') resolves to:
-//   Windows : C:\Users\<user>\AppData\Roaming\physio-clinic-app
-//   macOS   : ~/Library/Application Support/physio-clinic-app
-//   Linux   : ~/.config/physio-clinic-app
+//   Windows : C:\Users\<user>\AppData\Roaming\SoloPT
+//   macOS   : ~/Library/Application Support/SoloPT
+//   Linux   : ~/.config/SoloPT
 const userDataPath = (app && typeof app.getPath === 'function')
   ? app.getPath('userData')
-  : path.join(process.env.APPDATA || process.env.HOME || '.', 'physio-clinic-app');
+  : path.join(process.env.APPDATA || process.env.HOME || '.', 'SoloPT');
+
+if (!fs.existsSync(userDataPath)) {
+  fs.mkdirSync(userDataPath, { recursive: true });
+}
+
 const DB_PATH = path.join(userDataPath, 'clinic_data.db');
 
 // ── Open / create the database ────────────────────────────────────────────
@@ -232,7 +242,7 @@ db.transaction(() => {
     const existingRow = db.prepare('SELECT id FROM clinic_settings WHERE id = 1').get();
     const cNameRow = db.prepare("SELECT value FROM clinic_settings WHERE key = 'clinic_name'").get();
     const lPathRow = db.prepare("SELECT value FROM clinic_settings WHERE key = 'logo_path'").get();
-    const currentName = cNameRow ? cNameRow.value : '';
+    const currentName = (cNameRow && cNameRow.value ? cNameRow.value : '').trim() || 'SoloPT';
     const currentLogo = lPathRow ? lPathRow.value : null;
 
     if (!existingRow) {
@@ -438,7 +448,7 @@ try {
 // ── Seed Practice Settings (Phase 8 - Clean Defaults) ─────────────────────
 try {
   const defaultSettings = [
-    ['clinic_name', ''],
+    ['clinic_name', 'SoloPT'],
     ['practitioner_name', ''],
     ['practitioner_title', ''],
     ['provider_number', ''],
@@ -454,10 +464,10 @@ try {
     ['lunch_enabled', '1'],
     ['lunch_start', '12:30'],
     ['lunch_duration', '60'],
-    ['fee_initial', '0.00'],
-    ['fee_followup', '0.00'],
-    ['tax_rate', '0.0'],
-    ['currency_symbol', '£']
+    ['fee_initial', '140.00'],
+    ['fee_followup', '95.00'],
+    ['tax_rate', '10.0'],
+    ['currency_symbol', '$']
   ];
   const insertSetting = db.prepare('INSERT OR IGNORE INTO clinic_settings (key, value) VALUES (?, ?)');
   for (const [k, v] of defaultSettings) {
@@ -467,17 +477,17 @@ try {
   // Purge legacy mock/dummy clinician data from existing installations
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'practitioner_name' AND value LIKE '%Sarah Jenkins%'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'practitioner_title' AND value = 'Senior Orthopaedic Physiotherapist'`).run();
-  db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_name' AND value LIKE '%Antigravity Sports%'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = 'SoloPT' WHERE key = 'clinic_name' AND (value = '' OR value LIKE '%Antigravity Sports%')`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_address' AND value LIKE '%Medical Centre Way%'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'provider_number' AND value = 'PRV-8829103A'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'reg_number' AND value = 'AHPRA-PHY00019283'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_phone' AND value = '+61 (02) 9876 5432'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_email' AND value = 'reception@antigravityphysio.com.au'`).run();
   db.prepare(`UPDATE clinic_settings SET value = '' WHERE key = 'clinic_abn' AND value = 'ABN 88 123 456 789'`).run();
-  db.prepare(`UPDATE clinic_settings SET value = '0.00' WHERE key = 'fee_initial' AND value = '140.00'`).run();
-  db.prepare(`UPDATE clinic_settings SET value = '0.00' WHERE key = 'fee_followup' AND value = '95.00'`).run();
-  db.prepare(`UPDATE clinic_settings SET value = '0.0' WHERE key = 'tax_rate' AND value = '10.0'`).run();
-  db.prepare(`UPDATE clinic_settings SET value = '£' WHERE key = 'currency_symbol' AND value = '$'`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '140.00' WHERE key = 'fee_initial' AND (value = '0.00' OR value = '' OR value IS NULL)`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '95.00' WHERE key = 'fee_followup' AND (value = '0.00' OR value = '' OR value IS NULL)`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '10.0' WHERE key = 'tax_rate' AND (value = '0.0' OR value = '' OR value = '0' OR value IS NULL)`).run();
+  db.prepare(`UPDATE clinic_settings SET value = '$' WHERE key = 'currency_symbol' AND (value = '' OR value IS NULL)`).run();
 } catch (setErr) {
   console.warn('[DB] Settings seed warning:', setErr.message);
 }
@@ -1336,6 +1346,14 @@ const settings = {
         if (row1.logo_path !== undefined) result.logo_path = row1.logo_path;
       }
     } catch (_) {}
+    if (!result.clinic_name || !result.clinic_name.trim()) {
+      result.clinic_name = 'SoloPT';
+    }
+    // Harmonize fee aliases
+    if (!result.fee_initial && result.initial_consult_fee) result.fee_initial = result.initial_consult_fee;
+    if (!result.initial_consult_fee && result.fee_initial) result.initial_consult_fee = result.fee_initial;
+    if (!result.fee_followup && result.followup_fee) result.fee_followup = result.followup_fee;
+    if (!result.followup_fee && result.fee_followup) result.followup_fee = result.fee_followup;
     return result;
   },
 
@@ -1346,7 +1364,18 @@ const settings = {
         if (row1 && row1.logo_path !== undefined) return row1.logo_path;
       } catch (_) {}
     }
+    if (key === 'initial_consult_fee') {
+      const r = db.prepare("SELECT value FROM clinic_settings WHERE key IN ('initial_consult_fee', 'fee_initial') AND value != '' LIMIT 1").get();
+      return r ? r.value : '140.00';
+    }
+    if (key === 'followup_fee') {
+      const r = db.prepare("SELECT value FROM clinic_settings WHERE key IN ('followup_fee', 'fee_followup') AND value != '' LIMIT 1").get();
+      return r ? r.value : '95.00';
+    }
     const row = db.prepare('SELECT value FROM clinic_settings WHERE key = ?').get(key);
+    if (key === 'clinic_name') {
+      return (row && row.value && row.value.trim()) ? row.value.trim() : 'SoloPT';
+    }
     return row ? row.value : null;
   },
 
