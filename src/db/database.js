@@ -492,19 +492,6 @@ try {
   console.warn('[DB] Settings seed warning:', setErr.message);
 }
 
-// Seed clinical patients if missing (e.g. Emma Rodriguez id:3)
-try {
-  const insertPat = db.prepare(`
-    INSERT OR IGNORE INTO patients (id, first_name, last_name, dob, phone, email, address, emergency_contact, primary_diagnosis, national_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  insertPat.run(1, 'Jon', 'Doe', '1988-03-14', '07700 900123', 'jon.doe@example.com', '14 Victoria Road, London', 'David Doe (Brother) — 07700 900124', 'L4-L5 Lumbar Disc Herniation with Radiculopathy', '943 476 5919');
-  insertPat.run(2, 'Jom', 'Doughnut', '1975-08-22', '07700 900456', 'jom.doughnut@example.com', '82 High Street, Manchester', 'Claire Doughnut (Wife) — 07700 900457', 'Post-Op Right ACL Reconstruction (Hamstring Graft)', '842 195 4421');
-  insertPat.run(3, 'Emma', 'Rodriguez', '1992-11-05', '07700 900789', 'emma.rodriguez@example.com', '27 Park Lane, Bristol', 'Carlos Rodriguez (Brother) — 07700 900790', 'Cervicogenic Headache & Upper Trapezius Trigger Points', '731 884 1092');
-} catch (pErr) {
-  console.warn('[DB] Patient seed warning:', pErr.message);
-}
-
 // ── Prepared statements ───────────────────────────────────────────────────
 // Pre-compiled once at startup for maximum performance on hot paths.
 
@@ -1540,67 +1527,6 @@ const invoices = {
   }
 };
 
-// ── Seed Sample Invoices (Phase 8) ─────────────────────────────────────────
-try {
-  const invCount = db.prepare('SELECT COUNT(*) as count FROM invoices').get();
-  const firstPatient = db.prepare('SELECT id FROM patients LIMIT 1').get();
-  if ((!invCount || invCount.count === 0) && firstPatient) {
-    const pId = firstPatient.id;
-    const inv1 = invoices.create({
-      invoice_number: 'INV-2026-001',
-      patient_id: pId,
-      issue_date: '2026-10-10',
-      due_date: '2026-10-24',
-      status: 'Paid',
-      subtotal: 140.00,
-      tax_rate: 10.0,
-      tax_amount: 14.00,
-      total: 154.00,
-      payment_method: 'Credit/Debit Card',
-      notes: 'Initial MSK consultation and rehabilitation program onboarding.',
-      items: [
-        { description: 'Initial Comprehensive MSK Assessment (60 min)', quantity: 1, unit_price: 140.00, total: 140.00 }
-      ]
-    });
-    const inv2 = invoices.create({
-      invoice_number: 'INV-2026-002',
-      patient_id: pId,
-      issue_date: '2026-10-18',
-      due_date: '2026-11-01',
-      status: 'Pending',
-      subtotal: 120.00,
-      tax_rate: 10.0,
-      tax_amount: 12.00,
-      total: 132.00,
-      payment_method: 'Private Health Insurance / HICAPS',
-      notes: 'Follow-up manual therapy and dry needling.',
-      items: [
-        { description: 'Subsequent Treatment Consultation (30 min)', quantity: 1, unit_price: 95.00, total: 95.00 },
-        { description: 'Dry Needling Consumables & Modality', quantity: 1, unit_price: 25.00, total: 25.00 }
-      ]
-    });
-    const inv3 = invoices.create({
-      invoice_number: 'INV-2026-003',
-      patient_id: pId,
-      issue_date: '2026-09-20',
-      due_date: '2026-10-04',
-      status: 'Overdue',
-      subtotal: 180.00,
-      tax_rate: 10.0,
-      tax_amount: 18.00,
-      total: 198.00,
-      payment_method: 'Electronic Funds Transfer',
-      notes: 'Biomechanical gait analysis & video assessment.',
-      items: [
-        { description: 'Biomechanical Video Gait Analysis', quantity: 1, unit_price: 180.00, total: 180.00 }
-      ]
-    });
-    console.log('[DB] Seeded 3 sample invoices.');
-  }
-} catch (invErr) {
-  console.warn('[DB] Invoices seed warning:', invErr.message);
-}
-
 // ── Research Papers Module ────────────────────────────────────────────────
 const researchPapers = {
   getAll({ group, search, favoriteOnly, sortBy } = {}) {
@@ -1843,6 +1769,17 @@ const eula = {
   }
 };
 
+// ── Comprehensive First-Run Clinical Demo Seeder Suite ────────────────────
+try {
+  const { seedDatabase } = require('./seeds.js');
+  seedDatabase(db, {
+    userDataPath,
+    assetsPath: path.join(__dirname, '../../assets/sample_papers')
+  });
+} catch (seedErr) {
+  console.warn('[DB] Seeding routine error:', seedErr);
+}
+
 // ── Low-level helpers (kept for backward-compat with db:run/get/all IPC) ──
 module.exports = {
   run(sql, params = []) { return db.prepare(sql).run(params); },
@@ -1863,6 +1800,7 @@ module.exports = {
   eula,
   invoices,
   researchPapers,
+  seeds: require('./seeds.js'),
 
   // ── Diary domain ──────────────────────────────────────────────────────
   diary: {
